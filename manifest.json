@@ -1,0 +1,52 @@
+{
+    "format_version": 2,
+    "header": {
+        "name": "CountryWars v.1.0.0",
+        "description": "建国及び戦争ができるアドオン\nMade by クリームパン",
+        "version": [
+            2,
+            3,
+            1
+        ],
+        "uuid": "2d60ab3d-c725-4719-bfa1-dcd123de34a4",
+        "min_engine_version": [
+            1,
+            21,
+            130
+        ]
+    },
+    "modules": [
+        {
+            "type": "script",
+            "version": [
+                2,
+                3,
+                1
+            ],
+            "uuid": "37dc5294-4786-490e-9d01-de262dfcb6a9",
+            "language": "javascript",
+            "entry": "scripts/index.js"
+        }
+    ],
+    "dependencies": [
+        {
+            "module_name": "@minecraft/server",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server-ui",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server-gametest",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server-admin",
+            "version": "beta"
+        }
+    ],
+    "capabilities": [
+        "script_eval"
+    ]
+}
