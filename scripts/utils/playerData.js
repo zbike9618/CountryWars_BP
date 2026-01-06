@@ -16,10 +16,10 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             job: undefined,//levelはこのの中にobjectとして入れる
         }
         playerDatas.set(player.id, playerData);
-        initialSpawn(player);//初期スポーンメッセージ等 
+        DoInitialSpawn(player);//初期スポーンメッセージ等 
     }
 })
 
-function initialSpawn(player) {
+function DoInitialSpawn(player) {
     player.sendMessage({ translate: "cw.initialSpawn" })
 }
