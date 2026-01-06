@@ -7,7 +7,7 @@ export class MakeCountry {
 
     static makeForm(player) {
         const form = new ModalFormData()
-        form.header({ translate: "cw.makeCountry" })
+        form.header({ translate: "cw.mcform.header" })
 
     }
     //constructurはなし
