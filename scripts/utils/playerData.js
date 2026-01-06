@@ -21,5 +21,5 @@ world.afterEvents.playerSpawn.subscribe(ev => {
 })
 
 function initialSpawn(player) {
-    Util.translateMessage(player, "initialSpawn")
+    player.sendMessage({ translate: "cw.initialSpawn" })
 }

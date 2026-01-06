@@ -7,7 +7,7 @@ system.beforeEvents.startup.subscribe(ev => {
      * @type {import("@minecraft/server").CustomCommand}
      */
     const command = {
-        name: "mc:makecountry", // コマンド名
+        name: "cw:makecountry", // コマンド名
         description: "建国する", // コマンド説明
         permissionLevel: server.CommandPermissionLevel.Any, // 権限レベル: ope
         // 必須の引数
