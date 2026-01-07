@@ -7,8 +7,8 @@ system.beforeEvents.startup.subscribe(ev => {
      * @type {import("@minecraft/server").CustomCommand}
      */
     const command = {
-        name: "cw:makecountry", // コマンド名
-        description: "建国する", // コマンド説明
+        name: "cw:settingcountry", // コマンド名
+        description: "国の設定を閲覧・変更する", // コマンド説明
         permissionLevel: server.CommandPermissionLevel.Any, // 権限レベル: ope
         // 必須の引数
         mandatoryParameters: [
@@ -18,8 +18,8 @@ system.beforeEvents.startup.subscribe(ev => {
         ],
     }
     const scommand = {
-        name: "cw:mc", // コマンド名
-        description: "建国する", // コマンド説明
+        name: "cw:sc", // コマンド名
+        description: "国の設定を閲覧・変更する", // コマンド説明
         permissionLevel: server.CommandPermissionLevel.Any, // 権限レベル: ope
         // 必須の引数
         mandatoryParameters: [
@@ -46,7 +46,7 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        Country.makeForm(player);
+        Country.setting(player);
     })
 
 
