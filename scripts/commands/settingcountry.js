@@ -1,6 +1,10 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Country } from "../utils/country";
+import { Dypro } from "../utils/dypro";
+const countryDatas = new Dypro("country");
+const playerDatas = new Dypro("player");
+
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -46,7 +50,8 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        Country.setting(player);
+        const countryData = countryDatas.get(playerDatas.get(player.id).country);
+        Country.setting(player, countryData);
     })
 
 

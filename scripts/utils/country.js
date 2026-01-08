@@ -5,6 +5,7 @@ import { ChestFormData } from "./chest_shop/chest-ui.js";
 import { Util } from "./util.js";
 import { Dypro } from "./dypro.js";
 const countryDatas = new Dypro("country");
+const playerDatas = new Dypro("player");
 export class Country {
 
     static async makeForm(player) {
@@ -40,6 +41,9 @@ export class Country {
 
         }
         countryDatas.set(id, countryData);
+        const playerData = playerDatas.get(player.id);
+        playerData.country = id;
+        playerDatas.set(player.id, playerData);
     }
     static delete(countryData) {
         countryDatas.delete(countryData.id);
@@ -68,6 +72,18 @@ export class Country {
         }
     }
     static async information(player, countryData) {
+        const form = new MessageFormData()
+        form.title({ translate: "cw.scform.information" })
+        form.body({ translate: "cw.scform.informations", with: [`${countryData.name}`, `${countryData.description}`] })
+        form.button1({ translate: "cw.form.redo" })
+        if (hasPermission(player, "information")) {
+            form.button2({ translate: "cw.scform.setting" })
+        }
+        else {
+            form.button2({ translate: "cw.form.cancel" })
+        }
+
+        const res = await form.show(player)
 
 
     }
