@@ -16,7 +16,7 @@ export class Country {
         form.toggle({ translate: "cw.mcform.toggle" }, { defaultValue: false, tooltip: { translate: "cw.mcform.toggleTooltip" } })//平和主義か
         const res = await form.show(player)
         if (res.canceled) return;
-        this.make(player, res.formValues)
+        this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
 
     }
     //constructurはなし
@@ -36,14 +36,14 @@ export class Country {
             tax: 0,//税率[%]
             isPeace: isPeace,
             players: [player.id],
-            playerpermission: { "国王": [player.id] },
-            permissions: { "国王": [] },
+            permissions: { "国王": Data.permissions },
             //同盟国などはあとで
 
         }
         countryDatas.set(id, countryData);
         const playerData = playerDatas.get(player.id);
         playerData.country = id;
+        playerData.permission = "国王";
         playerDatas.set(player.id, playerData);
     }
     static delete(countryData) {
@@ -75,7 +75,13 @@ export class Country {
             this.tax(countryData)
         }
         if (res.selection == 2) {
-            Permission.permission(player, countryData)
+            if (hasPermission(player, "permission")) {
+                Permission.permission(player, countryData)
+            }
+
+            else if (await noPermission(player)) {
+                this.setting(player, countryData)
+            }
         }
         if (res.selection == 3) {
             this.delete(countryData)
@@ -89,9 +95,13 @@ export class Country {
 class Information {
     static async information(player, countryData) {
         const form = new MessageFormData()
-
+        world.sendMessage(`${countryData.name}`)
         form.title({ translate: "cw.scform.information" })
-        form.body({ translate: "cw.scform.informations", with: [`${countryData.name}`, `${countryData.description}`] })
+        form.body({
+            translate: "cw.scform.informations", with: [
+                `${countryData.name}`,
+                `${countryData.description}`]
+        })
         form.button1({ translate: "cw.form.redo" })
         if (hasPermission(player, "information")) {
             form.button2({ translate: "cw.scform.setting" })
@@ -101,7 +111,15 @@ class Information {
         }
 
         const res = await form.show(player)
-        this.edit(player, countryData)
+        if (res.selection == 0) {
+            Country.setting(player, countryData)
+        }
+        if (res.selection == 1) {
+
+            if (hasPermission(player, "information")) {
+                this.edit(player, countryData)
+            }
+        }
 
     }
     static async edit(player, countryData) {
@@ -136,14 +154,27 @@ class Permission {
         }
     }
     static async permissionSet(player, countryData) {
+
+        const players = countryData.players//.filter(playerId => playerId != player.id)
+        const playersname = players.map(playerId => playerDatas.get(playerId).name)
+        if (players.length == 0) {
+            const form = new MessageFormData()
+            form.title({ translate: "cw.scform.permission.set" })
+            form.body({ translate: "cw.scform.permission.set.noplayer" })
+            form.button1({ translate: "cw.form.redo" })
+            form.button2({ translate: "cw.form.cancel" })
+            const res = await form.show(player)
+            if (res.canceled) return;
+            return;
+        }
         const form = new ModalFormData()
-        const playerData = playerDatas.get(player.id)
         form.title({ translate: "cw.scform.permission.set" })
-        form.dropdown({ translate: "cw.form.playerchoiseInCountry", }, countryData.players.filter(playerId => playerId != player.id).map(playerId => playerData.name))
-        form.dropdown({ translate: "cw.scform.permission.choice", }, Object.keys(countryData.permissions))
+
+        form.dropdown({ translate: "cw.form.playerchoiseInCountry" }, playersname)
+        form.dropdown({ translate: "cw.scform.permission.choice" }, Object.keys(countryData.permissions))
         const res = await form.show(player)
         if (res.canceled) return;
-        const playerId = countryData.players.filter(playerId => playerId != player.id)[res.formValues[0]]
+        const playerId = players[res.formValues[0]]
         const permissionName = Object.keys(countryData.permissions)[res.formValues[1]]
         this.setPermission(playerId, permissionName)
 
@@ -157,36 +188,98 @@ class Permission {
         }
         const res = await form.show(player)
         if (res.canceled) return;
-        const permissionData =
-        {
-            name: res.formValues[0],
-            permissions: res.formValues.slice(1)
-        }
-        countryData.permissions.push(permissionData)
+
+        const permissionName = res.formValues[0]
+        const permissionValues = []
+        Data.permissions.forEach((perm, index) => {
+            if (res.formValues[index + 1]) {
+                permissionValues.push(perm)
+            }
+        })
+
+        countryData.permissions[permissionName] = permissionValues
         countryDatas.set(countryData.id, countryData)
     }
     static async permissionEdit(player, countryData) {
-        const form = new ActionFormData()
+        const aform = new ActionFormData()
+        aform.title({ translate: "cw.scform.permission.edit" })
+        for (const data of Object.keys(countryData.permissions)) {
+            aform.button({ text: `${data}` })
+        }
+        const resp = await aform.show(player)
+        if (resp.canceled) return;
+        const permissionName = Object.keys(countryData.permissions)[resp.selection]
+
+        const form = new ModalFormData()
         form.title({ translate: "cw.scform.permission.edit" })
         form.toggle({ translate: "cw.scform.permission.edit.delete" }, { defaultValue: false, tooltip: "cw.scform.permission.edit.delete.tooltip" })
-        form.textField({ translate: "cw.scform.permission.make.name" }, "Press Name", { defaultValue: countryData.permissions[countryData.permissions.length - 1].name })
+        form.textField({ translate: "cw.scform.permission.make.name" }, "Press Name", { defaultValue: permissionName })
         for (const data of Data.permissions) {
-            form.toggle({ translate: `cw.scform.permissions.${data}` }, { defaultValue: countryData.permissions[countryData.permissions.length - 1].permissions.includes(data) })
+            const defaultValue = countryData.permissions[permissionName].includes(data)
+            form.toggle({ translate: `cw.scform.permissions.${data}` }, { defaultValue })
         }
 
         const res = await form.show(player)
         if (res.canceled) return;
+
+        if (res.formValues[0]) {
+            // 削除する場合: この権限を持つ全プレイヤーの権限をクリア
+            for (const playerId of countryData.players) {
+                const pData = playerDatas.get(playerId)
+                if (pData.permission === permissionName) {
+                    pData.permission = ""
+                    playerDatas.set(playerId, pData)
+                }
+            }
+            delete countryData.permissions[permissionName]
+        }
+        else {
+            const newPermissionName = res.formValues[1]
+            const permissionValues = []
+            Data.permissions.forEach((perm, index) => {
+                if (res.formValues[index + 2]) {
+                    permissionValues.push(perm)
+                }
+            })
+
+            // 権限名が変更された場合: この権限を持つ全プレイヤーの権限名を更新
+            if (permissionName !== newPermissionName) {
+                for (const playerId of countryData.players) {
+                    const pData = playerDatas.get(playerId)
+                    if (pData.permission === permissionName) {
+                        pData.permission = newPermissionName
+                        playerDatas.set(playerId, pData)
+                    }
+                }
+                delete countryData.permissions[permissionName]
+            }
+
+            countryData.permissions[newPermissionName] = permissionValues
+        }
+        countryDatas.set(countryData.id, countryData)
     }
     static setPermission(playerId, permissionName) {
         const playerData = playerDatas.get(playerId)
-        const countryData = countryDatas.get(playerData.country)
-        countryData.playerpermission[permissionName].push(playerId)
-        countryDatas.set(playerData.country, countryData)
+        playerData.permission = permissionName
+        playerDatas.set(playerId, playerData)
     }
 
 }
-export function hasPermission(playerId, permissionName) {
-    const playerData = playerDatas.get(playerId)
+export function hasPermission(player, permissionName) {
+    const playerData = playerDatas.get(player.id)
+    if (!playerData.country) return false
     const countryData = countryDatas.get(playerData.country)
-    return countryData.playerpermission[permissionName].includes(playerId)
+    const playerPermission = playerData.permission
+    if (!playerPermission || !countryData.permissions[playerPermission]) return false
+    return countryData.permissions[playerPermission].includes(permissionName)
+}
+export async function noPermission(player) {
+    const form = new MessageFormData()
+    form.title({ translate: "cw.scform.permission" })
+    form.body({ translate: "cw.scform.permission.nopermission" })
+    form.button1({ translate: "cw.form.redo" })
+    form.button2({ translate: "cw.form.cancel" })
+    const res = await form.show(player)
+    if (res.canceled) return;
+    return res.selection == 0
 }
