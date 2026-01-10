@@ -1,0 +1,17 @@
+
+{
+  "format_version": "1.21.10",
+  "minecraft:item": {
+    "description": {
+      "identifier": "cw:toyphone"
+    },
+    "components": {
+      "minecraft:max_stack_size":1,
+      "minecraft:icon": "toyphone",
+      "minecraft:allow_off_hand":true,
+      "minecraft:display_name": {
+        "value": "ZPhone"
+      }
+    }
+  }
+}
