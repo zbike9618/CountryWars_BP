@@ -28,9 +28,9 @@ export class Dypro {
     }
     get(path) {
         const name = this.name;
-
-        return JSON.parse(world.getDynamicProperty(`${name}#${path}`))
-
+        const data = world.getDynamicProperty(`${name}#${path}`);
+        if (data === undefined) return undefined;
+        return JSON.parse(data);
     }
     delete(path) {
         const name = this.name;

@@ -1,12 +1,12 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui"
-import { ChestFormData } from "./chest_shop/chest-ui.js";
-import { Util } from "./util.js";
-import { Dypro } from "./dypro.js";
-import { Data } from "./data.js";
-import { ShortPlayerData } from "./playerData.js";
-import { sendDataForPlayers } from "./sendData.js";
+import { ChestFormData } from "./chest_shop/chest-ui";
+import { Util } from "./util";
+import { Dypro } from "./dypro";
+import { Data } from "./data";
+import { ShortPlayerData } from "./playerData";
+import { sendDataForPlayers } from "./sendData";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class Country {
@@ -55,6 +55,7 @@ export class Country {
             owner: player.id,
             players: [player.id],
             permissions: { "国王": Data.permissions },
+            chunkAmount: 0,
             //同盟国などはあとで
 
         }

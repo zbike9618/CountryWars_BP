@@ -43,7 +43,7 @@ server.system.beforeEvents.startup.subscribe(ev => {
             let player = origin.sourceEntity;
             system.run(() => {  // 1tick後に安全に実行
                 const score = Util.getMoney(player);
-                player.sendMessage(`§a所持金:${config.coinname}${score}`);
+                player.sendMessage(`§a所持金:${score}円`);
             });
         }
     });
