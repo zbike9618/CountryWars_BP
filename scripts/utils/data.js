@@ -14,5 +14,9 @@ export class Data {
         [
             "information",
             "permission",
+            "member_invite",
+            "member_kick",
+            "money_deposit",
+            "money_withdraw",
         ]
 }

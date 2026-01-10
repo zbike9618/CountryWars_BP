@@ -1,4 +1,5 @@
 import { world, system } from "@minecraft/server";
+import { ShortPlayerData } from "./playerData.js";
 
 /**
  * サーバーにいたプレイヤーに権限を渡す

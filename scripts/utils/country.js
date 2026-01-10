@@ -6,6 +6,7 @@ import { Util } from "./util.js";
 import { Dypro } from "./dypro.js";
 import { Data } from "./data.js";
 import { ShortPlayerData } from "./playerData.js";
+import { sendDataForPlayers } from "./sendData.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class Country {
@@ -20,8 +21,13 @@ export class Country {
         form.title({ translate: "cw.mcform.title" })
         form.textField({ translate: "cw.mcform.WriteCountryNameLabel" }, { translate: "cw.mcform.WriteCountryNamePlaceholder" })//国名
         form.toggle({ translate: "cw.mcform.toggle" }, { defaultValue: false, tooltip: { translate: "cw.mcform.toggleTooltip" } })//平和主義か
+
         const res = await form.show(player)
         if (res.canceled) return;
+        if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(res.formValues[0])) {
+            world.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
+            return;
+        }
         this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
 
     }
@@ -91,7 +97,7 @@ export class Country {
                 Member.member(player, countryData)
                 break;
             case 2:
-                this.money(player, countryData)
+                Money.money(player, countryData)
                 break;
             case 3:
                 this.tax(player, countryData)
@@ -129,7 +135,11 @@ class Information {
         form.body({
             translate: "cw.scform.informations", with: [
                 `${countryData.name}`,
-                `${countryData.description}`]
+                `${countryData.description}`,
+                `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+                `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                `${countryData.money}`
+            ]
         })
         form.button1({ translate: "cw.form.redo" })
         if (hasPermission(player, "information")) {
@@ -185,7 +195,7 @@ class Permission {
     static async permissionSet(player, countryData) {
 
         const players = countryData.players.filter(playerId => playerId != player.id && playerId != countryData.owner)
-        const playersname = players.map(playerId => playerDatas.get(playerId).name)
+        const playersname = players.map(playerId => playerDatas.get(playerId)?.name || "Unknown")
         if (players.length == 0) {
             const form = new MessageFormData()
             form.title({ translate: "cw.scform.permission.set" })
@@ -352,7 +362,107 @@ class Member {
         playerDatas.set(playerId, playerData)
         countryData.players.splice(countryData.players.indexOf(playerId), 1)
         countryDatas.set(countryData.id, countryData)
+        player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerDatas.get(playerId).name] })
+        const data = `world.getEntity('${playerId}').sendMessage({ translate: "cw.scform.member.kicked", with: ["${countryData.name}"] })`
+        sendDataForPlayers(data, playerId)
     }
+}
+class Money {
+    static async money(player, countryData) {
+        const form = new ActionFormData()
+        form.title({ translate: "cw.scform.money" })
+        form.body({ translate: "cw.scform.money.title", with: [`${playerDatas.get(player.id).money}`, `${countryData.money}`] })
+        if (hasPermission(player, "money_deposit")) {
+            form.button({ translate: "cw.scform.money.deposit" })
+        }
+        if (hasPermission(player, "money_withdraw")) {
+            form.button({ translate: "cw.scform.money.withdraw" })
+        }
+        const res = await form.show(player)
+        if (res.canceled) return;
+        if (res.selection == 0 && hasPermission(player, "money_deposit")) {
+            this.deposit(player, countryData)
+        }
+        else if ((res.selection == 1 && hasPermission(player, "money_withdraw")) || (res.selection == 0 && !hasPermission(player, "money_deposit"))) {
+            this.withdraw(player, countryData)
+        }
+    }
+    static async deposit(player, countryData) {
+        const playerMoney = playerDatas.get(player.id).money;
+        const form = new ModalFormData()
+        form.title({ translate: "cw.scform.money.deposit" })
+        form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
+        const res = await form.show(player)
+        if (res.canceled) return;
+        const money = Number(res.formValues[0])
+        if (isNaN(money) || money <= 0) return;
+
+        const isEnough = await this.enoughmoney(player, money, "deposit")
+        if (isEnough === true) {
+            const playerData = playerDatas.get(player.id)
+            playerData.money -= money
+            playerDatas.set(player.id, playerData)
+            countryData.money += money
+            countryDatas.set(countryData.id, countryData)
+            player.sendMessage({ translate: "cw.scform.money.deposit.success", with: [`${money}`] })
+        }
+        else if (isEnough === "retry") {
+            this.deposit(player, countryData)
+        }
+    }
+    static async withdraw(player, countryData) {
+        const playerMoney = playerDatas.get(player.id).money;
+        const form = new ModalFormData()
+        form.title({ translate: "cw.scform.money.withdraw" })
+        form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
+        const res = await form.show(player)
+        if (res.canceled) return;
+        const money = Number(res.formValues[0])
+        if (isNaN(money) || money <= 0) return;
+
+        const isEnough = await this.enoughmoney(player, money, "withdraw")
+        if (isEnough === true) {
+            const playerData = playerDatas.get(player.id)
+            playerData.money += money
+            playerDatas.set(player.id, playerData)
+            countryData.money -= money
+            countryDatas.set(countryData.id, countryData)
+            player.sendMessage({ translate: "cw.scform.money.withdraw.success", with: [`${money}`] })
+        }
+        else if (isEnough === "retry") {
+            this.withdraw(player, countryData)
+        }
+    }
+    static async enoughmoney(player, need, type) {
+        let current = 0;
+        let title = "";
+        let body = "";
+
+        if (type == "deposit") {
+            current = playerDatas.get(player.id).money;
+            title = "cw.scform.money.withdraw";
+            body = "cw.scform.money.deposit.noenough"; // Added check for country money
+        }
+        else if (type == "withdraw") {
+            current = countryDatas.get(playerDatas.get(player.id).country).money;
+            title = "cw.scform.money.withdraw";
+            body = "cw.scform.money.withdraw.countrynomoney"; // Added check for country money
+        }
+
+
+        if (current < need) {
+            const form = new MessageFormData()
+            form.title({ translate: title })
+            form.body({ translate: body })
+            form.button1({ translate: "cw.form.redo" })
+            form.button2({ translate: "cw.form.cancel" })
+            const res = await form.show(player)
+            if (res.canceled) return false;
+            return res.selection == 0 ? "retry" : false;
+        }
+        return true;
+    }
+
 }
 export function hasPermission(player, permissionName) {
     const playerData = playerDatas.get(player.id)

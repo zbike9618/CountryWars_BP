@@ -4,7 +4,8 @@ import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/serve
 import { Country } from "../utils/country";
 import { Dypro } from "../utils/dypro";
 import { ShortPlayerData } from "../utils/playerData";
-
+import { Util } from "../utils/util";
+import { sendDataForPlayers } from "../utils/sendData";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 system.beforeEvents.startup.subscribe(ev => {
@@ -74,7 +75,7 @@ async function openmessagebox(player) {
     const messageArray = playerData.get("message") || []
     const totalRequests = (tpaArray.length + tpaRequestArray.length + invitecountryArray.length + messageArray.length)
     const form = new ActionFormData()
-    form.title({ translate: "sw.messagebox.title" })
+    form.title({ translate: "cw.messagebox.title" })
     form.button({ translate: "cw.messagebox.recieve", with: [`${totalRequests}`] })
     form.button({ translate: "cw.messagebox.send" })
     const res = await form.show(player)
@@ -143,8 +144,8 @@ async function recieve(player) {
 }
 
 async function send(player) {
-    const players = world.getAllPlayers()//.filter(p => p != player)
-    const playersname = players.map(player => player.name)
+    const players = Util.getAllPlayerIdsSorted()//.filter(p => p != player.id)
+    const playersname = players.map(player => playerDatas.get(player).name)
     if (players.length == 0) {
         const form = new MessageFormData()
         form.title({ translate: "cw.messagebox.send" })
@@ -160,16 +161,23 @@ async function send(player) {
     }
     const form = new ModalFormData()
     form.title({ translate: "cw.messagebox.send" })
-    form.dropdown({ translate: "cw.form.playerchoice" }, playersname)
+    form.dropdown({ translate: "cw.form.playerchoise" }, playersname)
     form.textField({ translate: "cw.messagebox.send.message" }, "Write Message")
     const res = await form.show(player)
     if (res.canceled) return;
-    const playerId = players[res.formValues[0]].id
-    const message = { player: player.id, message: res.formValues[1] }
-    const playerData = new ShortPlayerData(playerId)
-    const messageArray = playerData.get("message") || []
-    messageArray.push(message)
-    playerData.set("message", messageArray)
+    const playerId = players[res.formValues[0]];
+    const message = { player: player.id, message: res.formValues[1] };
+    const targetName = playerDatas.get(playerId)?.name || "Unknown";
+    player.sendMessage({ translate: "cw.messagebox.send.success", with: [targetName] });
+    const data = `
+        const playerData = new ShortPlayerData("${playerId}");
+        const messageArray = playerData.get("message") || [];
+        messageArray.push(${JSON.stringify(message)});
+        playerData.set("message", messageArray);
+        const target = world.getEntity("${playerId}");
+        if (target) target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
+    `;
+    sendDataForPlayers(data, playerId)
 }
 
 async function readMessage(player, selection, type) {

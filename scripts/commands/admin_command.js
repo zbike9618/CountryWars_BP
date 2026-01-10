@@ -20,12 +20,3 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
 })
-system.afterEvents.scriptEventReceive.subscribe(ev => {
-    if (ev.id == "cw:removemoney") {
-        let args = ev.message.split(" ");
-        if (ev.sourceType == "Entity") {
-            Util.removeMoney(ev.sourceEntity, Number(args[0]));
-            ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lの所持金を§r§a§l${args[0]}§r§a§l削除しました`);
-        }
-    }
-})

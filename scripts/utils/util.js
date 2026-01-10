@@ -4,10 +4,12 @@ import { Dypro } from "./dypro";
 import { Data } from "./data";
 const playerDatas = new Dypro("player");
 export class Util {
-    getAllPlayerIdsSorted() {
-        return playerDatas.idList.sort((a, b) =>
-            Data.wordOrder.findIndex(playerDatas.get(a).name) -
-            Data.wordOrder.findIndex(playerDatas.get(b).name))
+    static getAllPlayerIdsSorted() {
+        return playerDatas.idList.sort((a, b) => {
+            const nameA = playerDatas.get(a)?.name?.[0] || "";
+            const nameB = playerDatas.get(b)?.name?.[0] || "";
+            return Data.wordOrder.indexOf(nameA) - Data.wordOrder.indexOf(nameB);
+        });
     }
     /**
  * アイテムの名前をLangに変換
@@ -21,11 +23,6 @@ export class Util {
     static addMoney(player, int) {
         const playerData = playerDatas.get(player.id);
         playerData.money += int;
-        playerDatas.set(player.id, playerData);
-    }
-    static removeMoney(player, int) {
-        const playerData = playerDatas.get(player.id);
-        playerData.money -= int;
         playerDatas.set(player.id, playerData);
     }
     static getMoney(player) {
