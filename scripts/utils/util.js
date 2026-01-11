@@ -1,6 +1,7 @@
 import * as server from "@minecraft/server";
 const { world, system, ItemStack } = server;
 import "./phone.js";
+import "./kaihuku_kit.js";
 import { Dypro } from "./dypro";
 import { Data } from "./data";
 const playerDatas = new Dypro("player");

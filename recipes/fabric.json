@@ -1,0 +1,28 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:fabric_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "XX"
+        ],
+        "key": {
+            "X": {
+                "item": "minecraft:string"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:string"
+            }
+        ],
+        "result": {
+            "item": "cw:fabric",
+            "count": 2
+        }
+    }
+}

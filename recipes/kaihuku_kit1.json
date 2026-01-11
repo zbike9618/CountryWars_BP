@@ -1,0 +1,39 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:kaihuku_kit1_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "Z##",
+            "#XX",
+            "#YY"
+        ],
+        "key": {
+            "#": {
+                "item": "minecraft:planks"
+            },
+            "X": {
+                "item": "minecraft:iron_ingot"
+            },
+            "Y": {
+                "item": "cw:fabric"
+            },
+            "Z": {
+                "item": "minecraft:redstone"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:planks"
+            }
+        ],
+        "result": {
+            "item": "cw:kaihuku_kit1",
+            "count": 1
+        }
+    }
+}
