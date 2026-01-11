@@ -146,6 +146,7 @@ class Information {
                 `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
                 `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
                 `${countryData.money}`,
+                `${countryData.chunkAmount}`,
                 `${countryData.tax.consumption}`,
                 `${countryData.tax.income}`,
                 `${countryData.tax.country}`,

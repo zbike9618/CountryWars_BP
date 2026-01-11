@@ -7,6 +7,6 @@ export default {
     //チャンク購入の金額
     chunkprice: 5000,
     //一国が保有できる最大チャンク数
-
+    maxchunk: 32,
     //
 };
