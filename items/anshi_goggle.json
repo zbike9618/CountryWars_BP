@@ -1,0 +1,21 @@
+{
+    "format_version": "1.21.60",
+    "minecraft:item": {
+        "description": {
+            "identifier": "cw:anshi_goggle",
+            "menu_category": {
+                "category": "items"
+            }
+        },
+        "components": {
+            "minecraft:icon": "anshi_goggle",
+            "minecraft:max_stack_size": 1,
+            "minecraft:display_name": {
+                "value": "暗視ゴーグル"
+            },
+            "minecraft:wearable": {
+                "slot": "slot.armor.head"
+            }
+        }
+    }
+}
