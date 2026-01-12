@@ -31,7 +31,7 @@ const healArray = [10, 25, 40]
  * @param {*} item 
  */
 async function kaihuku(player, number) {
-    player.playSound("mob.shulker.shoot");
+    player.playSound("mob.shulker.shoot", { volume: 0.1 });
     player.sendMessage(`回復キット <Level ${number}>を使用…`);
     player.runCommand(`clear @s cw:kaihuku_kit${number} 0 1`)
     player.inputPermissions.setPermissionCategory(6, false)

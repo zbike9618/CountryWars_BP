@@ -4,7 +4,7 @@ import { Util } from "../utils/util";
 import { default as config } from "../config/config.js";
 import { JobsConfig, JOB_CONFIG } from "../config/jobs_config.js";
 function sendActionBar(player, rawtexts) {
-    player.onScreenDisplay.setActionBar({ rawtext: rawtexts });
+    player.onScreenDisplay.setActionBar(rawtexts);
 }
 
 
