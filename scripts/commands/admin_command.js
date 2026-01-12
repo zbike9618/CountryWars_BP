@@ -20,3 +20,17 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
 })
+// タグリセット
+system.afterEvents.scriptEventReceive.subscribe(ev => {
+    if (ev.id == "cw:resetjob") {
+        if (ev.sourceType == "Entity") {
+            ev.sourceEntity.removeTag("job:0");
+            ev.sourceEntity.removeTag("job:1");
+            ev.sourceEntity.removeTag("job:2");
+            ev.sourceEntity.removeTag("job:3");
+            ev.sourceEntity.removeTag("job:4");
+            ev.sourceEntity.removeTag("job:5");
+            ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lのタグを§r§a§lリセットしました`);
+        }
+    }
+})
