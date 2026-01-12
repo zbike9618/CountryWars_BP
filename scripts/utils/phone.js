@@ -57,6 +57,14 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+
+    form.setButton(5, {
+        iconPath: "textures/items/diamond",
+        name: "cw.phone.set.home",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.show(player).then((responce) => {
         switch (responce.selection) {
             case 0:
@@ -74,6 +82,10 @@ function show_form(player) {
                 break;
             case 4:
                 player.runCommand("jobs");
+                break;
+            case 5:
+                player.runCommand("sethome");
+                break;
             default:
                 break;
         }
