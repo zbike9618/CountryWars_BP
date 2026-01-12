@@ -8,10 +8,27 @@ const playerDatas = new Dypro("player");
 export class Util {
     static getAllPlayerIdsSorted() {
         return playerDatas.idList.sort((a, b) => {
-            const nameA = playerDatas.get(a)?.name?.[0] || "";
-            const nameB = playerDatas.get(b)?.name?.[0] || "";
-            return Data.wordOrder.indexOf(nameA) - Data.wordOrder.indexOf(nameB);
+            const nameA = playerDatas.get(a)?.name || "";
+            const nameB = playerDatas.get(b)?.name || "";
+            return this.compareStrings(nameA, nameB);
         });
+    }
+    static compareStrings(a, b) {
+        const order = Data.wordOrder;
+        const minLen = Math.min(a.length, b.length);
+        for (let i = 0; i < minLen; i++) {
+            const charA = a[i];
+            const charB = b[i];
+            const indexA = order.indexOf(charA);
+            const indexB = order.indexOf(charB);
+            if (indexA !== indexB) {
+                // wordOrderにない文字は後ろに回す
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            }
+        }
+        return a.length - b.length;
     }
     /**
  * アイテムの名前をLangに変換

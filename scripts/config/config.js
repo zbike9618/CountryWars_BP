@@ -8,5 +8,6 @@ export default {
     chunkprice: 5000,
     //一国が保有できる最大チャンク数
     maxchunk: 32,
-    //
+    //設定できるhomeの数
+    maxhome: 3,
 };
