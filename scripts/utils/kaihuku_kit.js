@@ -56,6 +56,9 @@ async function kaihuku(entity, number2){
         player.sendMessage("回復キット <Level 3>を使用…");
         player.runCommand("clear @s cw:kaihuku_kit3 0 1")
         player.runCommand("inputpermission set @s jump disabled")
+        player.addEffect("slowness", 60, {
+        amplifier :255, showParticles: false
+        });
         await system.waitTicks(60)
         heal(entity,40)
         player.runCommand("inputpermission set @s jump enabled")
