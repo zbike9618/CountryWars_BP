@@ -3,62 +3,62 @@ import { ActionFormData } from "@minecraft/server-ui";
 
 // コンフィグ: 収納可能なアイテムリスト
 const ALLOWED_ITEMS = [
-{ id: "minecraft:dirt", name: "土" },
-{ id: "minecraft:stone", name: "石" },
-{ id: "minecraft:cobblestone", name: "丸石" },
-{ id: "minecraft:andesite", name: "安山岩" },
-{ id: "minecraft:diorite", name: "閃緑岩" },
-{ id: "minecraft:granite", name: "花崗岩" },
-{ id: "minecraft:gravel", name: "砂利" },
-{ id: "minecraft:sand", name: "砂" },
-{ id: "minecraft:snow_block", name: "雪ブロック" },
-{ id: "minecraft:glass", name: "ガラス" },
-{ id: "minecraft:obsidian", name: "黒曜石" },
+{ id: "minecraft:dirt", name: "cw.item.dirt" },
+{ id: "minecraft:stone", name: "cw.item.stone" },
+{ id: "minecraft:cobblestone", name: "cw.item.cobblestone" },
+{ id: "minecraft:andesite", name: "cw.item.andesite" },
+{ id: "minecraft:diorite", name: "cw.item.diorite" },
+{ id: "minecraft:granite", name: "cw.item.granite" },
+{ id: "minecraft:gravel", name: "cw.item.gravel" },
+{ id: "minecraft:sand", name: "cw.item.sand" },
+{ id: "minecraft:snow_block", name: "cw.item.snow" },
+{ id: "minecraft:glass", name: "cw.item.glass" },
+{ id: "minecraft:obsidian", name: "cw.item.obsidian" },
 
 // ── 木材・原木系 ──
-{ id: "minecraft:oak_log", name: "オークの原木" },
-{ id: "minecraft:oak_planks", name: "オークの木材" },
+{ id: "minecraft:oak_log", name: "cw.item.oak_log" },
+{ id: "minecraft:oak_planks", name: "cw.item.oak_planks" },
 
-{ id: "minecraft:birch_log", name: "白樺の原木" },
-{ id: "minecraft:birch_planks", name: "白樺の木材" },
+{ id: "minecraft:birch_log", name: "cw.item.birch_log" },
+{ id: "minecraft:birch_planks", name: "cw.item.birch_planks" },
 
-{ id: "minecraft:spruce_log", name: "トウヒの原木" },
-{ id: "minecraft:spruce_planks", name: "トウヒの木材" },
+{ id: "minecraft:spruce_log", name: "cw.item.spruce_log" },
+{ id: "minecraft:spruce_planks", name: "cw.item.spruce_planks" },
 
-{ id: "minecraft:jungle_log", name: "ジャングルの原木" },
-{ id: "minecraft:jungle_planks", name: "ジャングルの木材" },
+{ id: "minecraft:jungle_log", name: "cw.item.jungle_log" },
+{ id: "minecraft:jungle_planks", name: "cw.item.jungle_planks" },
 
-{ id: "minecraft:acacia_log", name: "アカシアの原木" },
-{ id: "minecraft:acacia_planks", name: "アカシアの木材" },
+{ id: "minecraft:acacia_log", name: "cw.item.acacia_log" },
+{ id: "minecraft:acacia_planks", name: "cw.item.acacia_planks" },
 
-{ id: "minecraft:dark_oak_log", name: "ダークオークの原木" },
-{ id: "minecraft:dark_oak_planks", name: "ダークオークの木材" },
+{ id: "minecraft:dark_oak_log", name: "cw.item.dark_oak_log" },
+{ id: "minecraft:dark_oak_planks", name: "cw.item.dark_oak_planks" },
 
-{ id: "minecraft:cherry_log", name: "桜の原木" },
-{ id: "minecraft:cherry_planks", name: "桜の木材" },
+{ id: "minecraft:cherry_log", name: "cw.item.cherry_log" },
+{ id: "minecraft:cherry_planks", name: "cw.item.cherry_planks" },
 
-{ id: "minecraft:mangrove_log", name: "マングローブの原木" },
-{ id: "minecraft:mangrove_planks", name: "マングローブの木材" },
+{ id: "minecraft:mangrove_log", name: "cw.item.mangrove_log" },
+{ id: "minecraft:mangrove_planks", name: "cw.item.mangrove_planks" },
 
 // ── 鉱石・素材 ──
-{ id: "minecraft:coal", name: "石炭" },
-{ id: "minecraft:raw_iron", name: "鉄の原石" },
-{ id: "minecraft:iron_ingot", name: "鉄インゴット" },
-{ id: "minecraft:raw_gold", name: "金の原石" },
-{ id: "minecraft:gold_ingot", name: "金インゴット" },
-{ id: "minecraft:raw_copper", name: "銅の原石" },
-{ id: "minecraft:copper_ingot", name: "銅インゴット" },
-{ id: "minecraft:redstone", name: "レッドストーン" },
-{ id: "minecraft:diamond", name: "ダイヤモンド" },
-{ id: "minecraft:emerald", name: "エメラルド" },
+{ id: "minecraft:coal", name: "cw.item.coal" },
+{ id: "minecraft:raw_iron", name: "cw.item.raw_iron" },
+{ id: "minecraft:iron_ingot", name: "cw.item.iron_ingot" },
+{ id: "minecraft:raw_gold", name: "cw.item.raw_gold" },
+{ id: "minecraft:gold_ingot", name: "cw.item.gold_ingot" },
+{ id: "minecraft:raw_copper", name: "cw.item.raw_copper" },
+{ id: "minecraft:copper_ingot", name: "cw.item.copper_ingot" },
+{ id: "minecraft:redstone", name: "cw.item.redstone" },
+{ id: "minecraft:diamond", name: "cw.item.diamond" },
+{ id: "minecraft:emerald", name: "cw.item.emerald" },
 
 // ── 異世界ブロック ──
-{ id: "minecraft:netherrack", name: "ネザーラック" },
-{ id: "minecraft:end_stone", name: "エンドストーン" },
+{ id: "minecraft:netherrack", name: "cw.item.netherrack" },
+{ id: "minecraft:end_stone", name: "cw.item.end_stone" },
 
 // ── 農業・消耗品 ──
-{ id: "minecraft:wheat", name: "小麦" },
-{ id: "minecraft:firework_rocket", name: "ロケット花火" }
+{ id: "minecraft:wheat", name: "cw.item.wheat" },
+{ id: "minecraft:firework_rocket", name: "cw.item.firework_rocket" }
 
 // ここに追加可能
 ];
