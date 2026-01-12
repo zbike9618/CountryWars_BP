@@ -5,8 +5,8 @@ system.runInterval(() => {
         const comp = player.getComponent("minecraft:equippable")
         const item = comp.getEquipmentSlot("Head")
         if (item.typeId == "cw:anshi_goggle") {
-            player.addEffect("minecraft:night_vision", 40, {
-                amplifier: 0,
+            player.addEffect("minecraft:night_vision", 221, {
+                amplifier: 1,
                 showParticles: false
             })
         }

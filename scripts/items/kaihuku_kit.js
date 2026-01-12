@@ -36,11 +36,10 @@ async function kaihuku(player, number) {
     player.runCommand(`clear @s cw:kaihuku_kit${number} 0 1`)
     player.inputPermissions.setPermissionCategory(6, false)
     player.addEffect("slowness", 20 * number, {
-        amplifier: 10, showParticles: false
+        amplifier: 255, showParticles: false
     });
     await system.waitTicks(20 * number)
     player.playSound("random.levelup");
-    Util.expandParticle(player.dimension, player.location, 5 * number, 1 + number, "minecraft:heart_particle");
     heal(player, healArray[number - 1])
     player.inputPermissions.setPermissionCategory(6, true)
 
