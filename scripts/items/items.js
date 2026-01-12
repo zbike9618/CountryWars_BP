@@ -7,7 +7,7 @@ world.afterEvents.worldLoad.subscribe((event) => {
         for (const player of world.getPlayers()) {
             const comp = player.getComponent("minecraft:equippable")
             if (!comp) return;
-            const item = comp.getEquipmentSlot("Head")
+            const item = comp.getEquipment("Head")
             if (!item) return;
             if (item.typeId == "cw:anshi_goggle") {
                 player.addEffect("minecraft:night_vision", 120, {
