@@ -10,7 +10,7 @@
       "minecraft:icon": "ingot",
       "minecraft:allow_off_hand":false,
       "minecraft:display_name": {
-        "value": "黒金属"
+        "value": "鋼"
       }
     }
   }
