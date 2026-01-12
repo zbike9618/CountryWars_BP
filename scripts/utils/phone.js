@@ -70,7 +70,7 @@ function show_form(player) {
                 break;
             case 3:
                 player.runCommand("tp @s ~~10~");
-                player.sendMessage({ translate: "went.lobby" })
+                player.sendMessage({ translate: "cw.phone.went.lobby" })
                 break;
             case 4:
                 player.runCommand("jobs");
