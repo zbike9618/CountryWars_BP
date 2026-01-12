@@ -1,14 +1,18 @@
+export class JobsConfig {
+    static JOB_LIMIT = 4; // 最大職業数
+    static jobList = ["miner", "hunter", "lumberjack", "farmer", "netherdigger", "builder"]
+}
+
 // 職業ごとの設定ファイル
 
 
-export const JOB_LIMIT = 4; // 最大職業数
+
 
 // 職業ごとの報酬設定
 // 各職業ごとに、対象ブロックやモンスターと報酬額を設定
 
-export const JOB_CONFIG = {
-    miner: {
-        name: "鉱夫",
+export class JOB_CONFIG {
+    static miner = {
         blockRewards: {
             "minecraft:stone": 5,
             "minecraft:coal_ore": 15,
@@ -22,9 +26,8 @@ export const JOB_CONFIG = {
             "minecraft:deepslate_diamond_ore": 50,
             "minecraft:deepslate_emerald_ore": 50
         }
-    },
-    hunter: {
-        name: "狩人",
+    };
+    static hunter = {
         mobRewards: {
             "minecraft:zombie": 20,
             "minecraft:skeleton": 20,
@@ -34,9 +37,8 @@ export const JOB_CONFIG = {
             "minecraft:witch": 40,
             "minecraft:slime": 10
         }
-    },
-    lumberjack: {
-        name: "木こり",
+    };
+    static lumberjack = {
         blockRewards: {
             "minecraft:oak_log": 10,
             "minecraft:birch_log": 10,
@@ -47,40 +49,25 @@ export const JOB_CONFIG = {
             "minecraft:mangrove_log": 15,
             "minecraft:cherry_log": 15
         }
-    }
-    ,
-    farmer: {
-        name: "農夫",
+    };
+    static farmer = {
         blockRewards: {
             "minecraft:wheat": 5,
             "minecraft:carrots": 5,
             "minecraft:potatoes": 5,
             "minecraft:beetroot": 5,
             "minecraft:farmland": 1
-        },
-        mobRewards: {
-            "minecraft:cow": 10,
-            "minecraft:pig": 8,
-            "minecraft:sheep": 8,
-            "minecraft:chicken": 6
         }
-    },
-    netherdigger: {
-        name: "ネザー採掘者",
+    };
+    static netherdigger = {
         blockRewards: {
             "minecraft:netherrack": 3,
             "minecraft:basalt": 4,
             "minecraft:blackstone": 8,
             "minecraft:ancient_debris": 200
-        },
-        mobRewards: {
-            "minecraft:ghast": 80,
-            "minecraft:zombified_piglin": 10,
-            "minecraft:blaze": 60
         }
-    },
-    builder: {
-        name: "建築者",
+    };
+    static builder = {
         blockRewards: {
             // 建築で使うブロックを壊す/設置で報酬を変える運用も可能
             "minecraft:stone": 1,

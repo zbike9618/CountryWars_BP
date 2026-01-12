@@ -13,42 +13,52 @@ world.afterEvents.itemUse.subscribe((event) => {
     }
 });
 
-function show_form(player){
-const form = new ChestFormData()
-const data = playerDatas.get(player.id);
+function show_form(player) {
+    const form = new ChestFormData("small")
+    const data = playerDatas.get(player.id);
     const money = data.money ?? 0;
     form.setTitle("ZPhone"),
-    form.setButton(0, { iconPath: "textures/items/gold_ingot", 
-    name: { translate: "check.money" }, 
-    stackAmount: 1, 
-    lore: [`$${money}`], 
-    isGlint: true, editedName: true }),
+        form.setButton(0, {
+            iconPath: "textures/items/gold_ingot",
+            name: "cw.phone.check.money",
+            stackAmount: 1,
+            lore: [`$${money}`],
+            isGlint: true, editedName: true
+        }),
 
-    form.setButton(1, { iconPath: "textures/items/ender_pearl", 
-    name: { translate: "player.teleport" }, 
-    stackAmount: 1, 
-    lore: ["<<Click here>>"], 
-    isGlint: true, editedName: true })
-    
-    form.setButton(2, { iconPath: "textures/items/later", 
-    name: { translate: "message.system" }, 
-    stackAmount: 1, 
-    lore: ["<<Click here>>"], 
-    isGlint: true, editedName: true })
+        form.setButton(1, {
+            iconPath: "textures/items/ender_pearl",
+            name: "cw.phone.player.teleport",
+            stackAmount: 1,
+            lore: ["<<Click here>>"],
+            isGlint: true, editedName: true
+        })
 
-    form.setButton(3, { iconPath: "textures/items/nether_star", 
-    name: { translate: "goto.lobby" }, 
-    stackAmount: 1, 
-    lore: ["<<Click here>>"], 
-    isGlint: true, editedName: true })
+    form.setButton(2, {
+        iconPath: "textures/items/later",
+        name: "cw.phone.message.system",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
 
-    form.setButton(4, { iconPath: "textures/items/wood_axe", 
-    name: { translate: "select.job" }, 
-    stackAmount: 1, 
-    lore: ["<<Click here>>"], 
-    isGlint: true, editedName: true })
+    form.setButton(3, {
+        iconPath: "textures/items/nether_star",
+        name: "cw.phone.goto.lobby",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+
+    form.setButton(4, {
+        iconPath: "textures/items/wood_axe",
+        name: "cw.phone.select.job",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.show(player).then((responce) => {
-        switch(responce.selection){
+        switch (responce.selection) {
             case 0:
                 player.runCommand("money");
                 break;
@@ -66,6 +76,6 @@ const data = playerDatas.get(player.id);
                 player.runCommand("jobs");
             default:
                 break;
-            }
+        }
     })
 };
