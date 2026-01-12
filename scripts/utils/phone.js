@@ -22,7 +22,7 @@ function show_form(player) {
             iconPath: "textures/items/gold_ingot",
             name: "cw.phone.check.money",
             stackAmount: 1,
-            lore: [`$${money}`],
+            lore: [`¥${money}`],
             isGlint: true, editedName: true
         }),
 
@@ -65,6 +65,14 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+
+    form.setButton(6, {
+        iconPath: "textures/items/diamond",
+        name: "cw.phone.goto.home",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.show(player).then((responce) => {
         switch (responce.selection) {
             case 0:
@@ -85,6 +93,9 @@ function show_form(player) {
                 break;
             case 5:
                 player.runCommand("sethome");
+                break;
+            case 6:
+                player.runCommand("home");
                 break;
             default:
                 break;
