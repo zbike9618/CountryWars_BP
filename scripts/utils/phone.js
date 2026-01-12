@@ -94,6 +94,9 @@ function show_form(player) {
             case 5:
                 player.runCommand("sethome");
                 break;
+            case 6:
+                player.runCommand("home");
+                break;
             default:
                 break;
         }
