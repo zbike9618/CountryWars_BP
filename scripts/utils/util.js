@@ -1,7 +1,7 @@
 import * as server from "@minecraft/server";
 const { world, system, ItemStack } = server;
 import "./phone.js";
-import "./kaihuku_kit.js";
+import "../items/kaihuku_kit.js";
 import { Dypro } from "./dypro";
 import { Data } from "./data";
 const playerDatas = new Dypro("player");
@@ -51,5 +51,29 @@ export class Util {
         const playerData = playerDatas.get(player.id);
         playerData.money = int;
         playerDatas.set(player.id, playerData);
+    }
+    /**
+    * パーティクルを周囲に出す
+    * @param {server.DimensionType} dim dimension名
+    * @param {Vecotr3} center 中央 {x,y,z}
+    * @param {Number} count 出す数
+    * @param {Number} range 範囲正方形
+    * @param {String} par particle名
+    */
+    static expandParticle(dim, center, count, range, par) {
+
+        for (let i = 0; i < count; i++) {
+            const offsetX = (Math.random() * 2 - 1) * range;
+            const offsetY = (Math.random() * 2 - 1) * range;
+            const offsetZ = (Math.random() * 2 - 1) * range;
+
+            const pos = {
+                x: center.x + offsetX,
+                y: center.y + offsetY,
+                z: center.z + offsetZ,
+            };
+
+            dim.spawnParticle(par, pos);
+        }
     }
 }
