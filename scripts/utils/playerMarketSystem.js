@@ -13,9 +13,12 @@ class playerMarketSystem {
      */
 
     static sell(player, itemData) {
-        const page = 0
-        const get = marketDatas.get(`${page}`);//仮として0
-        const marketData = JSON.parse(get) || [];
+        let page = 0
+        while (JSON.parse(marketDatas.get(`${page}`) || []).length) {
+            page++;
+        }
+
+        const marketData = marketDatas.get(`${page}`) || [];
         marketData.push({
             player: player.id,
             itemStack: itemData.itemStack,
@@ -40,8 +43,24 @@ class playerMarketSystem {
         delete marketData[slot];
         marketDatas.set(`${page}`, JSON.stringify(marketData));
     }
-    static show(player) {
-        const form = new ChestFormData("small")
-
+    static show(player, page = 0) {
+        const form = new ChestFormData()
+        form.title({ translate: "cw.playermarket.title" })
+        form.setButton(5, {
+            iconPath: "texture/ui/arrow_dark_right_stretch",
+            name: "Next", lore: "<Click here>",
+            editedName: true
+        })
+        const marketData = JSON.parse(get) || [];
+        for (let i = 0; i < marketData.length; i++) {
+            const itemData = marketData[i];
+            form.setButton(i, {
+                iconPath: itemData.itemStack.typeId,
+                name: itemData.itemStack.typeId,
+                lore: `${itemData.description}\n§e§l${itemData.price}§r`,
+                editedName: true
+            })
+        }
+        form.show(player)
     }
 }
