@@ -3,7 +3,6 @@ import { ActionFormData } from "@minecraft/server-ui";
 
 // コンフィグ: 収納可能なアイテムリスト
 const ALLOWED_ITEMS = [
-// ── 基本ブロック ──
 { id: "minecraft:dirt", name: "土" },
 { id: "minecraft:stone", name: "石" },
 { id: "minecraft:cobblestone", name: "丸石" },
@@ -83,7 +82,7 @@ if (storedData.count === 0) {
 // 収納アイテムが0の時: アイテム選択UI表示
 showItemSelectionUI(player, itemStack);
 } else {
-// 収納アイテムがある時: 全て出す
+// 収納アイテムがある時: 全て取り出す
 withdrawAllItems(player, itemStack, storedData);
 }
 } else {
@@ -96,23 +95,31 @@ storeAllItems(player, itemStack, storedData);
 }
 });
 
-// ブロックを右クリック(ブロックへのインタラクション)
-world.afterEvents.playerInteractWithBlock.subscribe((event) => {
+// 左クリックイベント
+world.afterEvents.playerSwingStart.subscribe((event) => {
 const player = event.player;
-const itemStack = event.itemStack;
+const itemStack = event.heldItemStack;
 
+// アイテムを持っていないか、mega_itemでない場合はスキップ
 if (!itemStack || itemStack.typeId !== "cw:mega_item") return;
 
-const storedData = getStoredData(itemStack);
+// 実際に手持ちにあるか確認(ドロップ時の誤動作を防ぐ)
+const equippable = player.getComponent(EntityComponentTypes.Equippable);
+if (!equippable) return;
+
+const mainhandItem = equippable.getEquipment(EquipmentSlot.Mainhand);
+if (!mainhandItem || mainhandItem.typeId !== "cw:mega_item") return;
+
+const storedData = getStoredData(mainhandItem);
 const isSneaking = player.isSneaking;
 
 if (storedData.count > 0) {
 if (isSneaking) {
-// Shift + ブロック右クリック: 1個だけ出す
-withdrawSingleItem(player, itemStack, storedData);
+// Shift + 左クリック: 1個だけ出す
+withdrawSingleItem(player, mainhandItem, storedData);
 } else {
-// ブロック右クリック: 64個出す
-withdrawItems(player, itemStack, storedData);
+// 左クリック: 64個出す
+withdrawItems(player, mainhandItem, storedData);
 }
 }
 });
@@ -147,7 +154,7 @@ updateMegaItem(player, itemStack, {
   count: 0
 });
 
-player.sendMessage(`§aセレクトアイテムを ${selectedItem.name} §aに設定しました`);
+player.sendMessage(`§aセレクトアイテムを §e${selectedItem.name} §aに設定しました`);
 
 
 } catch (error) {
@@ -363,11 +370,11 @@ const loreLines = [];
 
 if (storedData.selectedItem) {
 loreLines.push(`§6収納アイテム: ${storedData.selectedName}`);
-loreLines.push(`§6収納数: §e${storedData.count}個 §7/ ${MAX_STACKS * STACK_SIZE}個`);
+loreLines.push(`§6収納数: ${storedData.count}個 §7/ ${MAX_STACKS * STACK_SIZE}個`);
 loreLines.push(`§7右クリック: 全て収納`);
 loreLines.push(`§7Shift+右クリック: 全て取り出す`);
-loreLines.push(`§7ブロック右クリック: 64個取り出す`);
-loreLines.push(`§7Shift+ブロック右クリック: 1個取り出す`);
+loreLines.push(`§7左クリック: 64個取り出す`);
+loreLines.push(`§7Shift+左クリック: 1個取り出す`);
 } else {
 loreLines.push(`§7Shift+右クリックでアイテムを選択`);
 }
