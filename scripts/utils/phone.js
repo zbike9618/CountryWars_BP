@@ -22,7 +22,7 @@ function show_form(player) {
             iconPath: "textures/items/gold_ingot",
             name: "cw.phone.check.money",
             stackAmount: 1,
-            lore: [`$${money}`],
+            lore: [`¥${money}`],
             isGlint: true, editedName: true
         }),
 
