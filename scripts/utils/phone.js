@@ -65,6 +65,14 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+
+    form.setButton(6, {
+        iconPath: "textures/items/diamond",
+        name: "cw.phone.goto.home",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.show(player).then((responce) => {
         switch (responce.selection) {
             case 0:
