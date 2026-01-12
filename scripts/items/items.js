@@ -10,7 +10,7 @@ world.afterEvents.worldLoad.subscribe((event) => {
             const item = comp.getEquipment("Head")
             if (!item) return;
             if (item.typeId == "cw:anshi_goggle") {
-                player.addEffect("minecraft:night_vision", 120, {
+                player.addEffect("minecraft:night_vision", 240, {
                     amplifier: 0,
                     showParticles: false
                 })
