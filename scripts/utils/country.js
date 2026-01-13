@@ -74,6 +74,15 @@ export class Country {
             playerData.permission = "";
             playerDatas.set(playerId, playerData);
         }
+        const chunk = world.getDynamicProperty("chunk")
+        //chunkも消す
+        if (chunk) {
+            const chunkObj = JSON.parse(chunk);
+            for (const key in chunkObj) {
+                if (chunkObj[key] === countryData.id) delete chunkObj[key];
+            }
+            world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
+        }
 
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })

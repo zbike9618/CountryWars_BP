@@ -1,6 +1,6 @@
 import { world, system } from "@minecraft/server";
 import { ShortPlayerData } from "./playerData.js";
-
+import { Util } from "./util.js";
 /**
  * サーバーにいたプレイヤーに権限を渡す
  * @param {*} dataM 実行したいコード

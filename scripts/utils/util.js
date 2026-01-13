@@ -78,4 +78,11 @@ export class Util {
             dim.spawnParticle(par, pos);
         }
     }
+    static distanceTo(pos, otherPos) {
+        const dx = pos.x - otherPos.x;
+        const dy = pos.y - otherPos.y;
+        const dz = pos.z - otherPos.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return distance
+    }
 }

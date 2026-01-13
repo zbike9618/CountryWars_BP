@@ -1,6 +1,12 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
-import { ActionFormData } from "@minecraft/server-ui";
+import { ActionFormData, MessageFormData, ModalFormData } from "@minecraft/server-ui";
+import { playerMarketSystem } from "../utils/playerMarketSystem.js";
+import { Dypro } from "../utils/dypro.js";
+import { Util } from "../utils/util.js";
+import { itemIdToPath } from "../config/texture_config.js";
+const marketDatas = new Dypro("playermarket");
+const playerDatas = new Dypro("player");
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -63,11 +69,133 @@ async function showPlayerMarket(player) {
     form.title({ translate: "cw.playermarket.title" })
     form.button({ translate: "cw.playermarket.see" })
     form.button({ translate: "cw.playermarket.sell" })
-    form.button({ translate: "cw.playermarket.return" })
+    form.button({ translate: "cw.playermarket.edit" })
     const res = await form.show(player)
     if (res.canceled) return;
     if (res.selection === 0) {
-
+        const loc = await playerMarketSystem.show(player)
+        if (loc == "none") return;
+        buyForm(player, loc)
     }
+    if (res.selection == 1) {
+        {
+            sellForm(player)
+            playerMarketSystem.sell(player, { itemStack: new server.ItemStack("minecraft:diamond"), price: 10, description: "test" })
+        }
+    }
+
+}
+async function buyForm(player, { slot, page }) {
+    const data = marketDatas.get(`${page}`)[slot];
+    const form = new MessageFormData()
+    const playerData = playerDatas.get(player.id)
+    form.title({ translate: "cw.playermarket.buy" })
+    form.body({ rawtext: [{ translate: "cw.playermarket.buy.body" }, { translate: Util.langChangeItemName(data.itemId) }, { translate: "cw.playermarket.buy.body2", with: [`${playerData.money}`, `${data.price}`, `${data.description}`, `${playerDatas.get(data.player)?.name}`] }] })
+    form.button1({ translate: "cw.form.buy" })
+    form.button2({ translate: "cw.form.cancel" })
+    const res = await form.show(player)
+    if (res.canceled) return;
+    if (res.selection === 0) {
+        player.sendMessage({
+            rawtext: [
+                { translate: Util.langChangeItemName(data.itemId) },
+                { translate: "cw.playermarket.buy.success", with: [`${data.price}`] }
+            ]
+        })
+        playerMarketSystem.buy(player, { slot, page })
+    }
+    if (res.selection === 1) {
+        const loc = await playerMarketSystem.show(player)
+        buyForm(player, loc)
+    }
+
+}
+/**
+ * @param {server.Player} player 
+ */
+async function sellForm(player) {
+    const aform = new ActionFormData()
+    aform.title({ translate: "cw.playermarket.sell" })
+    const comp = player.getComponent("minecraft:inventory");
+    const inv = comp.container;
+    const size = inv.size;
+    const items = [];
+    for (let i = 0; i < size; i++) {
+        const item = inv.getItem(i)
+        if (!item) continue;
+        if (items.find(i => i.typeId === item.typeId)) continue;
+        items.push(item)
+    }
+    for (const item of items) {
+        aform.button({ translate: Util.langChangeItemName(item.typeId) }, itemIdToPath[item.typeId])
+    }
+    const resItem = await aform.show(player)
+    if (resItem.canceled) return;
+    const item = items[resItem.selection]
+    let amount = 0;
+    for (let i = 0; i < size; i++) {
+        const item = inv.getItem(i)
+        if (!item) continue;
+        if (item.typeId !== items[resItem.selection].typeId) continue;
+        amount += item.amount;
+    }
+    sellFormS(player, item, amount)
+
+}
+/**
+ * @param {server.Player} player 
+ * @param {server.ItemStack} item 
+ * @param {number} maxamount 
+ */
+async function sellFormS(player, item, maxamount) {
+    const form = new ModalFormData()
+    form.title({ translate: "cw.playermarket.sell" })
+    form.textField({ translate: "cw.playermarket.sell.price" }, "Press Number")
+    form.slider({ translate: "cw.playermarket.sell.amount" }, 1, maxamount)
+    const res = await form.show(player)
+    if (res.canceled) return;
+    if (!Number.isInteger(Number(res.formValues[0])) || Number < 0) {
+        const mform = new MessageFormData()
+        mform.title({ translate: "cw.playermarket.sell" })
+        mform.body({ translate: "cw.playermarket.sell.priceerror" })
+        mform.button1({ translate: "cw.form.redo" })
+        mform.button2({ translate: "cw.form.cancel" })
+        const res = await mform.show(player)
+        if (res.canceled) return;
+        if (res.selection === 0) {
+            sellFormS(player, item, amount)
+        }
+        return;
+    }
+    const amount = res.formValues[1]
+    playerMarketSystem.sell(player, { itemId: item.typeId, amount: res.formValues[1], price: Number(res.formValues[0]), description: "test" })
+    const comp = player.getComponent("minecraft:inventory");
+    const inv = comp.container;
+    for (let i = 0; i < inv.size; i++) {
+        const newItem = inv.getItem(i)
+        if (!newItem) continue;
+        if (newItem.typeId !== item.typeId) continue;
+        inv.setItem(i)
+    }
+    player.sendMessage({
+        rawtext: [
+            { translate: `${Util.langChangeItemName(item.typeId)}` },
+            { translate: "cw.playermarket.sell.success", with: [`${amount}`] }
+        ]
+    })
+    player.sendMessage({
+        rawtext: [
+            { translate: "cw.playermarket.selled.success1" },
+            { translate: `${Util.langChangeItemName(item.typeId)}` },
+            { translate: "cw.playermarket.selled.success2", with: [`${amount}`] }
+        ]
+    })
+    const amountC = maxamount - amount;
+    if (amountC == 0) return;
+    const count = Math.floor(amountC / 64);
+    for (let i = 0; i < count; i++) {
+        inv.addItem(new server.ItemStack(`${item.typeId}`, 64))
+    }
+    inv.addItem(new server.ItemStack(`${item.typeId}`, amountC - (count * 64)))
 
 }
