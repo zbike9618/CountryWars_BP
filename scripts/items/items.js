@@ -1,4 +1,4 @@
-import { world, system } from "@minecraft/server";
+import { world, system, WorldAfterEvents } from "@minecraft/server";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
@@ -19,3 +19,11 @@ world.afterEvents.worldLoad.subscribe((event) => {
 
     }, 20)
 });
+
+world.afterEvents.itemUse.subscribe((event => {
+    const player = event.source;
+    const itemId = event.itemStack.Id;
+    if(itemId === "cw:magnet"){
+    }
+}
+))
