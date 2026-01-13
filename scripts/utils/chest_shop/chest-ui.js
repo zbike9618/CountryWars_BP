@@ -35,12 +35,17 @@ export class ChestFormData {
      */
     setTitle(title) {
         try {
-            if (typeof title == 'string') {
-                this.#formData.title({ rawtext: [{ text: this.#type }, { translate: title }] });
+            let titleRaw = [];
+            if (typeof title === 'string') {
+                titleRaw = [{ translate: title }];
+            } else if (title && typeof title === 'object' && title.rawtext) {
+                titleRaw = title.rawtext;
+            } else if (Array.isArray(title)) {
+                titleRaw = title;
             } else {
-
-                this.#formData.title({ rawtext: [{ text: this.#type }].concat(title) });
-            };
+                titleRaw = [title];
+            }
+            this.#formData.title({ rawtext: [{ text: this.#type }, ...titleRaw] });
             return this;
         } catch (e) {
             console.error(e, e.stack);
@@ -66,15 +71,30 @@ export class ChestFormData {
                 ]
             };
 
-            typeof item.name == 'string' ? text.rawtext.push({ translate: `${item.name}` }, { text: `§r` }) : text.rawtext.push(...item.name);
+            if (typeof item.name === 'string') {
+                text.rawtext.push({ translate: `${item.name}` }, { text: `§r` });
+            } else if (item.name && typeof item.name === 'object' && item.name.rawtext) {
+                text.rawtext.push(...item.name.rawtext);
+            } else if (Array.isArray(item.name)) {
+                text.rawtext.push(...item.name);
+            } else {
+                text.rawtext.push(item.name);
+            }
 
             // lore のフォーマット処理
-            const formattedLore = item.lore?.length > 0
-                ? typeof item.lore[0] == 'string' ? item.lore.flatMap((l) => [
-                    { text: "\n§r" },
-                    { translate: `${l}` }
-                ]) : [{ text: "\n§r" }].concat(item.lore)
-                : [];
+            const formattedLore = [];
+            if (item.lore && item.lore.length > 0) {
+                if (item.lore.rawtext) {
+                    formattedLore.push({ text: "\n§r" }, ...item.lore.rawtext);
+                } else if (typeof item.lore[0] === 'string') {
+                    formattedLore.push(...item.lore.flatMap((l) => [
+                        { text: "\n§r" },
+                        { translate: `${l}` }
+                    ]));
+                } else {
+                    formattedLore.push({ text: "\n§r" }, ...item.lore);
+                }
+            }
 
             // formattedLore を rawtext に追加
             text.rawtext.push(...formattedLore);
