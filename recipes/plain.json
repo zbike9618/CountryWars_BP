@@ -2,7 +2,7 @@
     "format_version": "1.20.10",
     "minecraft:recipe_shaped": {
         "description": {
-            "identifier": "cw:plain_recipe"
+            "identifier": "cw:steel_plain_recipe"
         },
         "tags": [ "crafting_table" ],
         "assume_symmetry": false,
@@ -23,7 +23,7 @@
             }
         ],
         "result": {
-            "item": "cw:plain",
+            "item": "cw:steel_plain",
             "count": 1
         }
     }

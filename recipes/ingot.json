@@ -2,16 +2,16 @@
     "format_version": "1.20.10",
     "minecraft:recipe_furnace": {
         "description": {
-            "identifier": "cw:ingot_recipe"
+            "identifier": "cw:steel_ingot_recipe"
         },
 
         "unlock": [
             {
-                "item": "cw:plain"
+                "item": "cw:steel_plain"
             }
         ],
         "tags": ["furnace", "blast_furnace"],
-        "input": "cw:plain",
-        "output": "cw:ingot"
+        "input": "cw:steel_plain",
+        "output": "cw:steel_ingot"
     }
 }
