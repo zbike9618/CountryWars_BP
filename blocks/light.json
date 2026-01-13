@@ -1,0 +1,51 @@
+{
+  "format_version": "1.20.20",
+  "minecraft:block": {
+    "description": {
+      "identifier": "cw:light",
+      "menu_category": {
+        "category": "nature"
+      }
+    },
+    "components": {
+      "minecraft:display_name": "Light",
+      "minecraft:friction": 0.6,
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:light_emission": 15,
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "light"
+        }
+      },
+      "minecraft:geometry": "geometry.light",
+      "minecraft:collision_box": {
+        "origin": [
+          -2,
+          6,
+          -2
+        ],
+        "size": [
+          0,
+          0,
+          0
+        ]
+      },"minecraft:selection_box": {
+        "origin": [
+          -4,
+          4,
+          -4
+        ],
+        "size": [
+          8,
+          8,
+          8
+        ]
+      }
+    }
+  }
+}
