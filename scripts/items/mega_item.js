@@ -11,6 +11,7 @@ const ALLOWED_ITEMS = [
 { id: "minecraft:granite", name: "花崗岩" },
 { id: "minecraft:gravel", name: "砂利" },
 { id: "minecraft:sand", name: "砂" },
+{ id: "minecraft:sandstone", name: "砂岩" },
 { id: "minecraft:snow_block", name: "雪ブロック" },
 { id: "minecraft:glass", name: "ガラス" },
 { id: "minecraft:obsidian", name: "黒曜石" },
@@ -59,8 +60,6 @@ const ALLOWED_ITEMS = [
 // ── 農業・消耗品 ──
 { id: "minecraft:wheat", name: "小麦" },
 { id: "minecraft:firework_rocket", name: "ロケット花火" }
-
-// ここに追加可能
 ];
 
 const MAX_STACKS = 9; // 最大27スタック
@@ -201,7 +200,7 @@ if (totalStored >= canStore) break;
 if (totalStored > 0) {
 storedData.count += totalStored;
 updateMegaItem(player, itemStack, storedData);
-player.sendMessage(`§a${totalStored}個の ${storedData.selectedName} を収納しました (合計: ${storedData.count})`);
+player.sendMessage(`§a${totalStored}個の §e${storedData.selectedName} §aを収納しました (合計: ${storedData.count})`);
 } else {
 player.sendMessage("§c収納できるアイテムがインベントリにありません");
 }
@@ -217,6 +216,7 @@ player.sendMessage("§c収納できるアイテムがインベントリにあり
 
 let remainingItems = storedData.count;
 let totalWithdrawn = 0;
+let droppedItems = 0;
 
 // 64個ずつスタックを作成してインベントリに追加
 while (remainingItems > 0) {
@@ -227,11 +227,15 @@ const newItem = new ItemStack(storedData.selectedItem, withdrawAmount);
 const remainingItem = inventory.container.addItem(newItem);
 
 if (remainingItem) {
-  // インベントリが満杯
-  const actualWithdrawn = withdrawAmount - remainingItem.amount;
-  totalWithdrawn += actualWithdrawn;
-  remainingItems -= actualWithdrawn;
-  break;
+  // インベントリが満杯の場合、残りをドロップ
+  const actualAdded = withdrawAmount - remainingItem.amount;
+  totalWithdrawn += actualAdded;
+  
+  // 残ったアイテムをプレイヤーの位置にドロップ
+  player.dimension.spawnItem(remainingItem, player.location);
+  droppedItems += remainingItem.amount;
+  
+  remainingItems -= withdrawAmount;
 } else {
   totalWithdrawn += withdrawAmount;
   remainingItems -= withdrawAmount;
@@ -240,19 +244,14 @@ if (remainingItem) {
 
 }
 
-if (totalWithdrawn > 0) {
-storedData.count -= totalWithdrawn;
+storedData.count = 0; // 全て取り出したので0にする
 updateMegaItem(player, itemStack, storedData);
-player.sendMessage(`§a${totalWithdrawn}個の ${storedData.selectedName} を取り出しました (残り: ${storedData.count})`);
 
-
-if (remainingItems > 0) {
-  player.sendMessage("§eインベントリが満杯です");
-}
-
-
+if (droppedItems > 0) {
+player.sendMessage(`§a${totalWithdrawn + droppedItems}個の §e${storedData.selectedName} §aを取り出しました (残り: 0)`);
+player.sendMessage(`§e${droppedItems}個はインベントリが満杯のためドロップしました`);
 } else {
-player.sendMessage("§cインベントリが満杯です");
+player.sendMessage(`§a${totalWithdrawn}個の §e${storedData.selectedName} §aを取り出しました (残り: 0)`);
 }
 }
 
@@ -278,7 +277,7 @@ const actualWithdrawn = withdrawAmount - remainingItem.amount;
 if (actualWithdrawn > 0) {
 storedData.count -= actualWithdrawn;
 updateMegaItem(player, itemStack, storedData);
-player.sendMessage(`§a${actualWithdrawn}個の ${storedData.selectedName} を取り出しました (残り: ${storedData.count})`);
+player.sendMessage(`§a${actualWithdrawn}個の §e${storedData.selectedName} §aを取り出しました (残り: ${storedData.count})`);
 player.sendMessage("§eインベントリが満杯です");
 } else {
 player.sendMessage("§cインベントリが満杯です");
@@ -286,7 +285,7 @@ player.sendMessage("§cインベントリが満杯です");
 } else {
 storedData.count -= withdrawAmount;
 updateMegaItem(player, itemStack, storedData);
-player.sendMessage(`§a${withdrawAmount}個の ${storedData.selectedName} を取り出しました (残り: ${storedData.count})`);
+player.sendMessage(`§a${withdrawAmount}個の §e${storedData.selectedName} §aを取り出しました (残り: ${storedData.count})`);
 }
 }
 
@@ -307,7 +306,7 @@ const remainingItem = inventory.container.addItem(newItem);
 if (!remainingItem) {
 storedData.count -= 1;
 updateMegaItem(player, itemStack, storedData);
-player.sendMessage(`§a1個の ${storedData.selectedName} を取り出しました (残り: ${storedData.count})`);
+player.sendMessage(`§a1個の §e${storedData.selectedName} §aを取り出しました (残り: ${storedData.count})`);
 } else {
 player.sendMessage("§cインベントリが満杯です");
 }
@@ -333,7 +332,7 @@ if (itemMatch) {
 data.selectedName = itemMatch[1];
 
 
-  // コンフィグから該当アイテムのIDを取得
+  // 表示名からIDを逆引き
   const configItem = ALLOWED_ITEMS.find(item => item.name === data.selectedName);
   if (configItem) {
     data.selectedItem = configItem.id;
