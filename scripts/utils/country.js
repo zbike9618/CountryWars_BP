@@ -75,11 +75,18 @@ export class Country {
             playerDatas.set(playerId, playerData);
         }
         const chunk = world.getDynamicProperty("chunk")
+        world.sendMessage(`${chunk}`)
         //chunkも消す
         if (chunk) {
             const chunkObj = JSON.parse(chunk);
+            const removeChunk = [];
             for (const key in chunkObj) {
-                if (chunkObj[key] === countryData.id) delete chunkObj[key];
+                if (chunkObj[key].country === countryData.id) removeChunk.push(key);
+            }
+            for (const key of removeChunk) {
+                //world.sendMessage(`${chunkObj[key]}`)
+                chunkObj.splice(key - 1, 1);
+
             }
             world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
         }
@@ -89,7 +96,7 @@ export class Country {
     }
     static async setting(player, countryData) {
         if (countryData == "none") {
-            world.sendMessage({ translate: "cw.scform.unjoincountry" })
+            world.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
         const form = new ActionFormData()

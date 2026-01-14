@@ -45,7 +45,7 @@ export class Chunk {
         if (res.selection === 0) {
 
             if (playerData.money < config.chunkprice) {
-                player.sendMessage({ translate: "cw.chunk.buy.nomoney" })
+                player.sendMessage({ translate: "cw.form.nomoney" })
                 return;
             }
 

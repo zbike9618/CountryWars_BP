@@ -5,6 +5,7 @@ import { playerMarketSystem } from "../utils/playerMarketSystem.js";
 import { Dypro } from "../utils/dypro.js";
 import { Util } from "../utils/util.js";
 import { itemIdToPath } from "../config/texture_config.js";
+import { ActionForm } from "../utils/form_class.js";
 const marketDatas = new Dypro("playermarket");
 const playerDatas = new Dypro("player");
 system.beforeEvents.startup.subscribe(ev => {
@@ -77,11 +78,11 @@ async function showPlayerMarket(player) {
         if (loc == "none") return;
         buyForm(player, loc)
     }
-    if (res.selection == 1) {
-        {
-            sellForm(player)
-            playerMarketSystem.sell(player, { itemStack: new server.ItemStack("minecraft:diamond"), price: 10, description: "test" })
-        }
+    if (res.selection === 1) {
+        sellForm(player)
+    }
+    if (res.selection === 2) {
+        editForm(player)
     }
 
 }
@@ -90,7 +91,24 @@ async function buyForm(player, { slot, page }) {
     const form = new MessageFormData()
     const playerData = playerDatas.get(player.id)
     form.title({ translate: "cw.playermarket.buy" })
-    form.body({ rawtext: [{ translate: "cw.playermarket.buy.body" }, { translate: Util.langChangeItemName(data.itemId) }, { translate: "cw.playermarket.buy.body2", with: [`${playerData.money}`, `${data.price}`, `${data.description}`, `${playerDatas.get(data.player)?.name}`] }] })
+    if (playerData.money < data.price[data.price.length - 1]) {
+        form.body({ translate: "cw.form.nomoney" })
+        form.button1({ translate: "cw.form.redo" })
+        form.button2({ translate: "cw.form.cancel" })
+        const res = await form.show(player)
+        if (res.canceled) return;
+        if (res.selection == 0) {
+            const loc = await playerMarketSystem.show(player, 0)
+            if (loc == "none") return;
+            buyForm(player, loc)
+        }
+        return;
+    }
+    form.body({
+        rawtext: [{ translate: "cw.playermarket.buy.body" },
+        { translate: Util.langChangeItemName(data.itemId) },
+        { translate: "cw.playermarket.buy.body2", with: [`${playerData.money}`, `${data.price[data.price.length - 1]}`, `${data.lore}`, `${data.amount}`, `${data.description}`, `${playerDatas.get(data.player)?.name}`] }]
+    })
     form.button1({ translate: "cw.form.buy" })
     form.button2({ translate: "cw.form.cancel" })
     const res = await form.show(player)
@@ -99,7 +117,7 @@ async function buyForm(player, { slot, page }) {
         player.sendMessage({
             rawtext: [
                 { translate: Util.langChangeItemName(data.itemId) },
-                { translate: "cw.playermarket.buy.success", with: [`${data.price}`] }
+                { translate: "cw.playermarket.buy.success", with: [`${data.amount}`] }
             ]
         })
         playerMarketSystem.buy(player, { slot, page })
@@ -108,6 +126,7 @@ async function buyForm(player, { slot, page }) {
         const loc = await playerMarketSystem.show(player)
         buyForm(player, loc)
     }
+
 
 }
 /**
@@ -152,6 +171,7 @@ async function sellFormS(player, item, maxamount) {
     form.title({ translate: "cw.playermarket.sell" })
     form.textField({ translate: "cw.playermarket.sell.price" }, "Press Number")
     form.slider({ translate: "cw.playermarket.sell.amount" }, 1, maxamount)
+    form.textField({ translate: "cw.playermarket.sell.description" }, "Press Description")
     const res = await form.show(player)
     if (res.canceled) return;
     if (!Number.isInteger(Number(res.formValues[0])) || Number < 0) {
@@ -163,12 +183,18 @@ async function sellFormS(player, item, maxamount) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            sellFormS(player, item, amount)
+            sellFormS(player, item, maxamount)
         }
         return;
     }
     const amount = res.formValues[1]
-    playerMarketSystem.sell(player, { itemId: item.typeId, amount: res.formValues[1], price: Number(res.formValues[0]), description: "test" })
+    const Ecomp = item.getComponent("minecraft:enchantable")
+    const enchantments = Ecomp.getEnchantments()
+    const enchants = []
+    for (const enchantment of enchantments) {
+        enchants.push({ id: enchantment.type.id, level: enchantment.level })
+    }
+    playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2] })
     const comp = player.getComponent("minecraft:inventory");
     const inv = comp.container;
     for (let i = 0; i < inv.size; i++) {
@@ -183,7 +209,7 @@ async function sellFormS(player, item, maxamount) {
             { translate: "cw.playermarket.sell.success", with: [`${amount}`] }
         ]
     })
-    player.sendMessage({
+    world.sendMessage({
         rawtext: [
             { translate: "cw.playermarket.selled.success1" },
             { translate: `${Util.langChangeItemName(item.typeId)}` },
@@ -198,4 +224,90 @@ async function sellFormS(player, item, maxamount) {
     }
     inv.addItem(new server.ItemStack(`${item.typeId}`, amountC - (count * 64)))
 
+}
+async function editForm(player) {
+    const form = new ActionFormData()
+    form.title({ translate: "cw.playermarket.edit" })
+    const datas = []
+    for (const page of marketDatas.idList) {
+        let slot = 0;
+        for (const data of marketDatas.get(`${page}`)) {
+
+            if (data.player == player.id) {
+                form.button({ translate: Util.langChangeItemName(data.itemId) }, itemIdToPath[data.itemId])
+                datas.push({ page, slot })
+            }
+            slot++
+        }
+    }
+    const res = await form.show(player)
+    if (res.canceled) return;
+    editForm2(player, { page: datas[res.selection].page, slot: datas[res.selection].slot })
+}
+async function editForm2(player, { page, slot }) {
+    const marketData = marketDatas.get(`${page}`)[slot];
+    const form = new ModalFormData()
+    form.title({ translate: "cw.playermarket.sell" })
+    form.toggle({ translate: "cw.playermarket.edit.toggle" })
+    form.textField({ translate: "cw.playermarket.sell.price" }, "Press Number", { defaultValue: `${marketData.price[marketData.price.length - 1]}` })
+    form.textField({ translate: "cw.playermarket.sell.description" }, "Press Description", { defaultValue: marketData.description })
+    const res = await form.show(player)
+    if (res.canceled) return;
+    if (res.formValues[0]) {
+        const comp = player.getComponent("minecraft:inventory");
+        const inv = comp.container;
+        const { itemId, lore, amount } = marketData
+        if (amount != 0) {
+            const count = Math.floor(amount / 64);
+            for (let i = 0; i < count; i++) {
+                const item = new server.ItemStack(itemId, 64)
+                if (lore) {
+                    const lores = lore.split("\n")
+                    item.setLore(lores)
+                }
+                if (marketData.enchants) {
+                    const comp = item.getComponent("minecraft:enchantable")
+                    const enchantments = marketData.enchants
+                    for (const enchantment of enchantments) {
+                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                    }
+                }
+                inv.addItem(item)
+            }
+            const result = amount - (count * 64)
+            if (result != 0) {
+                const item = new server.ItemStack(itemId, result)
+                if (lore) {
+                    const lores = lore.split("\n")
+                    item.setLore(lores)
+                }
+                if (marketData.enchants) {
+                    const comp = item.getComponent("minecraft:enchantable")
+                    const enchantments = marketData.enchants
+                    for (const enchantment of enchantments) {
+                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                    }
+                }
+                inv.addItem(item)
+            }
+        }
+        playerMarketSystem.delete({ slot, page })
+
+    }
+    if (!Number.isInteger(Number(res.formValues[1])) || Number < 0) {
+        const mform = new MessageFormData()
+        mform.title({ translate: "cw.playermarket.sell" })
+        mform.body({ translate: "cw.playermarket.sell.priceerror" })
+        mform.button1({ translate: "cw.form.redo" })
+        mform.button2({ translate: "cw.form.cancel" })
+        const res = await mform.show(player)
+        if (res.canceled) return;
+        if (res.selection === 0) {
+            editForm2(player, { page, slot })
+        }
+        return
+    }
+    marketData.price.push(Number(res.formValues[1]))
+    marketData.description = res.formValues[2]
+    playerMarketSystem.edit(marketData, { page, slot })
 }

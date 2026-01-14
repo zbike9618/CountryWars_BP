@@ -38,8 +38,13 @@ export class Util {
  * @returns {string}
  */
     static langChangeItemName(typeId) {
-        const item = new ItemStack(typeId)
-        return item.localizationKey;
+        if (!typeId) return "Unknown";
+        try {
+            const item = new ItemStack(typeId)
+            return item.localizationKey;
+        } catch (e) {
+            return typeId.toString();
+        }
     }
     static addMoney(player, int) {
         const playerData = playerDatas.get(player.id);
