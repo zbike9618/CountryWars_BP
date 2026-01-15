@@ -65,8 +65,9 @@ world.afterEvents.playerBreakBlock.subscribe(ev => {
         const job = JOB_CONFIG[jobId];
         if (!job || !job.blockRewards) continue;
 
-        const reward = job.blockRewards[blockId];
-        if (reward !== undefined) {
+        const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
+        if (rewardInfo) {
+            const reward = rewardInfo[1];
             Util.addMoney(player, reward);
             const score = Util.getMoney(player);
             sendActionBar(player, [
@@ -97,8 +98,9 @@ world.afterEvents.playerPlaceBlock.subscribe(ev => {
         const job = JOB_CONFIG[jobId];
         if (!job || !job.blockRewards) continue;
 
-        const reward = job.blockRewards[blockId];
-        if (reward !== undefined) {
+        const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
+        if (rewardInfo) {
+            const reward = rewardInfo[1];
             Util.addMoney(player, reward);
             const score = Util.getMoney(player);
             sendActionBar(player, [

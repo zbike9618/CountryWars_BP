@@ -70,10 +70,10 @@ export class JOB_CONFIG {
     static builder = {
         blockRewards: {
             // 建築で使うブロックを壊す/設置で報酬を変える運用も可能
-            "minecraft:stone": 1,
-            "minecraft:brick": 5,
-            "minecraft:planks": 2,
-            "minecraft:glass": 3
+            "stone": 1,
+            "brick": 5,
+            "planks": 2,
+            "glass": 3
         }
     }
 };
