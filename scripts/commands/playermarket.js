@@ -292,7 +292,7 @@ async function editForm2(player, { page, slot }) {
             }
         }
         playerMarketSystem.delete({ slot, page })
-
+        return;
     }
     if (!Number.isInteger(Number(res.formValues[1])) || Number < 0) {
         const mform = new MessageFormData()
