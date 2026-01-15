@@ -9,14 +9,15 @@
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["core"]
+        "family": [
+          "core"
+        ]
       },
       "minecraft:health": {
         "value": 1000,
         "max": 1000
       },
-      "minecraft:fire_immune": {
-      },
+      "minecraft:fire_immune": {},
       "minecraft:physics": {
         "has_gravity": true
       },
@@ -26,6 +27,14 @@
       },
       "minecraft:movement": {
         "value": 0.0
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:boss": {
+        "should_darken_sky": false,
+        "hud_range": 20,
+        "name": "Core"
       }
     }
   }

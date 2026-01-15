@@ -167,14 +167,14 @@ export class playerMarketSystem {
 
     }
     static delete({ slot, page }) {
-        const marketData = marketDatas.get(`${page} `);
-        world.sendMessage(`${page} `)
-        marketData.splice(slot - 1, 1);
-        marketDatas.set(`${page} `, marketData);
+
+        const marketData = marketDatas.get(`${page}`);
+        marketData.splice(slot, 1);
+        marketDatas.set(`${page}`, marketData);
     }
     static edit(newData, { slot, page }) {
-        const marketData = marketDatas.get(`${page} `);
+        const marketData = marketDatas.get(`${page}`);
         marketData[slot] = newData;
-        marketDatas.set(`${page} `, marketData);
+        marketDatas.set(`${page}`, marketData);
     }
 }
