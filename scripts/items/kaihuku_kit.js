@@ -62,5 +62,5 @@ world.afterEvents.itemUse.subscribe((event) => {
     cooldowns.set(playerId, true);
     system.runTimeout(() => {
         cooldowns.delete(playerId);
-    }, 30); // 100tick = 5秒
+    }, 60); // 100tick = 5秒
 });
