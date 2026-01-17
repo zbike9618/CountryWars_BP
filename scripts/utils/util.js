@@ -91,4 +91,20 @@ export class Util {
         const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         return distance
     }
+    /**
+     * 国のプレイヤーの中で現在いるプレイヤーを返す
+     * @param {*} countryData 
+     *@return {Array<server.Player>} プレイヤーのリスト
+     */
+    static GetCountryPlayer(countryData) {
+        const players = world.getAllPlayers();
+        const list = [];
+        for (const player of players) {
+            const playerData = playerDatas.get(player.id);
+            if (playerData.id == countryData.id) {
+                list.push(player);
+            }
+        }
+        return list;
+    }
 }

@@ -52,14 +52,7 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.success" })
             Util.addMoney(player, -config.chunkprice)
 
-            countryData.chunkAmount += 1;
-            countryDatas.set(countryData.id, countryData)
-            const chunk = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
-            chunk.push({
-                id: this.positionToChunkId(player.location),
-                country: countryData.id
-            })
-            world.setDynamicProperty(`chunk`, JSON.stringify(chunk))
+            this.setChunk(this.positionToChunkId(player.location), countryData)
 
         }
     }
@@ -94,5 +87,23 @@ export class Chunk {
 
         }
     }
+    static setChunk(chunkId, countryData) {
+        const chunk = this.checkChunk(chunkId);
+        if (chunk == "wasteland") return;
+        const enemyData = countryDatas.get(chunk);
+        const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
+        if (chunks.map(c => c.id).includes(chunkId)) {
+            chunks.splice(chunks.map(c => c.id).indexOf(chunkId), 1)
+            enemyData.chunkAmount -= 1;
+            countryDatas.set(enemyData.id, enemyData)
+        }
+        chunks.push({
+            id: chunkId,
+            country: countryData.id
+        })
+        world.setDynamicProperty(`chunk`, JSON.stringify(chunks))
+        countryData.chunkAmount += 1;
+        countryDatas.set(countryData.id, countryData)
 
+    }
 }

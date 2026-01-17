@@ -57,7 +57,7 @@ export class Country {
             permissions: { "国王": Data.permissions },
             chunkAmount: 0,
             //同盟国などはあとで
-
+            warcountry: [],
         }
         countryDatas.set(id, countryData);
         const playerData = playerDatas.get(player.id);
@@ -85,7 +85,7 @@ export class Country {
             }
             for (const key of removeChunk) {
                 //world.sendMessage(`${chunkObj[key]}`)
-                chunkObj.splice(key - 1, 1);
+                chunkObj.splice(key, 1);
 
             }
             world.setDynamicProperty("chunk", JSON.stringify(chunkObj));

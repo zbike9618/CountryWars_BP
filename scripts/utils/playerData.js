@@ -16,6 +16,11 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             money: 0,
             job: undefined,//levelはこのの中にobjectとして入れる
             permission: "",
+            secondname: {
+                before: [],
+                after: [],
+                now: [0, 0]
+            }
         }
         playerDatas.set(player.id, playerData);
         DoInitialSpawn(player);//初期スポーンメッセージ等 
