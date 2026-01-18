@@ -17,8 +17,8 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             job: undefined,//levelはこのの中にobjectとして入れる
             permission: "",
             secondname: {
-                before: [],
-                after: [],
+                before: ["一般的な"],
+                after: ["鯖民"],
                 now: [0, 0]
             }
         }
