@@ -73,6 +73,13 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+    form.setButton(26, {
+        iconPath: "textures/items/diamond",
+        name: "cw.phone.help",
+        stackAmount: 1,
+        lore: ["comming soon..."],
+        isGlint: true, editedName: true
+    })
     form.show(player).then((responce) => {
         switch (responce.selection) {
             case 0:
@@ -96,6 +103,9 @@ function show_form(player) {
                 break;
             case 6:
                 player.runCommand("home");
+                break;
+            case 26:
+                player.sendMessage("comming soon...");
                 break;
             default:
                 break;
