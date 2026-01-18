@@ -6,8 +6,9 @@ const countryDatas = new Dypro("country");
 world.beforeEvents.chatSend.subscribe((ev) => {
     const player = ev.sender;
     const message = ev.message;
-    const playerData = playerDatas.get(player.id).country;
-    const countryname = countryDatas.get(playerData)?.name || "§7未所属";
+    const playerData = playerDatas.get(player.id);
+    const countryname = countryDatas.get(playerData.country)?.name || "§7未所属";
     ev.cancel = true;
-    world.sendMessage(`[${countryname}§r] <${player.name}> ${message}`)
+    const secondname = playerData.secondname;
+    world.sendMessage(`[${secondname.before[secondname.now[0]]}${secondname.after[secondname.now[1]]}][${countryname}§r] <${player.name}> ${message}`)
 })

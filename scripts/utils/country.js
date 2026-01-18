@@ -7,6 +7,7 @@ import { Dypro } from "./dypro";
 import { Data } from "./data";
 import { ShortPlayerData } from "./playerData";
 import { sendDataForPlayers } from "./sendData";
+import { War } from "./war";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class Country {
@@ -14,7 +15,7 @@ export class Country {
     static async makeForm(player) {
         const playerData = playerDatas.get(player.id);
         if (playerData.country) {
-            world.sendMessage({ translate: "cw.mcform.alreadyCountry" })
+            player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
             return;
         }
         const form = new ModalFormData()
@@ -25,7 +26,7 @@ export class Country {
         const res = await form.show(player)
         if (res.canceled) return;
         if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(res.formValues[0])) {
-            world.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
+            player.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
             return;
         }
         this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
@@ -56,8 +57,11 @@ export class Country {
             players: [player.id],
             permissions: { "国王": Data.permissions },
             chunkAmount: 0,
+            robbedChunkAmount: [],//国ごとに保存
             //同盟国などはあとで
-            warcountry: [],
+            warcountry: [],//戦争中
+
+
         }
         countryDatas.set(id, countryData);
         const playerData = playerDatas.get(player.id);
@@ -75,7 +79,6 @@ export class Country {
             playerDatas.set(playerId, playerData);
         }
         const chunk = world.getDynamicProperty("chunk")
-        world.sendMessage(`${chunk}`)
         //chunkも消す
         if (chunk) {
             const chunkObj = JSON.parse(chunk);
@@ -89,6 +92,13 @@ export class Country {
 
             }
             world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
+        }
+        //戦争中なら戦争を終わらせる
+        if (countryData.warcountry.length > 0) {
+            for (const warcountryId of countryData.warcountry) {
+                const warcountryData = countryDatas.get(warcountryId);
+                War.finish(warcountryData, countryData, "invade");
+            }
         }
 
         countryDatas.delete(countryData.id);

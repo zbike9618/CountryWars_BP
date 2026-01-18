@@ -89,13 +89,15 @@ export class Chunk {
     }
     static setChunk(chunkId, countryData) {
         const chunk = this.checkChunk(chunkId);
-        if (chunk == "wasteland") return;
+
         const enemyData = countryDatas.get(chunk);
         const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
-        if (chunks.map(c => c.id).includes(chunkId)) {
-            chunks.splice(chunks.map(c => c.id).indexOf(chunkId), 1)
-            enemyData.chunkAmount -= 1;
-            countryDatas.set(enemyData.id, enemyData)
+        if (chunk != "wasteland") {
+            if (chunks.map(c => c.id).includes(chunkId)) {
+                chunks.splice(chunks.map(c => c.id).indexOf(chunkId), 1)
+                enemyData.chunkAmount -= 1;
+                countryDatas.set(enemyData.id, enemyData)
+            }
         }
         chunks.push({
             id: chunkId,

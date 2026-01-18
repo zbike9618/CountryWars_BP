@@ -100,8 +100,7 @@ export class Util {
         const players = world.getAllPlayers();
         const list = [];
         for (const player of players) {
-            const playerData = playerDatas.get(player.id);
-            if (playerData.id == countryData.id) {
+            if (countryData.players.includes(player.id)) {
                 list.push(player);
             }
         }

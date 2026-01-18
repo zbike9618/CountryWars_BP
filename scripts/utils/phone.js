@@ -14,7 +14,7 @@ world.afterEvents.itemUse.subscribe((event) => {
 });
 
 function show_form(player) {
-    const form = new ChestFormData("small")
+    const form = new ChestFormData("large")
     const data = playerDatas.get(player.id);
     const money = data.money ?? 0;
     form.setTitle("ZPhone"),

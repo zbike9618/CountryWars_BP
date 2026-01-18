@@ -17,14 +17,21 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             job: undefined,//levelはこのの中にobjectとして入れる
             permission: "",
             secondname: {
-                before: [],
-                after: [],
+                before: ["一般的な"],
+                after: ["鯖民"],
                 now: [0, 0]
             }
         }
         playerDatas.set(player.id, playerData);
         DoInitialSpawn(player);//初期スポーンメッセージ等 
         player.setDynamicProperty("initial", true);
+    }
+    if (initialSpawn) {
+        const playerData = new ShortPlayerData(player.id)
+        const messageArray = playerData.get("message") || []
+        if (messageArray.length > 0) {
+            player.sendMessage({ translate: "cw.initialSpawn.messageRecieve", with: [`${messageArray.length}`] })
+        }
     }
 })
 

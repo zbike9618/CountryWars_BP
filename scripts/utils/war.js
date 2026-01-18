@@ -40,7 +40,7 @@ export class War {
         const core = dimension.spawnEntity("cw:core", player.location)
         core.nameTag = `Core : ${enemyCountryData.name}`
         core.setDynamicProperty("core", `${Chunk.positionToChunkId(player.location)}`)
-        world.sendMessage({ translate: "cw.war.invade", with: [player.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
+        world.sendMessage({ translate: "cw.war.invade", with: [player.name, enemyCountryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
     }
     /**
      * 宣戦布告
@@ -66,8 +66,21 @@ export class War {
      * @param {string} type タイプ
      */
     static finish(winnerData, loserData, type) {
-        if (type == "invade") {
-            Country.delete(loserData)
+        if (type == "invade") {//国は滅ぼさない
+            const chunkAmount = winnerData.robbedChunkAmount
+            const number = chunkAmount[loserData.id] * 20000 || 0;
+            loserData.money -= number
+            winnerData.money += number
+            chunkAmount.splice(Object.keys(chunkAmount).indexOf(loserData.id), 1)
+            winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
+            loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
+            countryDatas.set(loserData.id, loserData)
+            countryDatas.set(winnerData.id, winnerData)
+            world.sendMessage({ translate: "cw.war.invade.finish", with: [winnerData.name, loserData.name] })
+            const loserplayers = Util.GetCountryPlayer(loserData);
+            for (const player of loserplayers) {
+                player.sendMessage({ translate: "cw.war.invade.finish.money", with: [winnerData.name, `${number}`] })
+            }
         }
     }
 }
@@ -82,9 +95,18 @@ world.afterEvents.entityDie.subscribe(ev => {
     const cc = Chunk.checkChunk(chunkId)
     const countryData = countryDatas.get(cc);
     if (!countryData) return;
+    if (!mineData.robbedChunkAmount[countryData.id]) {
+        mineData.robbedChunkAmount[countryData.id] = 0;
+    }
+    mineData.robbedChunkAmount[countryData.id]++;
+    countryData.chunkAmount--;
+    mineData.chunkAmount++;
+    countryDatas.set(mineData.id, mineData);
+    countryDatas.set(countryData.id, countryData);
     Chunk.setChunk(chunkId, mineData)
+    world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
     if (countryData.chunkAmount == 0) {
         War.finish(mineData, countryData, "invade")
     }
-    world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
+
 })

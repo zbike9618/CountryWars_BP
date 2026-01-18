@@ -189,10 +189,13 @@ async function sellFormS(player, item, maxamount) {
     }
     const amount = res.formValues[1]
     const Ecomp = item.getComponent("minecraft:enchantable")
-    const enchantments = Ecomp.getEnchantments()
-    const enchants = []
-    for (const enchantment of enchantments) {
-        enchants.push({ id: enchantment.type.id, level: enchantment.level })
+    let enchants = []
+    if (Ecomp) {
+        const enchantments = Ecomp.getEnchantments()
+
+        for (const enchantment of enchantments) {
+            enchants.push({ id: enchantment.type.id, level: enchantment.level })
+        }
     }
     playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2] })
     const comp = player.getComponent("minecraft:inventory");
