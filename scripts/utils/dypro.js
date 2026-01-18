@@ -16,6 +16,7 @@ export class Dypro {
     get idList() {
         const idList = []
         for (const data of world.getDynamicPropertyIds().filter(id => id.startsWith(`${this.name}#`))) {
+            if (world.getDynamicProperty(data) === undefined) continue;
             idList.push(data.replace(`${this.name}#`, ""))
         }
         return idList
