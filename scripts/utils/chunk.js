@@ -18,6 +18,11 @@ export class Chunk {
     static checkChunk(chunkId) {
         const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
         const found = chunks.find(c => c.id === chunkId);
+        if (found && !countryDatas.get(found.country)) {
+            chunks.splice(chunks.indexOf(found), 1)
+            world.setDynamicProperty(`chunk`, JSON.stringify(chunks))
+            return "wasteland";
+        }
         return found ? found.country : "wasteland";
     }
     static async buy(player, countryData) {
@@ -37,21 +42,21 @@ export class Chunk {
         }
         const form = new MessageFormData()
         form.title({ translate: "cw.chunk.buy.title" })
-        form.body({ translate: "cw.chunk.buy.body", with: [`${config.chunkprice}`, `${playerData.money}`] })
+        form.body({ translate: "cw.chunk.buy.body", with: [`${config.chunkprice}`, `${countryData.money}`] })
         form.button1({ translate: "cw.form.buy" })
         form.button2({ translate: "cw.form.cancel" })
         const res = await form.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
 
-            if (playerData.money < config.chunkprice) {
+            if (countryData.money < config.chunkprice) {
                 player.sendMessage({ translate: "cw.form.nomoney" })
                 return;
             }
 
             player.sendMessage({ translate: "cw.chunk.buy.success" })
-            Util.addMoney(player, -config.chunkprice)
-
+            countryData.money -= config.chunkprice;
+            countryDatas.set(countryData.id, countryData)
             this.setChunk(this.positionToChunkId(player.location), countryData)
 
         }

@@ -58,6 +58,7 @@ export class Country {
             permissions: { "国王": Data.permissions },
             chunkAmount: 0,
             robbedChunkAmount: [],//国ごとに保存
+            wardeath: 0,//戦争中に死んでいい回数
             //同盟国などはあとで
             warcountry: [],//戦争中
 
@@ -79,6 +80,13 @@ export class Country {
             playerDatas.set(playerId, playerData);
         }
         const chunk = world.getDynamicProperty("chunk")
+        //戦争中なら戦争を終わらせる
+        if (countryData.warcountry.length > 0) {
+            for (const warcountryId of countryData.warcountry) {
+                const warcountryData = countryDatas.get(warcountryId);
+                War.finish(warcountryData, countryData, "invade");
+            }
+        }
         //chunkも消す
         if (chunk) {
             const chunkObj = JSON.parse(chunk);
@@ -93,13 +101,7 @@ export class Country {
             }
             world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
         }
-        //戦争中なら戦争を終わらせる
-        if (countryData.warcountry.length > 0) {
-            for (const warcountryId of countryData.warcountry) {
-                const warcountryData = countryDatas.get(warcountryId);
-                War.finish(warcountryData, countryData, "invade");
-            }
-        }
+
 
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })

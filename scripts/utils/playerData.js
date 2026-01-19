@@ -3,7 +3,7 @@ import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-
+const countryDatas = new Dypro("country");
 world.afterEvents.playerSpawn.subscribe(ev => {
     const player = ev.player;
     const initialSpawn = ev.initialSpawn;
@@ -27,11 +27,12 @@ world.afterEvents.playerSpawn.subscribe(ev => {
         player.setDynamicProperty("initial", true);
     }
     if (initialSpawn) {
-        const playerData = new ShortPlayerData(player.id)
-        const messageArray = playerData.get("message") || []
-        if (messageArray.length > 0) {
-            player.sendMessage({ translate: "cw.initialSpawn.messageRecieve", with: [`${messageArray.length}`] })
+        const playerData = playerDatas.get(player.id)
+        const countryData = countryDatas.get(playerData.country)
+        if (countryData && countryData.warcountry.length == 0) {
+            player.removeTag("cw:duringwar")
         }
+
     }
 })
 

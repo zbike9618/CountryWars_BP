@@ -48,15 +48,23 @@ export class War {
      * @param {Object} enemyData 敵の国
      */
     static declareTo(mineData, enemyData) {
-        const myplayers = Util.GetCountryPlayer(mineData).length;
-        const enemyplayers = Util.GetCountryPlayer(enemyData).length;
+        const myplayers = Util.GetCountryPlayer(mineData);
+        const enemyplayers = Util.GetCountryPlayer(enemyData);
 
         // バランスが取れている時のみ宣戦布告可能
-        //if (this.isBalanced(myplayers, enemyplayers)) {
+        //if (this.isBalanced(myplayers.length, enemyplayers.length)) {
         mineData.warcountry.push(enemyData.id);
         enemyData.warcountry.push(mineData.id);
         countryDatas.set(mineData.id, mineData);
         countryDatas.set(enemyData.id, enemyData);
+        mineData.wardeath += myplayers.length;
+        enemyData.wardeath += enemyplayers.length;
+        for (const player of myplayers) {
+            player.addTag("cw:duringwar")
+        }
+        for (const player of enemyplayers) {
+            player.addTag("cw:duringwar")
+        }
         //}
     }
     /**
@@ -71,15 +79,25 @@ export class War {
             const number = chunkAmount[loserData.id] * 20000 || 0;
             loserData.money -= number
             winnerData.money += number
-            chunkAmount.splice(Object.keys(chunkAmount).indexOf(loserData.id), 1)
+            delete chunkAmount[loserData.id];
             winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
             loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
             countryDatas.set(loserData.id, loserData)
             countryDatas.set(winnerData.id, winnerData)
             world.sendMessage({ translate: "cw.war.invade.finish", with: [winnerData.name, loserData.name] })
+
             const loserplayers = Util.GetCountryPlayer(loserData);
             for (const player of loserplayers) {
                 player.sendMessage({ translate: "cw.war.invade.finish.money", with: [winnerData.name, `${number}`] })
+                if (loserData.warcountry.length === 0) {
+                    player.removeTag("cw:duringwar")
+                }
+            }
+            const winnerplayers = Util.GetCountryPlayer(winnerData);
+            for (const player of winnerplayers) {
+                if (winnerData.warcountry.length === 0) {
+                    player.removeTag("cw:duringwar")
+                }
             }
         }
     }
@@ -89,6 +107,11 @@ world.afterEvents.entityDie.subscribe(ev => {
     const player = ev.damageSource.damagingEntity;
     if (player && player.typeId == "minecraft:player")
         if (core.typeId !== "cw:core") return;
+
+
+
+
+    //----------------------------------------------
     const playerData = playerDatas.get(player.id)
     const mineData = countryDatas.get(playerData.country)
     const chunkId = core.getDynamicProperty("core");
@@ -108,5 +131,40 @@ world.afterEvents.entityDie.subscribe(ev => {
     if (countryData.chunkAmount == 0) {
         War.finish(mineData, countryData, "invade")
     }
-
+    //----------------------------------------------
 })
+
+
+world.afterEvents.entityDie.subscribe(ev => {
+    const player = ev.deadEntity;
+    const damager = ev.damageSource.damagingEntity;
+    if (player && player.typeId == "minecraft:player" && damager && damager.typeId == "minecraft:player") {
+        const playerData = playerDatas.get(player.id)
+        if (!playerData.country) return;
+        const countryData = countryDatas.get(playerData.country)
+        const warCountries = countryData.warcountry
+        if (warCountries && warCountries.length > 0) {
+            const damagerData = playerDatas.get(damager.id);
+            if (!damagerData.country) return;
+
+            // 攻撃者が敵国のいずれかに所属しているか確認
+            if (warCountries.includes(damagerData.country)) {
+                if (countryData.wardeath <= 0) {
+                    // 全ての戦争を終了させる（あるいは特定の国とのみ終了させるかはルール次第だが、現状のロジックに合わせ全解除を検討）
+                    // ここでは wardeath が 0 になったので、敗北処理
+                    const activeWars = [...warCountries];
+                    for (const enemyId of activeWars) {
+                        War.finish(countryDatas.get(enemyId), countryData, "invade");
+                    }
+                }
+                else {
+                    countryData.wardeath--;
+                    countryDatas.set(countryData.id, countryData);
+                    world.sendMessage({
+                        translate: "cw.war.death", with: [countryData.name, `${countryData.wardeath}`]
+                    })
+                }
+            }
+        }
+    }
+});
