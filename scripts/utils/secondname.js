@@ -33,36 +33,36 @@ export class SecondName {
 //こんなもん？
 //一旦テストしてくる
 
-     async function beforeForm(player) {
-        const playerData = playerDatas.get(player.id)
-        const form = new ActionFormData();
-        form.title({ translate: "cw.secondnameform.before" });
-        for (const button of playerData.secondname.before) {
-            form.button(`${button}`);
-        }
-        const res = await form.show(player);
-        if (res.canceled) return;
-        playerData.secondname.now[0] = res.selection
-        playerDatas.set(player.id,playerData)
-        const now = playerData.secondname.now
-        player.sendMessage({ translate: "cw.secondnameform.beforechanged", with: [playerData?.secondname.before[now[0]], playerData?.secondname.before[now[0]]+playerData?.secondname.after[now[1]]] });
-        SecondName.secondNameForm(player);
-    
+async function beforeForm(player) {
+    const playerData = playerDatas.get(player.id)
+    const form = new ActionFormData();
+    form.title({ translate: "cw.secondnameform.before", with: [""] });
+    for (const button of playerData.secondname.before) {
+        form.button(`${button}`);
+    }
+    const res = await form.show(player);
+    if (res.canceled) return;
+    playerData.secondname.now[0] = res.selection
+    playerDatas.set(player.id, playerData)
+    const now = playerData.secondname.now
+    player.sendMessage({ translate: "cw.secondnameform.beforechanged", with: [playerData?.secondname.before[now[0]], playerData?.secondname.before[now[0]] + playerData?.secondname.after[now[1]]] });
+    SecondName.secondNameForm(player);
+
 }
 
-    async function afterForm(player) {
-        const playerData = playerDatas.get(player.id)
-        const form = new ActionFormData();
-        form.title({ translate: "cw.secondnameform.after" });
-        for (const button of playerData.secondname.after) {
-            form.button(`${button}`);
-        }
-        const res = await form.show(player);
-        if (res.canceled) return;
-        playerData.secondname.now[1] = res.selection
-        playerDatas.set(player.id,playerData)
-        const now = playerData.secondname.now
-        player.sendMessage({ translate: "cw.secondnameform.afterchanged", with: [playerData?.secondname.after[now[1]], playerData?.secondname.before[now[0]]+playerData?.secondname.after[now[1]]] });
-        SecondName.secondNameForm(player);
+async function afterForm(player) {
+    const playerData = playerDatas.get(player.id)
+    const form = new ActionFormData();
+    form.title({ translate: "cw.secondnameform.after", with: [""] });
+    for (const button of playerData.secondname.after) {
+        form.button(`${button}`);
     }
+    const res = await form.show(player);
+    if (res.canceled) return;
+    playerData.secondname.now[1] = res.selection
+    playerDatas.set(player.id, playerData)
+    const now = playerData.secondname.now
+    player.sendMessage({ translate: "cw.secondnameform.afterchanged", with: [playerData?.secondname.after[now[1]], playerData?.secondname.before[now[0]] + playerData?.secondname.after[now[1]]] });
+    SecondName.secondNameForm(player);
+}
 
