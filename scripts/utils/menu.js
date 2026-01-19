@@ -234,7 +234,7 @@ async function DeleteCountry(player) {
         .map(id => countryDatas.get(id))
         .filter(country => country?.name);
     const form = new ui.ActionFormData();
-    form.title("cw.menu.deletecountry.title");
+    form.title("cw.menu.deletecountry");
     for (const country of countries) {
         form.button(country.name);
     }
