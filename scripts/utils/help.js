@@ -25,6 +25,42 @@ export class Help {
         }
     }
 }
+async function show_howtoplay(player) {
+    const form = new ActionFormData()
+    form.title({ translate: "cw.help.howtoplay" })
+    const commands = ["whatisthisgame","mainguide"]
+    for (const command of commands) {
+        form.button({ translate: `cw.help.howtoplay.${command}.title` })
+    }
+    form.show(player).then((res) => {
+        if (res.canceled) {
+            Help.mainForm(player)
+            return;
+        }
+        const selectedCommand = commands[res.selection];
+        showhowtoplayHelp(player, selectedCommand);
+    })
+}
+const helphowtoplayData = {
+    "whatisthisgame": { title: "cw.help.howtoplay.whatisthisgame.title", body: "cw.help.howtoplay.whatisthisgame.body" },
+    "mainguide": { title: "cw.help.howtoplay.mainguide.title", body: "cw.help.howtoplay.mainguide.body" },
+    // 他のコマンドも同様に定義（ここでは例として一部のみ）
+};
+
+async function showhowtoplayHelp(player, command) {
+    const data = helphowtoplayData[command];
+    if (!data) return;
+    const newform = new ui.ActionFormData();
+    newform.title({ translate: data.title });
+    newform.body({ translate: data.body });
+    newform.button({ translate: "cw.form.redo" });
+    newform.show(player).then((res) => {
+        if (res.canceled || res.selection === 0) {
+            show_howtoplay(player);
+            return;
+        }
+    });
+}
 
 
 
@@ -48,7 +84,7 @@ async function show_commands(player) {
     })
 }
 
-const helpData = {
+const helpcommandData = {
     "/money": { title: "cw.help.commands.money.title", body: "cw.help.commands.money.body" },
     "/bank": { title: "cw.help.commands.bank.title", body: "cw.help.commands.bank.body" },
     "/sethome": { title: "cw.help.commands.sethome.title", body: "cw.help.commands.sethome.body" },
@@ -68,7 +104,7 @@ const helpData = {
 };
 
 async function showCommandHelp(player, command) {
-    const data = helpData[command];
+    const data = helpcommandData[command];
     if (!data) return;
     const newform = new ui.ActionFormData();
     newform.title({ translate: data.title });
