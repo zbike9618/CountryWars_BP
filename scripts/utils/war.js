@@ -105,31 +105,32 @@ export class War {
 world.afterEvents.entityDie.subscribe(ev => {
     const core = ev.deadEntity;
     const player = ev.damageSource.damagingEntity;
-    if (player && player.typeId == "minecraft:player")
+    if (player && player.typeId == "minecraft:player") {
         if (core.typeId !== "cw:core") return;
 
 
 
 
-    //----------------------------------------------
-    const playerData = playerDatas.get(player.id)
-    const mineData = countryDatas.get(playerData.country)
-    const chunkId = core.getDynamicProperty("core");
-    const cc = Chunk.checkChunk(chunkId)
-    const countryData = countryDatas.get(cc);
-    if (!countryData) return;
-    if (!mineData.robbedChunkAmount[countryData.id]) {
-        mineData.robbedChunkAmount[countryData.id] = 0;
-    }
-    mineData.robbedChunkAmount[countryData.id]++;
-    countryData.chunkAmount--;
-    mineData.chunkAmount++;
-    countryDatas.set(mineData.id, mineData);
-    countryDatas.set(countryData.id, countryData);
-    Chunk.setChunk(chunkId, mineData)
-    world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
-    if (countryData.chunkAmount == 0) {
-        War.finish(mineData, countryData, "invade")
+        //----------------------------------------------
+        const playerData = playerDatas.get(player.id)
+        const mineData = countryDatas.get(playerData.country)
+        const chunkId = core.getDynamicProperty("core");
+        const cc = Chunk.checkChunk(chunkId)
+        const countryData = countryDatas.get(cc);
+        if (!countryData) return;
+        if (!mineData.robbedChunkAmount[countryData.id]) {
+            mineData.robbedChunkAmount[countryData.id] = 0;
+        }
+        mineData.robbedChunkAmount[countryData.id]++;
+        countryData.chunkAmount--;
+        mineData.chunkAmount++;
+        countryDatas.set(mineData.id, mineData);
+        countryDatas.set(countryData.id, countryData);
+        Chunk.setChunk(chunkId, mineData)
+        world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
+        if (countryData.chunkAmount == 0) {
+            War.finish(mineData, countryData, "invade")
+        }
     }
     //----------------------------------------------
 })

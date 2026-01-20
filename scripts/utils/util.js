@@ -106,4 +106,23 @@ export class Util {
         }
         return list;
     }
+    static getForwardPosition(player, distance, floor = false) {
+
+        // 基準位置（頭の位置が欲しければ getHeadLocation に変えてOK）
+        const base = player.location;
+        // 向いている方向（長さ1のベクトル）
+        const dir = player.getViewDirection();
+        if (floor) {
+            return {
+                x: Math.floor(base.x + dir.x * distance),
+                y: Math.floor(base.y + dir.y * distance),
+                z: Math.floor(base.z + dir.z * distance),
+            };
+        }
+        return {
+            x: base.x + dir.x * distance,
+            y: base.y + dir.y * distance,
+            z: base.z + dir.z * distance,
+        };
+    }
 }

@@ -34,7 +34,4 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lのタグを§r§a§lリセットしました`);
         }
     }
-    if (ev.id == "cw:test") {
-        world.sendMessage(`${countryDatas.idList}`)
-    }
 })
