@@ -1,8 +1,10 @@
 import * as ui from "@minecraft/server-ui";
+import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui"
 import { system, world } from "@minecraft/server";
 import { Util } from "../utils/util";
 import { Dypro } from "../utils/dypro";
 import { Country } from "../utils/country";
+import { War } from "../utils/war";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 
@@ -13,7 +15,7 @@ export class Menu {
         form.button({ translate: "cw.menu.movemoney" });
         form.button({ translate: "cw.menu.secondname" });
         form.button({ translate: "cw.menu.playerdatareset" });
-        //form.button({ translate: "cw.menu.deletecountry" })
+        form.button({ translate: "cw.menu.deletecountry" })
         form.show(player).then((response) => {
             if (response.canceled) return;
             if (response.selection === 0) {
@@ -228,9 +230,12 @@ async function PlayerDataReset(player) {
 }
 
 async function DeleteCountry(player) {
+    const countries = countryDatas.idList
+        .map(id => countryDatas.get(id))
+        .filter(country => country?.name);
     const form = new ui.ActionFormData();
-    form.title("cw.menu.deletecountry.title");
-    for (const country of countryDatas.get(id)?.name) {
+    form.title("cw.menu.deletecountry");
+    for (const country of countries) {
         form.button(country.name);
     }
     form.show(player).then((response) => {
@@ -238,7 +243,53 @@ async function DeleteCountry(player) {
             Menu.showForm(player);
             return;
         };
-        const countryData = countryDatas.get(response.selection);
-        Country.delete(countryData.id);
-    })
+        const newform = new MessageFormData()
+        const playerData = playerDatas.get(player.id)
+        const countryData = playerData.country ? countryDatas.get(playerData.country) : "none";
+        newform.title({ translate: "cw.scform.delete" })
+        newform.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
+        newform.button1({ translate: "cw.form.yes" })
+        newform.button2({ translate: "cw.form.no" })
+        newform.show(player).then((res) => {
+        if (res.canceled || res.selection == 1) return;
+        const selectedCountry = countries[response.selection];
+        if (!selectedCountry) return; // safety check
+        deleteCountry(selectedCountry);
+    })});
+}
+async function deleteCountry(countryData) {
+    if (countryData.players !== undefined) {
+        const players = countryData.players;
+        for (const playerId of players) {
+            const playerData = playerDatas.get(playerId);
+            playerData.country = undefined;
+            playerData.permission = "";
+            playerDatas.set(playerId, playerData);
+        }
+    }
+    const chunk = world.getDynamicProperty("chunk")
+    //chunkも消す
+    if (chunk) {
+        const chunkObj = JSON.parse(chunk);
+        const removeChunk = [];
+        for (const key in chunkObj) {
+            if (chunkObj[key].country === countryData.id) removeChunk.push(key);
+        }
+        for (const key of removeChunk) {
+            //world.sendMessage(`${chunkObj[key]}`)
+            chunkObj.splice(key, 1);
+
+        }
+        world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
+    }
+    //戦争中なら戦争を終わらせる
+    if (countryData.warcountry && countryData.warcountry.length > 0) {
+        for (const warcountryId of countryData.warcountry) {
+            const warcountryData = countryDatas.get(warcountryId);
+            War.finish(warcountryData, countryData, "invade");
+        }
+    }
+
+    countryDatas.delete(countryData.id);
+    world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
 }

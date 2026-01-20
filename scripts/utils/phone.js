@@ -3,6 +3,7 @@ import { ActionFormData } from "@minecraft/server-ui";
 import { Dypro } from "./dypro.js";
 import { ChestFormData } from "./chest_shop/chest-ui.js";
 import { SecondName } from "./secondname.js";
+import { Help } from "./help.js";
 const playerDatas = new Dypro("player");
 
 //スマホ使用時
@@ -15,7 +16,7 @@ world.afterEvents.itemUse.subscribe((event) => {
 });
 
 function show_form(player) {
-    const form = new ChestFormData("large")
+    const form = new ChestFormData("small")
     const data = playerDatas.get(player.id);
     const money = data.money || 0;
     form.setTitle("ZPhone"),
@@ -89,7 +90,7 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(26, {
-        iconPath: "textures/items/diamond",
+        iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
         stackAmount: 1,
         lore: ["comming soon..."],
@@ -126,7 +127,7 @@ function show_form(player) {
                 player.sendMessage("comming soon...");
                 break;
             case 26:
-                player.sendMessage("comming soon...");
+                Help.mainForm(player);
                 break;
             default:
                 break;
