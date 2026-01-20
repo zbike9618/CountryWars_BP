@@ -9,7 +9,7 @@ const playerDatas = new Dypro("player");
 
 server.system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
-        name: "cw:listcountry",
+        name: "cw:countrylist",
         description: "国の一覧を表示するコマンド",
         permissionLevel: server.CommandPermissionLevel.Any,
         mandatoryParameters: [
@@ -27,7 +27,7 @@ server.system.beforeEvents.startup.subscribe(ev => {
 });
 server.system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
-        name: "cw:lc",
+        name: "cw:cl",
         description: "国の一覧を表示するコマンド",
         permissionLevel: server.CommandPermissionLevel.Any,
         mandatoryParameters: [
@@ -46,9 +46,9 @@ server.system.beforeEvents.startup.subscribe(ev => {
 
 function showCountryList(player) {
     const form = new ActionFormData();
-    form.title({ translate: "cw.listcountry.title" });
+    form.title({ translate: "cw.countrylist.title" });
     if (countryDatas.idList.length === 0) {
-        form.body({ translate: "cw.listcountry.nocountry" });
+        form.body({ translate: "cw.countrylist.nocountry" });
         form.show(player);
         return;
     }
@@ -66,24 +66,24 @@ function showCountryList(player) {
 }
 
 async function information(player, countryData) {
-        const form = new ActionFormData()
-        form.title({ translate: "cw.scform.information" })
-        form.body({
-            translate: "cw.scform.informations", with: [
-                `${countryData.name}`,
-                `${countryData.description}`,
-                `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
-                `${countryData.money}`,
-                `${countryData.chunkAmount}`,
-                `${countryData.tax.consumption}`,
-                `${countryData.tax.income}`,
-                `${countryData.tax.country}`,
-                `${countryData.tax.customs}`
-            ]
-        })
-        form.button({ translate: "cw.listcountry.info.ok" })
-        form.show(player).then((res) => {
+    const form = new ActionFormData()
+    form.title({ translate: "cw.scform.information" })
+    form.body({
+        translate: "cw.scform.informations", with: [
+            `${countryData.name}`,
+            `${countryData.description}`,
+            `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+            `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+            `${countryData.money}`,
+            `${countryData.chunkAmount}`,
+            `${countryData.tax.consumption}`,
+            `${countryData.tax.income}`,
+            `${countryData.tax.country}`,
+            `${countryData.tax.customs}`
+        ]
+    })
+    form.button({ translate: "cw.form.redo" })
+    form.show(player).then((res) => {
         if (res.canceled) {
             showCountryList(player)
         }

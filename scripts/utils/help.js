@@ -28,7 +28,7 @@ export class Help {
 async function show_howtoplay(player) {
     const form = new ActionFormData()
     form.title({ translate: "cw.help.howtoplay" })
-    const commands = ["whatisthisgame","mainguide"]
+    const commands = ["whatisthisgame", "mainguide"]
     for (const command of commands) {
         form.button({ translate: `cw.help.howtoplay.${command}.title` })
     }
@@ -70,7 +70,7 @@ async function showhowtoplayHelp(player, command) {
 async function show_commands(player) {
     const form = new ActionFormData()
     form.title({ translate: "cw.help.commands" })
-    const commands = ["/money", "/bank", "/sethome", "/home", "/jobs", "/tpaccept", "/messagebox", "/listcountry", "/playermarket", "/makecountry", "/settingscountry", "/buychunk", "/sellchunk", "/checkchunk", "/war"]
+    const commands = ["/money", "/bank", "/sethome", "/home", "/jobs", "/tpaccept", "/messagebox", "/countrylist", "/playermarket", "/makecountry", "/settingscountry", "/buychunk", "/sellchunk", "/checkchunk", "/war"]
     for (const command of commands) {
         form.button({ text: command })
     }
@@ -92,7 +92,7 @@ const helpcommandData = {
     "/jobs": { title: "cw.help.commands.jobs.title", body: "cw.help.commands.jobs.body" },
     "/tpaccept": { title: "cw.help.commands.tpaccept.title", body: "cw.help.commands.tpaccept.body" },
     "/messagebox": { title: "cw.help.commands.messagebox.title", body: "cw.help.commands.messagebox.body" },
-    "/listcountry": { title: "cw.help.commands.listcountry.title", body: "cw.help.commands.listcountry.body" },
+    "/countrylist": { title: "cw.help.commands.countrylist.title", body: "cw.help.commands.countrylist.body" },
     "/playermarket": { title: "cw.help.commands.playermarket.title", body: "cw.help.commands.playermarket.body" },
     "/makecountry": { title: "cw.help.commands.makecountry.title", body: "cw.help.commands.makecountry.body" },
     "/settingscountry": { title: "cw.help.commands.settingscountry.title", body: "cw.help.commands.settingscountry.body" },

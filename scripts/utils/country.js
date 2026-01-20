@@ -165,7 +165,7 @@ export class Country {
 }
 class Information {
     static async information(player, countryData) {
-        const form = new MessageFormData()
+        const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
         form.body({
             translate: "cw.scform.informations", with: [
@@ -181,12 +181,9 @@ class Information {
                 `${countryData.tax.customs}`
             ]
         })
-        form.button1({ translate: "cw.form.redo" })
+        form.button({ translate: "cw.form.redo" })
         if (hasPermission(player, "information")) {
-            form.button2({ translate: "cw.scform.setting" })
-        }
-        else {
-            form.button2({ translate: "cw.form.cancel" })
+            form.button({ translate: "cw.scform.setting" })
         }
 
         const res = await form.show(player)
@@ -194,10 +191,8 @@ class Information {
             Country.setting(player, countryData)
         }
         if (res.selection == 1) {
+            this.edit(player, countryData)
 
-            if (hasPermission(player, "information")) {
-                this.edit(player, countryData)
-            }
         }
 
     }
