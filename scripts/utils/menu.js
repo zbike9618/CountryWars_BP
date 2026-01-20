@@ -214,16 +214,9 @@ async function PlayerDataReset(player) {
             player.sendMessage({ translate: "cw.menu.playerdatareset.error" });
             return;
         } else if (response.formValues[1] === true) {
-            const playerData = playerDatas.get(player.id)
             const playerId = allPlayers[response.formValues[0]];
-            const countryData = playerData.country ? countryDatas.get(playerData.country) : "none";
-            playerData.country = undefined
-            playerDatas.set(playerId, playerData)
-            if (countryData !== "none") {
-                countryData.players.splice(countryData.players.indexOf(playerId), 1)
-                countryDatas.set(countryData.id, countryData)
-            }
-            player.setDynamicProperty("initial", false);
+            playerDatas.delete(playerId)
+            world.getEntity(playerId).setDynamicProperty("initial", false);
             player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${playerId.name}`] });
         }
     })
@@ -251,45 +244,10 @@ async function DeleteCountry(player) {
         newform.button1({ translate: "cw.form.yes" })
         newform.button2({ translate: "cw.form.no" })
         newform.show(player).then((res) => {
-        if (res.canceled || res.selection == 1) return;
-        const selectedCountry = countries[response.selection];
-        if (!selectedCountry) return; // safety check
-        deleteCountry(selectedCountry);
-    })});
-}
-async function deleteCountry(countryData) {
-    if (countryData.players !== undefined) {
-        const players = countryData.players;
-        for (const playerId of players) {
-            const playerData = playerDatas.get(playerId);
-            playerData.country = undefined;
-            playerData.permission = "";
-            playerDatas.set(playerId, playerData);
-        }
-    }
-    const chunk = world.getDynamicProperty("chunk")
-    //chunkも消す
-    if (chunk) {
-        const chunkObj = JSON.parse(chunk);
-        const removeChunk = [];
-        for (const key in chunkObj) {
-            if (chunkObj[key].country === countryData.id) removeChunk.push(key);
-        }
-        for (const key of removeChunk) {
-            //world.sendMessage(`${chunkObj[key]}`)
-            chunkObj.splice(key, 1);
-
-        }
-        world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
-    }
-    //戦争中なら戦争を終わらせる
-    if (countryData.warcountry && countryData.warcountry.length > 0) {
-        for (const warcountryId of countryData.warcountry) {
-            const warcountryData = countryDatas.get(warcountryId);
-            War.finish(warcountryData, countryData, "invade");
-        }
-    }
-
-    countryDatas.delete(countryData.id);
-    world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
+            if (res.canceled || res.selection == 1) return;
+            const selectedCountry = countries[response.selection];
+            if (!selectedCountry) return; // safety check
+            Country.delete(selectedCountry);
+        })
+    });
 }

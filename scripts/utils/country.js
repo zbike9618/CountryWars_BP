@@ -84,6 +84,7 @@ export class Country {
         if (countryData.warcountry.length > 0) {
             for (const warcountryId of countryData.warcountry) {
                 const warcountryData = countryDatas.get(warcountryId);
+                if (!warcountryData) continue;
                 War.finish(warcountryData, countryData, "invade");
             }
         }

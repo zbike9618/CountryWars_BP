@@ -89,6 +89,13 @@ function show_form(player) {
         lore: ["comming soon..."],
         isGlint: true, editedName: true
     })
+    form.setButton(9, {
+        iconPath: "textures/ui/automation_glyph_color",
+        name: "cw.scform.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.setButton(26, {
         iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",

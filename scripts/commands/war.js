@@ -61,7 +61,7 @@ async function warForm(player, countryData) {
     const form = new ActionFormData()
     form.title({ translate: `cw.warform.title` })
     form.button({ translate: `cw.warform.declare` })//宣戦布告
-    form.button({ translate: `cw.warform.join` })
+    form.button({ translate: `cw.warform.peace` })
     const res = await form.show(player)
     if (res.selection === 0) {
         declareForm(player, countryData)
@@ -75,6 +75,10 @@ async function declareForm(player, countryData) {
     const countriesData = countryDatas.idList.map(id => countryDatas.get(id)).filter(data => data.id !== countryData.id && !data.warcountry.includes(countryData.id))
     if (countriesData.length == 0) {
         player.sendMessage({ translate: "cw.warform.declare.none" })
+        return
+    }
+    if (countryData.isPeace) {
+        player.sendMessage({ translate: "cw.warform.declare.peace" })
         return
     }
     form.title({ translate: `cw.warform.declare` })

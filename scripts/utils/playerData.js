@@ -32,6 +32,9 @@ world.afterEvents.playerSpawn.subscribe(ev => {
         if (countryData && countryData.warcountry.length == 0) {
             player.removeTag("cw:duringwar")
         }
+        else {
+            player.addTag("cw:duringwar")
+        }
 
     }
 })

@@ -75,7 +75,7 @@ export class War {
      */
     static finish(winnerData, loserData, type) {
         if (type == "invade") {//国は滅ぼさない
-            const chunkAmount = winnerData.robbedChunkAmount
+            const chunkAmount = winnerData.robbedChunkAmount || 0;
             const number = chunkAmount[loserData.id] * 20000 || 0;
             loserData.money -= number
             winnerData.money += number
@@ -169,3 +169,17 @@ world.afterEvents.entityDie.subscribe(ev => {
         }
     }
 });
+//ダメージを相殺
+world.afterEvents.entityHurt.subscribe((ev) => {
+    const player = ev.damageSource.damagingEntity;
+    const hitEntity = ev.hurtEntity;
+    if (!player || player.typeId === "minecraft:player") return
+    if (!hitEntity || hitEntity.typeId === "minecraft:player") return
+    if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {
+        Util.heal(hitEntity, ev.damage)
+        hitEntity.clearVelocity()
+        player.addEffect("weakness", 60, { amplifier: 255, showParticles: false })
+        player.addEffect("slowness", 60, { amplifier: 4, showParticles: false })
+        player.sendMessage({ translate: "cw.war.attacknowar" })
+    }
+})

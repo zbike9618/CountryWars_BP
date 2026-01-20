@@ -106,7 +106,7 @@ export class Util {
         }
         return list;
     }
-    static getForwardPosition(player, distance, floor = false) {
+    /*static getForwardPosition(player, distance, floor = false) {
 
         // 基準位置（頭の位置が欲しければ getHeadLocation に変えてOK）
         const base = player.location;
@@ -124,5 +124,26 @@ export class Util {
             y: base.y + dir.y * distance,
             z: base.z + dir.z * distance,
         };
+    }*/
+    /**
+ * 回復する関数
+ * @param {*} entity 
+ * @param {*} number 
+ * @returns 
+ */
+    static heal(entity, number = 0) {
+        try {
+            const comp = entity.getComponent("minecraft:health")
+            const value = comp.currentValue
+            let all = value + number
+            if (comp.effectiveMax < all) {
+                all = comp.effectiveMax
+            }
+            comp.setCurrentValue(all)
+            return true;
+        }
+        catch (c) {
+            return false;
+        }
     }
 }
