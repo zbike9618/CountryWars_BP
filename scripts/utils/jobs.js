@@ -122,8 +122,8 @@ world.afterEvents.playerPlaceBlock.subscribe(ev => {
  */
 world.afterEvents.entityDie.subscribe(ev => {
     const { deadEntity, damageSource } = ev;
-    const killer = damageSource?.damagingEntity;
-    if (!killer) return;
+    const killer = damageSource.damagingEntity;
+    if (!killer || killer.typeId !== "minecraft:player") return;
 
     const mobId = deadEntity.typeId;
 

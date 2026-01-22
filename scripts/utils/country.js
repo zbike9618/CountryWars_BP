@@ -7,6 +7,7 @@ import { Dypro } from "./dypro";
 import { Data } from "./data";
 import { ShortPlayerData } from "./playerData";
 import { sendDataForPlayers } from "./sendData";
+import { War } from "./war";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class Country {
@@ -14,7 +15,7 @@ export class Country {
     static async makeForm(player) {
         const playerData = playerDatas.get(player.id);
         if (playerData.country) {
-            world.sendMessage({ translate: "cw.mcform.alreadyCountry" })
+            player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
             return;
         }
         const form = new ModalFormData()
@@ -25,7 +26,7 @@ export class Country {
         const res = await form.show(player)
         if (res.canceled) return;
         if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(res.formValues[0])) {
-            world.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
+            player.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
             return;
         }
         this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
@@ -56,8 +57,12 @@ export class Country {
             players: [player.id],
             permissions: { "国王": Data.permissions },
             chunkAmount: 0,
+            robbedChunkAmount: [],//国ごとに保存
+            wardeath: 0,//戦争中に死んでいい回数
             //同盟国などはあとで
-            warcountry: [],
+            warcountry: [],//戦争中
+
+
         }
         countryDatas.set(id, countryData);
         const playerData = playerDatas.get(player.id);
@@ -75,7 +80,14 @@ export class Country {
             playerDatas.set(playerId, playerData);
         }
         const chunk = world.getDynamicProperty("chunk")
-        world.sendMessage(`${chunk}`)
+        //戦争中なら戦争を終わらせる
+        if (countryData.warcountry.length > 0) {
+            for (const warcountryId of countryData.warcountry) {
+                const warcountryData = countryDatas.get(warcountryId);
+                if (!warcountryData) continue;
+                War.finish(warcountryData, countryData, "invade");
+            }
+        }
         //chunkも消す
         if (chunk) {
             const chunkObj = JSON.parse(chunk);
@@ -90,6 +102,7 @@ export class Country {
             }
             world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
         }
+
 
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
@@ -153,7 +166,7 @@ export class Country {
 }
 class Information {
     static async information(player, countryData) {
-        const form = new MessageFormData()
+        const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
         form.body({
             translate: "cw.scform.informations", with: [
@@ -169,12 +182,9 @@ class Information {
                 `${countryData.tax.customs}`
             ]
         })
-        form.button1({ translate: "cw.form.redo" })
+        form.button({ translate: "cw.form.redo" })
         if (hasPermission(player, "information")) {
-            form.button2({ translate: "cw.scform.setting" })
-        }
-        else {
-            form.button2({ translate: "cw.form.cancel" })
+            form.button({ translate: "cw.scform.setting" })
         }
 
         const res = await form.show(player)
@@ -182,10 +192,8 @@ class Information {
             Country.setting(player, countryData)
         }
         if (res.selection == 1) {
+            this.edit(player, countryData)
 
-            if (hasPermission(player, "information")) {
-                this.edit(player, countryData)
-            }
         }
 
     }

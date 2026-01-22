@@ -5,7 +5,7 @@ import "./utils/interval"
 import "./items/items"
 import "./utils/chat"
 world.afterEvents.worldLoad.subscribe(() => {
-    for (const player of world.getPlayers()) {
+    for (const player of world.getAllPlayers()) {
         player.inputPermissions.setPermissionCategory(6, true)
     }
 })

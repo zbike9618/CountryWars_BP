@@ -96,11 +96,50 @@ export class Util {
         const players = world.getAllPlayers();
         const list = [];
         for (const player of players) {
-            const playerData = playerDatas.get(player.id);
-            if (playerData.id == countryData.id) {
+            if (countryData.players.includes(player.id)) {
                 list.push(player);
             }
         }
         return list;
+    }
+    /*static getForwardPosition(player, distance, floor = false) {
+
+        // 基準位置（頭の位置が欲しければ getHeadLocation に変えてOK）
+        const base = player.location;
+        // 向いている方向（長さ1のベクトル）
+        const dir = player.getViewDirection();
+        if (floor) {
+            return {
+                x: Math.floor(base.x + dir.x * distance),
+                y: Math.floor(base.y + dir.y * distance),
+                z: Math.floor(base.z + dir.z * distance),
+            };
+        }
+        return {
+            x: base.x + dir.x * distance,
+            y: base.y + dir.y * distance,
+            z: base.z + dir.z * distance,
+        };
+    }*/
+    /**
+ * 回復する関数
+ * @param {*} entity 
+ * @param {*} number 
+ * @returns 
+ */
+    static heal(entity, number = 0) {
+        try {
+            const comp = entity.getComponent("minecraft:health")
+            const value = comp.currentValue
+            let all = value + number
+            if (comp.effectiveMax < all) {
+                all = comp.effectiveMax
+            }
+            comp.setCurrentValue(all)
+            return true;
+        }
+        catch (c) {
+            return false;
+        }
     }
 }

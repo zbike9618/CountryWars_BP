@@ -1,15 +1,13 @@
 import * as server from "@minecraft/server";
-import { world, system, CommandPermissionLevel, CustomCommandStatus } from "@minecraft/server";
-import { Util } from "../utils/util";
-import { default as config } from "../config/config.js";
-import { Jobs } from "../utils/jobs.js";
+import { system, world } from "@minecraft/server";
+import { Menu } from "../utils/menu.js";
 
 
 server.system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
-        name: "cw:jobs",
-        description: "職業を選択するコマンド",
-        permissionLevel: server.CommandPermissionLevel.Any,
+        name: "cw:menu",
+        description: "管理者用ツール[管理者専用]",
+        permissionLevel: server.CommandPermissionLevel.Admin,
         mandatoryParameters: [
         ],
         optionalParameters: [
@@ -18,7 +16,7 @@ server.system.beforeEvents.startup.subscribe(ev => {
         if (origin.sourceEntity?.typeId === "minecraft:player") {
             let player = origin.sourceEntity;
             system.run(() => {  // 1tick後に安全に実行
-                Jobs.showForm(player);
+                Menu.showForm(player);
             });
         }
     });

@@ -9,7 +9,7 @@ world.afterEvents.worldLoad.subscribe((event) => {
 
 
     system.runInterval(() => {
-        for (const player of world.getPlayers()) {
+        for (const player of world.getAllPlayers()) {
             const comp = player.getComponent("minecraft:equippable")
             if (!comp) return;
             const item = comp.getEquipment("Head")
@@ -28,26 +28,26 @@ world.afterEvents.worldLoad.subscribe((event) => {
 world.afterEvents.itemUse.subscribe((event) => {
     const player = event.source;
     const itemId = event.itemStack.typeId; // ← typeId に修正（Idではない）
-    
-    if(itemId === "cw:magnet"){
+
+    if (itemId === "cw:magnet") {
         const playerPos = player.location; // プレイヤーの正確な位置
         const dimension = player.dimension;
-        
+
         // 半径20ブロック内のアイテムエンティティを取得
         const nearbyEntities = dimension.getEntities({
-    location: playerPos,
-    maxDistance: 20,
-    type: "minecraft:item"
-});
+            location: playerPos,
+            maxDistance: 20,
+            type: "minecraft:item"
+        });
 
-for (const entity of nearbyEntities) {
-    entity.teleport(playerPos, {
-        dimension,
-        rotation: { x: 0, y: 0 },
-        facingLocation: playerPos,
-        checkForBlocks: false
-    });
-}
+        for (const entity of nearbyEntities) {
+            entity.teleport(playerPos, {
+                dimension,
+                rotation: { x: 0, y: 0 },
+                facingLocation: playerPos,
+                checkForBlocks: false
+            });
+        }
 
     }
 });

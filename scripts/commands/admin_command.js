@@ -1,6 +1,7 @@
 import { Util } from "../utils/util";
-import { system } from "@minecraft/server";
-
+import { world, system } from "@minecraft/server";
+import { Dypro } from "../utils/dypro";
+const countryDatas = new Dypro("country");
 // ===== 管理者用金銭操作コマンド =====
 system.afterEvents.scriptEventReceive.subscribe(ev => {
     if (ev.id == "cw:setmoney") {

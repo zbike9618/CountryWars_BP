@@ -61,7 +61,7 @@ async function warForm(player, countryData) {
     const form = new ActionFormData()
     form.title({ translate: `cw.warform.title` })
     form.button({ translate: `cw.warform.declare` })//宣戦布告
-    form.button({ translate: `cw.warform.join` })
+    form.button({ translate: `cw.warform.peace` })
     const res = await form.show(player)
     if (res.selection === 0) {
         declareForm(player, countryData)
@@ -72,13 +72,33 @@ async function warForm(player, countryData) {
 }
 async function declareForm(player, countryData) {
     const form = new ModalFormData()
-    const countriesData = countryDatas.idList.map(id => countryDatas.get(id)).filter(data => data.id !== countryData.id)
+    const countriesData = countryDatas.idList.map(id => countryDatas.get(id)).filter(data => data.id !== countryData.id && !data.warcountry.includes(countryData.id))
+    if (countriesData.length == 0) {
+        player.sendMessage({ translate: "cw.warform.declare.none" })
+        return
+    }
+    if (countryData.isPeace) {
+        player.sendMessage({ translate: "cw.warform.declare.peace" })
+        return
+    }
     form.title({ translate: `cw.warform.declare` })
     world.sendMessage(`${countriesData.map(data => data.name)}`)
     form.dropdown({ translate: `cw.form.countrychoise` }, countriesData.map(data => data.name))
     const res = await form.show(player)
     if (res.canceled) return;
     const enemyData = countriesData[res.formValues[0]];
+    if (enemyData.chunkAmount == 0 || countryData.chunkAmount == 0) {
+        const mform = new MessageFormData()
+        mform.title({ translate: `cw.warform.declare` })
+        mform.body({ translate: `cw.warform.declare.nochunk` })
+        mform.button1({ translate: "cw.form.redo" })
+        mform.button2({ translate: "cw.form.cancel" })
+        const resp = await mform.show(player)
+        if (resp.selection === 0) {
+            declareForm(player, countryData)
+        }
+        return
+    }
     const mform = new MessageFormData()
     mform.title({ translate: `cw.warform.declare` })
     mform.body({ translate: `cw.warform.declare.check`, with: [enemyData.name] })
@@ -89,7 +109,7 @@ async function declareForm(player, countryData) {
         War.declareTo(countryData, enemyData)
         //宣戦布告を送信
         world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
-        for (const player of world.getPlayers()) {
+        for (const player of world.getAllPlayers()) {
             player.playSound("mob.enderdragon.growl")
         }
         for (const player of Util.GetCountryPlayer(enemyData)) {

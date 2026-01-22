@@ -3,7 +3,7 @@ import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-
+const countryDatas = new Dypro("country");
 world.afterEvents.playerSpawn.subscribe(ev => {
     const player = ev.player;
     const initialSpawn = ev.initialSpawn;
@@ -17,14 +17,25 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             job: undefined,//levelはこのの中にobjectとして入れる
             permission: "",
             secondname: {
-                before: [],
-                after: [],
+                before: ["一般的な"],
+                after: ["鯖民"],
                 now: [0, 0]
             }
         }
         playerDatas.set(player.id, playerData);
         DoInitialSpawn(player);//初期スポーンメッセージ等 
         player.setDynamicProperty("initial", true);
+    }
+    if (initialSpawn) {
+        const playerData = playerDatas.get(player.id)
+        const countryData = countryDatas.get(playerData.country)
+        if (countryData && countryData.warcountry.length == 0) {
+            player.removeTag("cw:duringwar")
+        }
+        else {
+            player.addTag("cw:duringwar")
+        }
+
     }
 })
 

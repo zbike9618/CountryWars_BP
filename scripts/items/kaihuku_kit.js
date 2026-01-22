@@ -1,27 +1,7 @@
 import { world, system, Player } from "@minecraft/server";
 import { Util } from "../utils/util";
 const cooldowns = new Map();
-/**
- * 回復する関数
- * @param {*} entity 
- * @param {*} number 
- * @returns 
- */
-function heal(entity, number = 0) {
-    try {
-        const comp = entity.getComponent("minecraft:health")
-        const value = comp.currentValue
-        let all = value + number
-        if (comp.effectiveMax < all) {
-            all = comp.effectiveMax
-        }
-        comp.setCurrentValue(all)
-        return true;
-    }
-    catch (c) {
-        return false;
-    }
-}
+
 
 const healArray = [10, 25, 40]
 /**
@@ -40,7 +20,7 @@ async function kaihuku(player, number) {
     });
     await system.waitTicks(20 * number)
     player.playSound("random.levelup");
-    heal(player, healArray[number - 1])
+    Util.heal(player, healArray[number - 1])
     player.inputPermissions.setPermissionCategory(6, true)
 
 }
