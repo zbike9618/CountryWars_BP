@@ -1,4 +1,9 @@
 import { world, system, } from "@minecraft/server";
+import "./kaihuku_kit.js";
+import "./xp_box.js";
+import "./mega_item.js";
+import "./shinai.js";
+import "./security_camera.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 

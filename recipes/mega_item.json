@@ -1,0 +1,36 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:xp_box_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "YYY",
+            "XCX",
+            "XDX"
+        ],
+        "key": {
+            "X": {
+                "item": "minecraft:planks"
+            },"Y": {
+                "item": "minecraft:iron_block"
+            },"C": {
+                "item": "minecraft:chest"
+            },"D": {
+                "item": "minecraft:diamond"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:chest"
+            }
+        ],
+        "result": {
+            "item": "cw:mega_item",
+            "count": 1
+        }
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:shinai_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "X",
+            "X",
+            "Y"
+        ],
+        "key": {
+            "X": {
+                "item": "minecraft:bamboo"
+            },"Y": {
+                "item": "minecraft:stick"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:stick"
+            }
+        ],
+        "result": {
+            "item": "cw:shinai1",
+            "count": 1
+        }
+    }
+}
