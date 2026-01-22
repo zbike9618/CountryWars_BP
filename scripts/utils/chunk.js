@@ -122,7 +122,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland") {
+    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
         player.sendMessage({ translate: "cw.chunk.break", with: [countryDatas.get(countryData).name] })
 
@@ -138,7 +138,7 @@ world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland") {
+    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
         player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
 
@@ -154,7 +154,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland") {
+    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
         player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
 
@@ -177,7 +177,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
             const chunkId = Chunk.positionToChunkId(block.location);
             const countryDataId = Chunk.checkChunk(chunkId);
 
-            if (countryDataId && countryDataId !== "wasteland") {
+            if (countryDataId && countryDataId !== "wasteland" && countryDatas.get(countryDataId).warcountry.length == 0) {
                 if (!explodedInCountry) {
                     ev.cancel = true;
                     system.run(() => {
@@ -205,8 +205,9 @@ world.beforeEvents.explosion.subscribe((ev) => {
         }
 
         if (destroyBlockLocations.length > 0) {
+            const spawnpos = world.getAllPlayers()[0].location
             system.run(() => {
-                const entity = dimension.spawnEntity("cw:explosion", { x: 0, y: 200, z: 0 });
+                const entity = dimension.spawnEntity("cw:explosion", { x: spawnpos.x, y: 320, z: spawnpos.z });
                 explosionMap.set(entity.id, destroyBlockLocations);
             });
         }

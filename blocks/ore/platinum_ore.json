@@ -1,0 +1,21 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:block": {
+    "description": {
+      "identifier": "cw:platinum_ore"
+    },
+    "components": {
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 3
+      },
+      "minecraft:destructible_by_explosion": 1,
+      "minecraft:flammable": {
+        "flame_odds": 0,
+        "burn_odds": 0
+      },
+      "minecraft:map_color": "#000000",
+      "minecraft:loot": "loot_tables/block/platinum_ore.json"
+    }
+  }
+}

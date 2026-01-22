@@ -23,9 +23,12 @@ export class War {
 
     static CanInvade(player, countryData) {
         const chunk = Chunk.checkChunk(Chunk.positionToChunkId(player.location));
+        const dimension = player.dimension;
         if (chunk == "wasteland") return false;
         const enemycountryData = countryDatas.get(chunk);
         if (enemycountryData.id == countryData.id) return false;
+        const core = dimension.getEntities({ location: player.location, maxDistance: 32, closest: 10 }).filter(e => e.typeId == "cw:core");
+
         if (countryData.warcountry.includes(enemycountryData.id)) return true;
 
     }
@@ -122,13 +125,11 @@ world.afterEvents.entityDie.subscribe(ev => {
             mineData.robbedChunkAmount[countryData.id] = 0;
         }
         mineData.robbedChunkAmount[countryData.id]++;
-        countryData.chunkAmount--;
-        mineData.chunkAmount++;
         countryDatas.set(mineData.id, mineData);
         countryDatas.set(countryData.id, countryData);
         Chunk.setChunk(chunkId, mineData)
         world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
-        if (countryData.chunkAmount == 0) {
+        if (countryData.chunkAmount == 1) {
             War.finish(mineData, countryData, "invade")
         }
     }
@@ -174,12 +175,40 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId === "minecraft:player") return
-    if (!hitEntity || hitEntity.typeId === "minecraft:player") return
-    if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {
-        Util.heal(hitEntity, ev.damage)
-        hitEntity.clearVelocity()
-        player.addEffect("weakness", 60, { amplifier: 255, showParticles: false })
-        player.addEffect("slowness", 60, { amplifier: 4, showParticles: false })
-        player.sendMessage({ translate: "cw.war.attacknowar" })
+    if (!hitEntity || hitEntity.typeId !== "minecraft:player") return
+    if (player.isValid) {
+        if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {
+            Util.heal(hitEntity, ev.damage)
+            hitEntity.clearVelocity()
+            player.addEffect("weakness", 60, { amplifier: 255, showParticles: false })
+            player.addEffect("slowness", 60, { amplifier: 4, showParticles: false })
+            player.sendMessage({ translate: "cw.war.attacknowar" })
+        }
+    }
+})
+world.afterEvents.entityHurt.subscribe((ev) => {
+    const player = ev.damageSource.damagingEntity;
+    const hitEntity = ev.hurtEntity;
+    if (!player || player.typeId !== "minecraft:player") return
+    if (!hitEntity || hitEntity.typeId !== "cw:core") return
+    if (player.isValid) {
+
+        const chunkId = Chunk.positionToChunkId(hitEntity.location)
+        const countryData = countryDatas.get(Chunk.checkChunk(chunkId))
+        if (countryData.players.includes(player.id)) {
+            Util.heal(hitEntity, ev.damage)
+            hitEntity.clearVelocity()
+            player.sendMessage({ translate: "cw.war.attacknoown" })
+            return;
+        }
+
+        if (!player.hasTag("cw:duringwar")) {
+            Util.heal(hitEntity, ev.damage)
+            hitEntity.clearVelocity()
+            player.addEffect("weakness", 20, { amplifier: 255, showParticles: false })
+            player.addEffect("slowness", 20, { amplifier: 4, showParticles: false })
+            player.sendMessage({ translate: "cw.war.attacknowar" })
+        }
+
     }
 })

@@ -1,6 +1,7 @@
 import { Util } from "../utils/util";
 import { world, system } from "@minecraft/server";
 import { Dypro } from "../utils/dypro";
+const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 // ===== 管理者用金銭操作コマンド =====
 system.afterEvents.scriptEventReceive.subscribe(ev => {
@@ -33,5 +34,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             ev.sourceEntity.removeTag("job:5");
             ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lのタグを§r§a§lリセットしました`);
         }
+    }
+    if (ev.id == "cw:test") {
+
     }
 })

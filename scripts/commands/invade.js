@@ -46,6 +46,10 @@ function DoCommand(origin) {
             return;
         }
         if (War.CanInvade(player, countryData)) {
+            if (!player.hasTag("cw:duringwar")) {
+                player.sendMessage({ translate: "cw.war.nozanki" })
+                return;
+            }
             War.invade(player, countryData);
         } else {
             player.sendMessage("現在は侵略できません（人数バランスが悪いか、対象外のエリアです）");
