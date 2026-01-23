@@ -5,10 +5,11 @@ world.afterEvents.itemUse.subscribe((event) => {
 
     if (item.typeId == "cw:dice"){
     const spawnPos = player.location;
+    let n;
     if (player.isSneaking){
-        const n = 1;
+        n = 1;
     }else{
-        const n = 2;
+        n = 2;
     }
     player.dimension.spawnEntity("cw:dice", spawnPos,);
     player.runCommand(`clear @s cw:dice 0 1`)
@@ -29,14 +30,14 @@ world.afterEvents.itemUse.subscribe((event) => {
         player.playSound("block.bell.hit",{
             location: spawnPos,
         })
-        if (n == 2){
+        if (n == 1){
             const players = player.dimension.getEntities({
                 location: spawnPos,
                 maxDistance: 40,
                 type: "player"
             });
             for (const p of players){
-                p.sendMessage(`${player.name} rolled a ${diceRoll}!`);
+                p.sendMessage(`${player.name} Rolled ${diceRoll}!`);
             }};
     }, 30);
 }
