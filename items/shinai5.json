@@ -15,9 +15,7 @@
       "minecraft:hand_equipped":true,
       "minecraft:icon":"shinai",
       "minecraft:allow_off_hand":false,
-      "minecraft:durability":{
-      "max_durability": 0
-      },"minecraft:fuel":{
+      "minecraft:fuel":{
         "duration": 100
       },
        "minecraft:damage": 5

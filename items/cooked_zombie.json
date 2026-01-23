@@ -1,0 +1,30 @@
+{
+    "format_version": "1.21.130",
+    "minecraft:item": {
+        "description": {
+            "identifier": "cw:cooked_zombie",
+            "menu_category": {
+                "category": "items",
+                "group": "minecraft:itemGroup.name.miscFood"
+            }
+        },
+        "components": {
+            "minecraft:icon": "cooked_zombie",
+            "minecraft:food": {
+                "nutrition": 8,
+                "saturation_modifier": 0.4
+            },
+            "minecraft:can_always_eat": true,
+            "minecraft:use_animation": "eat",
+            "minecraft:use_modifiers": {
+                "use_duration": 2,
+                "movement_modifier": 1.0
+            },
+            "minecraft:tags": {
+                "tags": [
+                    "minecraft:is_food"
+                ]
+            }
+        }
+    }
+}
