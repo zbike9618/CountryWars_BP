@@ -182,7 +182,7 @@ world.afterEvents.entityDie.subscribe(ev => {
 world.afterEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
-    if (!player || player.typeId === "minecraft:player") return
+    if (!player || player.typeId != "minecraft:player") return
     if (!hitEntity || hitEntity.typeId !== "minecraft:player") return
     if (player.isValid) {
         if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {

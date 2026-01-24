@@ -1,0 +1,32 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:platinum_leggings_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "XXX",
+            "XCX",
+            "XCX"
+        ],
+        "key": {
+            "X": {
+                "item": "cw:platinum_ingot"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:platinum_ingot"
+            }
+        ],
+        "result": {
+            "item": "cw:platinum_leggings",
+            "count": 1
+        }
+    }
+}
