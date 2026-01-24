@@ -1,0 +1,55 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "cw:airboard",
+      "is_spawnable": true,
+      "is_summonable": true
+    },
+    "components": {
+      "minecraft:rideable": {
+  "seat_count": 2,
+  "crouching_skip_interact": true,
+  "pull_in_entities": true,
+  "family_types": [
+    "player",
+    "villager",
+    "monster"
+  ],
+  "interact_text": "action.interact.ride.horse",
+  "seats": [
+    {
+      "min_rider_count": 0,
+      "max_rider_count": 2,
+      "position": [
+        0,
+        0.03,
+        -0.02
+      ]
+    },
+    {
+      "min_rider_count": 1,
+      "max_rider_count": 2,
+      "position": [
+        0,
+        1.45,
+        -0.02
+      ]
+    }
+  ]
+},
+      "minecraft:movement": {
+        "value": 0.25
+      },
+      "minecraft:physics": {
+        "has_gravity": false
+      },
+      "minecraft:damage_sensor": {
+        "triggers": {
+          "cause": "fall",
+          "deals_damage": false
+        }
+      }
+    }
+  }
+}

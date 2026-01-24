@@ -8,6 +8,7 @@ import "./magnet.js"
 import "./fertilizer.js"
 import "./dice.js";
 import "./fabric_armor.js";
+import "./airboard.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
@@ -28,7 +29,3 @@ world.afterEvents.worldLoad.subscribe((event) => {
 
     }, 20)
 });
-
-
-
-
