@@ -8,15 +8,16 @@
             "crafting_table"
         ],
         "pattern": [
-            "B",
-            "A"
+            "AAA",
+            "ABA",
+            "AAA"
         ],
         "key": {
-            "A": {
-                "item": "minecraft:bucket",
+            "B": {
+                "item": "minecraft:water_bucket",
                 "data": 0
             },
-            "B": {
+            "A": {
                 "item": "cw:platinum_ingot",
                 "data": 0
             }

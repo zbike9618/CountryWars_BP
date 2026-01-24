@@ -7,6 +7,7 @@ import "./security_camera.js";
 import "./magnet.js"
 import "./fertilizer.js"
 import "./dice.js";
+import "./platinum_armor.js";
 import "./fabric_armor.js";
 import "./airboard.js";
 
