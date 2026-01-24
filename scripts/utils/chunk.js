@@ -6,6 +6,7 @@ import { Util } from "./util";
 import config from "../config/config"
 const countryDatas = new Dypro("country")
 const playerDatas = new Dypro("player")
+const chunkDatas = new Dypro("chunk")
 const explosionMap = new Map();
 
 
@@ -17,14 +18,12 @@ export class Chunk {
         return `${x}_${z}`
     }
     static checkChunk(chunkId) {
-        const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
-        const found = chunks.find(c => c.id === chunkId);
-        if (found && !countryDatas.get(found.country)) {
-            chunks.splice(chunks.indexOf(found), 1)
-            world.setDynamicProperty(`chunk`, JSON.stringify(chunks))
+        const chunkData = chunkDatas.get(chunkId);
+        if (chunkData && !countryDatas.get(chunkData.country)) {
+            chunkDatas.delete(chunkId);
             return "wasteland";
         }
-        return found ? found.country : "wasteland";
+        return chunkData ? chunkData.country : "wasteland";
     }
     static async buy(player, countryData) {
         const playerData = playerDatas.get(player.id)
@@ -63,13 +62,12 @@ export class Chunk {
         }
     }
     static async sell(player, chunkId) {
-        const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
-        const found = chunks.find(c => c.id === chunkId);
-        if (!found) {
+        const chunkData = chunkDatas.get(chunkId);
+        if (!chunkData) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
-        const countryData = countryDatas.get(found.country)
+        const countryData = countryDatas.get(chunkData.country)
         if (!countryData) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
@@ -87,9 +85,7 @@ export class Chunk {
             countryData.money += config.chunkprice / 2;
             countryData.chunkAmount -= 1;
             countryDatas.set(countryData.id, countryData)
-            const chunk = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
-            chunk.splice(chunk.indexOf(found), 1)
-            world.setDynamicProperty(`chunk`, JSON.stringify(chunk))
+            chunkDatas.delete(chunkId);
 
         }
     }
@@ -97,19 +93,17 @@ export class Chunk {
         const chunk = this.checkChunk(chunkId);
 
         const enemyData = countryDatas.get(chunk);
-        const chunks = JSON.parse(world.getDynamicProperty(`chunk`) || "[]");
         if (chunk != "wasteland") {
-            if (chunks.map(c => c.id).includes(chunkId)) {
-                chunks.splice(chunks.map(c => c.id).indexOf(chunkId), 1)
+            const existingChunk = chunkDatas.get(chunkId);
+            if (existingChunk) {
                 enemyData.chunkAmount -= 1;
                 countryDatas.set(enemyData.id, enemyData)
             }
         }
-        chunks.push({
+        chunkDatas.set(chunkId, {
             id: chunkId,
             country: countryData.id
-        })
-        world.setDynamicProperty(`chunk`, JSON.stringify(chunks))
+        });
         countryData.chunkAmount += 1;
         countryDatas.set(countryData.id, countryData)
 

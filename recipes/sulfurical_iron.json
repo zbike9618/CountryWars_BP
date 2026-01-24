@@ -1,0 +1,30 @@
+{
+    "format_version": "1.12",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:sulfuric_iron_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "AAA",
+            "ABA",
+            "AAA"
+        ],
+        "key": {
+            "A": {
+                "item": "cw:sulfur",
+                "data": 0
+            },
+            "B": {
+                "item": "minecraft:iron_ingot",
+                "data": 0
+            }
+        },
+        "result": {
+            "item": "cw:sulfuric_iron",
+            "count": 8
+        }
+    }
+}

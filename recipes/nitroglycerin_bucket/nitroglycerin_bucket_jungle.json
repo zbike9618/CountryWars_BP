@@ -1,0 +1,33 @@
+{
+    "format_version": "1.12",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:nitroglycerin_jungle_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "AC",
+            "B"
+        ],
+        "key": {
+            "A": {
+                "item": "cw:nitricacid_bucket",
+                "data": 0
+            },
+            "B": {
+                "item": "cw:sulfuricacid_bucket",
+                "data": 0
+            },
+            "C": {
+                "item": "minecraft:jungle_sapling",
+                "data": 0
+            }
+        },
+        "result": {
+            "item": "cw:nitroglycerin_bucket",
+            "count": 1
+        }
+    }
+}

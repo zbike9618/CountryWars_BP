@@ -1,0 +1,18 @@
+{
+    "format_version": "1.15.0",
+    "minecraft:ore_feature": {
+        "description": {
+            "identifier": "cw:feature_sulfur_ore"
+        },
+        "count": 8,
+        "replace_rules": [
+            {
+                "places_block": "cw:sulfur_ore",
+                "may_replace": [
+                    "minecraft:stone",
+                    "minecraft:gravel"
+                ]
+            }
+        ]
+    }
+}

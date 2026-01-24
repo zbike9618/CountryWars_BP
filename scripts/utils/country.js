@@ -10,6 +10,7 @@ import { sendDataForPlayers } from "./sendData";
 import { War } from "./war";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
+const chunkDatas = new Dypro("chunk");
 export class Country {
 
     static async makeForm(player) {
@@ -79,7 +80,6 @@ export class Country {
             playerData.permission = "";
             playerDatas.set(playerId, playerData);
         }
-        const chunk = world.getDynamicProperty("chunk")
         //戦争中なら戦争を終わらせる
         if (countryData.warcountry.length > 0) {
             for (const warcountryId of countryData.warcountry) {
@@ -89,18 +89,12 @@ export class Country {
             }
         }
         //chunkも消す
-        if (chunk) {
-            const chunkObj = JSON.parse(chunk);
-            const removeChunk = [];
-            for (const key in chunkObj) {
-                if (chunkObj[key].country === countryData.id) removeChunk.push(key);
+        const chunkIds = chunkDatas.idList;
+        for (const chunkId of chunkIds) {
+            const chunkData = chunkDatas.get(chunkId);
+            if (chunkData && chunkData.country === countryData.id) {
+                chunkDatas.delete(chunkId);
             }
-            for (const key of removeChunk) {
-                //world.sendMessage(`${chunkObj[key]}`)
-                chunkObj.splice(key, 1);
-
-            }
-            world.setDynamicProperty("chunk", JSON.stringify(chunkObj));
         }
 
 

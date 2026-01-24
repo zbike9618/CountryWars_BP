@@ -4,7 +4,8 @@ import "./xp_box.js";
 import "./mega_item.js";
 import "./shinai.js";
 import "./security_camera.js";
-
+import "./magnet.js"
+import "./fertilizer.js"
 world.afterEvents.worldLoad.subscribe((event) => {
 
 
@@ -25,29 +26,6 @@ world.afterEvents.worldLoad.subscribe((event) => {
     }, 20)
 });
 
-world.afterEvents.itemUse.subscribe((event) => {
-    const player = event.source;
-    const itemId = event.itemStack.typeId; // ← typeId に修正（Idではない）
 
-    if (itemId === "cw:magnet") {
-        const playerPos = player.location; // プレイヤーの正確な位置
-        const dimension = player.dimension;
 
-        // 半径20ブロック内のアイテムエンティティを取得
-        const nearbyEntities = dimension.getEntities({
-            location: playerPos,
-            maxDistance: 20,
-            type: "minecraft:item"
-        });
 
-        for (const entity of nearbyEntities) {
-            entity.teleport(playerPos, {
-                dimension,
-                rotation: { x: 0, y: 0 },
-                facingLocation: playerPos,
-                checkForBlocks: false
-            });
-        }
-
-    }
-});

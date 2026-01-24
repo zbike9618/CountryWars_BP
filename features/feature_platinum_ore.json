@@ -1,0 +1,19 @@
+{
+    "format_version": "1.15.0",
+    "minecraft:ore_feature": {
+        "description": {
+            "identifier": "cw:feature_platinum_ore"
+        },
+        "count": 8,
+        "replace_rules": [
+            {
+                "places_block": "cw:platinum_ore",
+                "may_replace": [
+                    "minecraft:stone",
+                    "minecraft:deepslate",
+                    "minecraft:gravel"
+                ]
+            }
+        ]
+    }
+}

@@ -22,12 +22,20 @@ export class War {
     }
 
     static CanInvade(player, countryData) {
-        const chunk = Chunk.checkChunk(Chunk.positionToChunkId(player.location));
+        const chunkId = Chunk.positionToChunkId(player.location)
+        const chunk = Chunk.checkChunk(chunkId);
         const dimension = player.dimension;
         if (chunk == "wasteland") return false;
         const enemycountryData = countryDatas.get(chunk);
         if (enemycountryData.id == countryData.id) return false;
-        const core = dimension.getEntities({ location: player.location, maxDistance: 32, closest: 10 }).filter(e => e.typeId == "cw:core");
+
+        const entities = dimension.getEntities({ location: player.location, maxDistance: 60 }).filter(e => e.typeId == "cw:core");
+        for (const e of entities) {
+            const coreChunkId = Chunk.positionToChunkId(e.location)
+            if (coreChunkId == chunkId) {
+                return false;
+            }
+        }
 
         if (countryData.warcountry.includes(enemycountryData.id)) return true;
 
