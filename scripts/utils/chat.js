@@ -10,5 +10,5 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     const countryname = countryDatas.get(playerData.country)?.name || "§7未所属";
     ev.cancel = true;
     const secondname = playerData.secondname;
-    world.sendMessage(`[${secondname.before[secondname.now[0]]}${secondname.after[secondname.now[1]]}][${countryname}§r] <${player.name}> ${message}`)
+    world.sendMessage(`§r[${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r][${countryname}§r] <${player.name}> ${message}`)
 })
