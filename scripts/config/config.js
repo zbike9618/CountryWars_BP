@@ -10,4 +10,6 @@ export default {
     maxchunk: 32,
     //設定できるhomeの数
     maxhome: 3,
+    //最大戦争勝利金
+    maxWarMoney: 500000,
 };
