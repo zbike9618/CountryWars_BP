@@ -4,7 +4,7 @@
         "description": {
             "identifier": "cw:fabric_chestplate",
             "menu_category": {
-                "category": "items"
+                "category": "equipment"
             }
         },
         "components": {

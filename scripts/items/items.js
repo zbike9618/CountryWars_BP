@@ -8,6 +8,7 @@ import "./magnet.js"
 import "./fertilizer.js"
 import "./dice.js";
 import "./platinum_armor.js";
+import "./fabric_armor.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
