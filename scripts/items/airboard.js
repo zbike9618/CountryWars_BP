@@ -23,9 +23,9 @@ system.runInterval(() => {
     
     // 飛行力の付与（前進）
     airboard.applyImpulse({
-      x: dir.x * 0.025,
-      y: dir.y * 0.025,
-      z: dir.z * 0.025
+      x: dir.x * 0.05,
+      y: dir.y * 0.005,
+      z: dir.z * 0.05
     });
 
     // 向きの設定（setRotation）
