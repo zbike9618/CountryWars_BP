@@ -5,6 +5,7 @@ import "./mega_item.js";
 import "./shinai.js";
 import "./security_camera.js";
 import "./dice.js";
+import "./fabric_armor.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
