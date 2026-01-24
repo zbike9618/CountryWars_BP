@@ -85,30 +85,38 @@ export class War {
      * @param {string} type タイプ
      */
     static finish(winnerData, loserData, type) {
+        let number = 0;
+        if (type == "killall") {//国は滅ぼさない
+            const savePlayer = winnerData.wardeath || 0;
+            number = Math.min(savePlayer * 30000 || 0, config.maxWarMoney);
+            world.sendMessage({ translate: "cw.war.finish.killall", with: [winnerData.name, loserData.name] })
+
+        }
         if (type == "invade") {//国は滅ぼさない
             const chunkAmount = winnerData.robbedChunkAmount || 0;
-            const number = chunkAmount[loserData.id] * 20000 || 0;
-            loserData.money -= number
-            winnerData.money += number
-            delete chunkAmount[loserData.id];
-            winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
-            loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
-            countryDatas.set(loserData.id, loserData)
-            countryDatas.set(winnerData.id, winnerData)
-            world.sendMessage({ translate: "cw.war.invade.finish", with: [winnerData.name, loserData.name] })
+            number = Math.min(chunkAmount[loserData.id] * 20000 || 0, config.maxWarMoney);
 
-            const loserplayers = Util.GetCountryPlayer(loserData);
-            for (const player of loserplayers) {
-                player.sendMessage({ translate: "cw.war.invade.finish.money", with: [winnerData.name, `${number}`] })
-                if (loserData.warcountry.length === 0) {
-                    player.removeTag("cw:duringwar")
-                }
+            world.sendMessage({ translate: "cw.war.finish.invade", with: [winnerData.name, loserData.name] })
+        }
+
+        loserData.money -= number
+        winnerData.money += number
+        winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
+        loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
+        countryDatas.set(loserData.id, loserData)
+        countryDatas.set(winnerData.id, winnerData)
+
+        const loserplayers = Util.GetCountryPlayer(loserData);
+        for (const player of loserplayers) {
+            player.sendMessage({ translate: "cw.war.invade.finish.money", with: [winnerData.name, `${number}`] })
+            if (loserData.warcountry.length === 0) {
+                player.removeTag("cw:duringwar")
             }
-            const winnerplayers = Util.GetCountryPlayer(winnerData);
-            for (const player of winnerplayers) {
-                if (winnerData.warcountry.length === 0) {
-                    player.removeTag("cw:duringwar")
-                }
+        }
+        const winnerplayers = Util.GetCountryPlayer(winnerData);
+        for (const player of winnerplayers) {
+            if (winnerData.warcountry.length === 0) {
+                player.removeTag("cw:duringwar")
             }
         }
     }
@@ -164,7 +172,7 @@ world.afterEvents.entityDie.subscribe(ev => {
                     // ここでは wardeath が 0 になったので、敗北処理
                     const activeWars = [...warCountries];
                     for (const enemyId of activeWars) {
-                        War.finish(countryDatas.get(enemyId), countryData, "invade");
+                        War.finish(countryDatas.get(enemyId), countryData, "killall");
                     }
                 }
                 else {
