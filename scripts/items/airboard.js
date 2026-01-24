@@ -24,7 +24,7 @@ system.runInterval(() => {
     // 飛行力の付与（前進）
     airboard.applyImpulse({
       x: dir.x * 0.05,
-      y: dir.y * 0.005,
+      y: dir.y * 0.00005,
       z: dir.z * 0.05
     });
 
