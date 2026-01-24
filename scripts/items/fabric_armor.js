@@ -104,7 +104,11 @@ import { world, system, EntityComponentTypes } from "@minecraft/server";
     if (equip.getEquipment("Feet")?.typeId === "cw:fabric_boots") {power++};
     if (equip.getEquipment("Head")?.typeId === "cw:fabric_helmet") {power++};
     const speed = 0.1 + power * 0.05;
-    player.sendMessage(`${power} ${speed}`);
+    //player.sendMessage(`${power} ${speed}`);
+    if (power > 0){
   setEntitySpeed(player, speed); // 速度を0.2に設定
+    } else {
+  resetEntitySpeed(player);
+    }
   }
-  }, 10);
+}, 10);

@@ -1,0 +1,29 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:fabric_helmet_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "XXX",
+            "X X"
+        ],
+        "key": {
+            "X": {
+                "item": "cw:fabric"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:fabric"
+            }
+        ],
+        "result": {
+            "item": "cw:fabric_helmet",
+            "count": 1
+        }
+    }
+}

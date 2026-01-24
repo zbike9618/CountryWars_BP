@@ -4,7 +4,7 @@
         "description": {
             "identifier": "cw:fabric_helmet",
             "menu_category": {
-                "category": "items"
+                "category": "equipment"
             }
         },
         "components": {
