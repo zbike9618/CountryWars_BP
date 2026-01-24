@@ -19,7 +19,7 @@
       },
       "minecraft:fire_immune": {},
       "minecraft:physics": {
-        "has_gravity": true
+        "has_gravity": false
       },
       "minecraft:collision_box": {
         "width": 0.5,

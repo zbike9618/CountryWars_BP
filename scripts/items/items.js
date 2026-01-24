@@ -6,6 +6,8 @@ import "./shinai.js";
 import "./security_camera.js";
 import "./magnet.js"
 import "./fertilizer.js"
+import "./dice.js";
+
 world.afterEvents.worldLoad.subscribe((event) => {
 
 

@@ -1,0 +1,28 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:dice_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "X"
+        ],
+        "key": {
+            "X": {
+                "item": "minecraft:quartz"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:quartz"
+            }
+        ],
+        "result": {
+            "item": "cw:dice",
+            "count": 16
+        }
+    }
+}
