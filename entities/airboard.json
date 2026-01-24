@@ -8,38 +8,58 @@
     },
     "components": {
       "minecraft:rideable": {
-  "seat_count": 2,
-  "crouching_skip_interact": true,
-  "pull_in_entities": true,
-  "family_types": [
-    "player",
-    "villager",
-    "monster"
-  ],
-  "interact_text": "action.interact.ride.horse",
-  "seats": [
-    {
-      "min_rider_count": 0,
-      "max_rider_count": 2,
-      "position": [
-        0,
-        0.03,
-        -0.02
-      ]
-    },
-    {
-      "min_rider_count": 1,
-      "max_rider_count": 2,
-      "position": [
-        0,
-        1.45,
-        -0.02
-      ]
-    }
-  ]
-},
+        "seat_count": 2,
+        "crouching_skip_interact": true,
+        "pull_in_entities": true,
+        "family_types": [
+          "player",
+          "monster",
+          "pig",
+          "sheep",
+          "cow",
+          "chicken",
+          "rabbit",
+          "horse",
+          "donkey",
+          "mule",
+          "llama",
+          "wolf",
+          "cat",
+          "parrot",
+          "ocelot",
+          "villager",
+          "panda",
+          "fox",
+          "bee",
+          "axolotl",
+          "goat",
+          "frog",
+          "turtle",
+          "dolphin",
+          "polar_bear",
+          "armadillo"
+        ],
+        "interact_text": "action.interact.ride.horse",
+        "seats": [
+          {
+            "min_rider_count": 0,
+            "max_rider_count": 2,
+            "position": [0, 0.03, -0.02]
+          },
+          {
+            "min_rider_count": 1,
+            "max_rider_count": 2,
+            "position": [0, 1.45, -0.02]
+          }
+        ]
+      },
+      "minecraft:leashable": {
+        "soft_distance": 2.0,
+        "hard_distance": 3.0,
+        "max_distance": 100.0
+      },
       "minecraft:movement": {
-        "value": 0.25
+        "value": 0.15
       },
       "minecraft:physics": {
         "has_gravity": false
