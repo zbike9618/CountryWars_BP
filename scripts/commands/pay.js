@@ -21,27 +21,27 @@ server.system.beforeEvents.startup.subscribe(ev => {
             let pay = args[0]; // 金額 (Integer)
             let toPlayer = args[1][0]; // プレイヤー (PlayerSelector は配列なので [0] で最初のプレイヤー)
             if (!toPlayer) {
-                player.sendMessage("§c指定されたプレイヤーが見つかりません。");
+                player.sendMessage({translate : "cw.pay.noplayer"});
                 return;
             }
             system.run(() => {  // 1tick後に安全に実行
                 const score = Util.getMoney(player);
                 if (pay < 1) {
-                    player.sendMessage("値が無効です");
+                    player.sendMessage({translate : "cw.pay.minamount"});
                     return;
                 }
                 if (player.id === toPlayer.id) {
-                    player.sendMessage("§c自分自身にお金を渡すことはできません。");
+                    player.sendMessage({translate : "cw.pay.selfpay"});
                     return;
                 }
                 if (score < pay) {
-                    player.sendMessage("§cお金が足りません。");
+                    player.sendMessage({translate : "cw.pay.nomoney"});
                     return;
                 }
                 Util.addMoney(player, -Number(pay));
                 Util.addMoney(toPlayer, Number(pay));
-                player.sendMessage(`${player.name}から§r§a§l${toPlayer.name}§r§a§lに§r§a§l${pay}円§r§a§lを渡しました`);
-                toPlayer.sendMessage(`${player.name}§r§a§lから§r§a§l${pay}円を受け取りました`);
+                player.sendMessage({translate : "cw.pay.me" , with : [`${toPlayer.name}`, `${pay}`]});
+                toPlayer.sendMessage({translate : "cw.pay.to", with : [`${player.name}`, `${pay}`]});
             });
         }
     });
