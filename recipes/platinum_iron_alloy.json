@@ -1,0 +1,30 @@
+{
+    "format_version": "1.12",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:platinum_iron_alloy_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "AAA",
+            "ABA",
+            "AAA"
+        ],
+        "key": {
+            "A": {
+                "item": "cw:platinum_ingot",
+                "data": 0
+            },
+            "B": {
+                "item": "minecraft:iron_ingot",
+                "data": 0
+            }
+        },
+        "result": {
+            "item": "cw:platinum_iron_alloy",
+            "count": 1
+        }
+    }
+}

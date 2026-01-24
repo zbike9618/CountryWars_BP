@@ -142,4 +142,44 @@ export class Util {
             return false;
         }
     }
+    /**
+ * @param {server.Player} player アイテムを持っているプレイヤー
+ * @param {server.ItemStack} itemStack 耐久値を減らしたいアイテムスタック
+ * @param {number} amount 減らす耐久値の量 (デフォルトは1)
+ * @returns {boolean} アイテムが壊れなかった場合はtrue、壊れた場合はfalseを返す
+ */
+    static reduceDurability(player, itemStack, amount = 1) {
+        const durability = itemStack.getComponent(server.ItemComponentTypes.Durability);
+        if (!durability) {
+            // 耐久コンポーネントがなければ何もしない
+            return true;
+        }
+
+        const enchantments = itemStack.getComponent(server.ItemComponentTypes.Enchantable);
+
+        const unbreakingEnchant = enchantments?.getEnchantment("unbreaking");
+        const unbreakingLevel = unbreakingEnchant ? unbreakingEnchant.level : 0;
+
+        const chanceToTakeDamage = 1 / (1 + unbreakingLevel);
+
+        if (Math.random() > chanceToTakeDamage) {
+            return true; // 耐久値が減らなかった（壊れてもいない）
+        }
+
+        const inventory = player.getComponent(server.EntityComponentTypes.Inventory).container;
+        const slot = player.selectedSlotIndex;
+
+        // 耐久ダメージが最大値以上になるかチェック
+        if (durability.damage + amount >= durability.maxDurability) {
+            // アイテム破壊処理
+            inventory.setItem(slot, undefined);
+            player.playSound("random.break");
+            return false; // 壊れた
+        } else {
+            // 耐久値を減らす
+            durability.damage += amount;
+            inventory.setItem(slot, itemStack);
+            return true; // 壊れなかった
+        }
+    }
 }

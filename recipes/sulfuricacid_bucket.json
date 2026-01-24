@@ -1,0 +1,29 @@
+{
+    "format_version": "1.12",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:sulfuricacid_bucket_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "B",
+            "A"
+        ],
+        "key": {
+            "A": {
+                "item": "minecraft:bucket",
+                "data": 0
+            },
+            "B": {
+                "item": "cw:sulfur",
+                "data": 0
+            }
+        },
+        "result": {
+            "item": "cw:sulfuricacid_bucket",
+            "count": 4
+        }
+    }
+}

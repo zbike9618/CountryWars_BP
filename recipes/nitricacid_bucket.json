@@ -1,0 +1,29 @@
+{
+    "format_version": "1.12",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:nitricacid_bucket_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "B",
+            "A"
+        ],
+        "key": {
+            "A": {
+                "item": "minecraft:bucket",
+                "data": 0
+            },
+            "B": {
+                "item": "cw:platinum_ingot",
+                "data": 0
+            }
+        },
+        "result": {
+            "item": "cw:nitricacid_bucket",
+            "count": 4
+        }
+    }
+}

@@ -2,10 +2,9 @@
   "format_version": "1.21.50",
   "minecraft:block": {
     "description": {
-      "identifier": "cw:platinum_ore",
+      "identifier": "cw:platinum_iron_alloy",
       "menu_category": {
-        "category": "nature",
-        "group": "itemGroup.name.ore"
+        "category": "construction"
       }
     },
     "components": {
@@ -15,48 +14,48 @@
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:wooden_tier')"
             },
-            "destroy_speed": 1.15
+            "destroy_speed": 10
           },
           {
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:stone_tier')"
             },
-            "destroy_speed": 0.6
+            "destroy_speed": 9
           },
           {
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:iron_tier')"
             },
-            "destroy_speed": 0.4
+            "destroy_speed": 8
           },
           {
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:golden_tier')"
             },
-            "destroy_speed": 0.2
+            "destroy_speed": 7
           },
           {
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:diamond_tier')"
             },
-            "destroy_speed": 0.3
+            "destroy_speed": 6
           },
           {
             "item": {
               "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:netherite_tier')"
             },
-            "destroy_speed": 0.25
+            "destroy_speed": 5
           }
         ],
-        "seconds_to_destroy": 10
+        "seconds_to_destroy": 30
       },
-      "minecraft:destructible_by_explosion": 1,
+      "minecraft:destructible_by_explosion": false,
+      //もしくは75
       "minecraft:flammable": {
         "flame_odds": 0,
         "burn_odds": 0
       },
-      "minecraft:map_color": "#000000",
-      "minecraft:loot": "loot_tables/block/platinum_ore.json"
+      "minecraft:map_color": "#000000"
     }
   }
 }
