@@ -204,29 +204,14 @@ async function readMessage(player, selection, type) {
     if (res.canceled) return;
     if (res.selection == 0) {
         if (type == "tpa") {
-            tpa(player, selection)
+            player.teleport(world.getEntity(selection).location)
         }
         if (type == "tpaRequest") {
-            tpaRequest(player, selection)
+            world.getEntity(selection).teleport(player.location)
         }
         if (type == "invitecountry") {
-            invitecountry(player, selection)
+            Country.join(player, countryDatas.get(selection))
         }
         // messageタイプは確認のみなので何もしない
     }
-}
-
-function tpa(player, selection) {
-    player.teleport(world.getEntity(selection).location)
-}
-function tpaRequest(player, selection) {
-    world.getEntity(selection).teleport(player.location)
-}
-function invitecountry(player, selection) {
-    const countryData = countryDatas.get(selection)
-    const playerData = playerDatas.get(player.id)
-    playerData.country = selection
-    playerDatas.set(player.id, playerData)
-    countryData.players.push(player.id)
-    countryDatas.set(selection, countryData)
 }

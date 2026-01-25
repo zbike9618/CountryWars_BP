@@ -214,10 +214,11 @@ async function PlayerDataReset(player) {
             player.sendMessage({ translate: "cw.menu.playerdatareset.error" });
             return;
         } else if (response.formValues[1] === true) {
-            const playerId = allPlayers[response.formValues[0]];
-            playerDatas.delete(playerId)
-            world.getEntity(playerId).setDynamicProperty("initial", false);
-            player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${playerId.name}`] });
+            const player = allPlayers[response.formValues[0]];
+            playerDatas.delete(player.id)
+            player.setDynamicProperty("initial", false);
+            player.runCommand("kick @s プレイヤーデータのリセット")
+            player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${player.name}`] });
         }
     })
 }

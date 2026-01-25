@@ -62,13 +62,14 @@ export class Chunk {
         }
     }
     static async sell(player, chunkId) {
+        const playerData = playerDatas.get(player.id)
         const chunkData = chunkDatas.get(chunkId);
         if (!chunkData) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
         const countryData = countryDatas.get(chunkData.country)
-        if (!countryData) {
+        if (countryData != playerData.country) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
@@ -80,7 +81,7 @@ export class Chunk {
         const res = await form.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            const playerData = playerDatas.get(player.id)
+
             player.sendMessage({ translate: "cw.chunk.sell.success", with: [`${countryData.money}`, `${countryData.money + config.chunkprice / 2}`] })
             countryData.money += config.chunkprice / 2;
             countryData.chunkAmount -= 1;

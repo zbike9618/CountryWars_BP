@@ -4,6 +4,7 @@ import { Chunk } from "./chunk.js";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 import { Country } from "./country.js";
+import config from "../config/config.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
