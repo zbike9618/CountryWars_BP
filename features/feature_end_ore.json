@@ -1,0 +1,17 @@
+{
+  "format_version": "1.15.0",
+  "minecraft:ore_feature": {
+    "description": {
+      "identifier": "cw:feature_end_ore"
+    },
+    "count": 3,
+    "replace_rules": [
+      {
+        "places_block": "cw:end_ore",
+        "may_replace": [
+          "minecraft:end_stone"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.10",
+  "minecraft:item": {
+    "description": {
+      "identifier": "cw:airboard_key",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": "airboard_key",
+      "minecraft:durability": {
+        "max_durability": 32
+      },
+      "minecraft:allow_off_hand": false,
+      "minecraft:use_modifiers": {
+        "use_duration": 1.0,
+        "movement_modifier": 1.0
+      },
+      "minecraft:repairable": {
+        "repair_items": [{
+            "items": ["minecraft:coal"]
+        }],
+        "repair_amount": 32
+      },
+      "minecraft:use_animation": "bow",
+      "minecraft:custom_components": ["cw:airboard_key_component"]
+    }
+  }
+}

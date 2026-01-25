@@ -10,7 +10,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const armorSlot = player.getComponent("minecraft:equippable")
     let reduceAmount = 1;//%表記
     if (armorSlot.getEquipmentSlot("Head").typeId == "cw:platinum_helmet") {
-        reduceAmount += 2;
+        reduceAmount += 1;
     }
     if (armorSlot.getEquipmentSlot("Feet").typeId == "cw:platinum_boots") {
         reduceAmount += 1;
