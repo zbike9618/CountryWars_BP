@@ -5,6 +5,7 @@ import { ChestFormData } from "./chest_shop/chest-ui.js";
 import { SecondName } from "./secondname.js";
 import { Help } from "./help.js";
 import { Country } from "./country.js";
+import { Bank } from "./bank.js";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 //スマホ使用時
@@ -132,10 +133,7 @@ function show_form(player) {
                 SecondName.secondNameForm(player);
                 break;
             case 8:
-                player.sendMessage("comming soon...");
-                break;
-            case 9:
-                player.runCommand("sc")
+                Bank.bankForm(player);
                 break;
             case 26:
                 Help.mainForm(player);

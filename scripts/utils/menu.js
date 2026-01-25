@@ -54,24 +54,28 @@ async function movemoney(player) {
         }
         const currentMoney = Util.getMoney(selectedPlayer);
         let newMoney;
+        let actionmoney;
         let action;
         if (operation === 0) { // 増やす
             Util.addMoney(selectedPlayer, amount);
             newMoney = currentMoney + amount;
+            actionmoney = amount;
             action = "add";
         } else if (operation === 1) { // 減らす
             Util.addMoney(selectedPlayer, -amount);
             newMoney = Math.max(0, currentMoney - amount); // マイナスにならないように
+            actionmoney = -amount;
             action = "remove";
         } else if (operation === 2) { // 設定
             Util.setMoney(selectedPlayer, amount);
             newMoney = amount;
+            actionmoney = amount;
             action = "set";
         } else {
             player.sendMessage({ translate: "cw.menu.movemoney.error.invalidoperation" });
             return;
         }
-        player.sendMessage({ translate: `cw.menu.movemoney.success.${action}`, with: [`${selectedPlayer.name}`, `${newMoney}`] });
+        player.sendMessage({ translate: `cw.menu.movemoney.success.${action}`, with: [`${selectedPlayer.name}`, `${actionmoney}`, `${newMoney}`] });
     });
 }
 
