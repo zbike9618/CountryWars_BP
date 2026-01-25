@@ -177,7 +177,7 @@ async function sellFormS(player, item, maxamount) {
     if (!Number.isInteger(Number(res.formValues[0])) || Number < 0) {
         const mform = new MessageFormData()
         mform.title({ translate: "cw.playermarket.sell" })
-        mform.body({ translate: "cw.playermarket.sell.priceerror" })
+        mform.body({ translate: "cw.form.error.int" })
         mform.button1({ translate: "cw.form.redo" })
         mform.button2({ translate: "cw.form.cancel" })
         const res = await mform.show(player)

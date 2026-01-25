@@ -35,12 +35,12 @@ export class Dypro {
     }
     delete(path) {
         const name = this.name;
-        world.setDynamicProperty(`${name}#${path}`, undefined)
+        world.setDynamicProperty(`${name}#${path}`)
     }
     clear() {
         const data = this.idList
         for (const id of data) {
-            world.setDynamicProperty(id, undefined)
+            this.delete(id)
         }
     }
 

@@ -113,11 +113,12 @@ export class Chunk {
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+
+
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
         player.sendMessage({ translate: "cw.chunk.break", with: [countryDatas.get(countryData).name] })
 
@@ -129,29 +130,28 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
 world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
-
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+        ev.cancel = true;
         player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
-
-        ev.cancel = true
-
+        return;
     }
+
+
 
 })
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
-        player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+
+        player.sendMessage({ translate: "cw.chunk.interact", with: [countryDatas.get(countryData).name] })
 
         ev.cancel = true
 

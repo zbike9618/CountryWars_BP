@@ -8,18 +8,17 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const attacker = ev.damageSource.damagingEntity;
     if (!attacker || attacker.typeId != "minecraft:player") return;
     const armorSlot = player.getComponent("minecraft:equippable")
-    if (!armorSlot) return;
     let reduceAmount = 1;//%表記
-    if (armorSlot.getEquipmentSlot("Head").typeId == "cw:platinum_helmet") {
+    if (armorSlot.getEquipment("Head")?.typeId == "cw:platinum_helmet") {
         reduceAmount += 1;
     }
-    if (armorSlot.getEquipmentSlot("Feet").typeId == "cw:platinum_boots") {
+    if (armorSlot.getEquipment("Feet")?.typeId == "cw:platinum_boots") {
         reduceAmount += 1;
     }
-    if (armorSlot.getEquipmentSlot("Legs").typeId == "cw:platinum_leggings") {
+    if (armorSlot.getEquipment("Legs")?.typeId == "cw:platinum_leggings") {
         reduceAmount += 3;
     }
-    if (armorSlot.getEquipmentSlot("Chest").typeId == "cw:platinum_chestplate") {
+    if (armorSlot.getEquipment("Chest")?.typeId == "cw:platinum_chestplate") {
         reduceAmount += 4;
     }
     if (reduceAmount == 1) return;

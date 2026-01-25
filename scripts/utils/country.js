@@ -40,8 +40,8 @@ export class Country {
      * 
      */
     static make(player, { countryName, isPeace }) {
-        const { idList } = countryData
-        const id = idList[idList.length - 1] + 1;
+        const { idList } = countryDatas
+        const id = Number(idList[idList.length - 1] || "0") + 1;
         const countryData =
         {
             id,
@@ -63,6 +63,7 @@ export class Country {
             wardeath: 0,//戦争中に死んでいい回数
             //同盟国などはあとで
             warcountry: [],//戦争中
+            peaceProposals: {},//講和提案
 
 
         }
@@ -97,7 +98,6 @@ export class Country {
                 chunkDatas.delete(chunkId);
             }
         }
-
 
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
