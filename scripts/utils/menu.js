@@ -210,10 +210,10 @@ async function PlayerDataReset(player) {
             Menu.showForm(player);
             return;
         };
-        if (response.formValues[1] !== true) {
+        if (!response.formValues[1]) {
             player.sendMessage({ translate: "cw.menu.playerdatareset.error" });
             return;
-        } else if (response.formValues[1] === true) {
+        } else {
             const player = allPlayers[response.formValues[0]];
             playerDatas.delete(player.id)
             player.setDynamicProperty("initial", false);

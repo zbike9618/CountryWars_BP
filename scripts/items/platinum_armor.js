@@ -8,6 +8,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const attacker = ev.damageSource.damagingEntity;
     if (!attacker || attacker.typeId != "minecraft:player") return;
     const armorSlot = player.getComponent("minecraft:equippable")
+    if (!armorSlot) return;
     let reduceAmount = 1;//%表記
     if (armorSlot.getEquipmentSlot("Head").typeId == "cw:platinum_helmet") {
         reduceAmount += 1;
@@ -27,8 +28,10 @@ world.afterEvents.entityHurt.subscribe((ev) => {
 
     const itemStack = comp.container?.getItem(attacker.selectedSlotIndex);
     if (!itemStack) return;
+    const dura = itemStack.getComponent("minecraft:durability");
+    if (!dura) return;
     const reduce = Math.floor(ev.damage * reduceAmount);
-    if (!Util.reduceDurability(attacker, itemStack, reduce)) {
+    if (!Util.reduceDurability(attacker, itemStack, Math.min(reduce, Math.floor(dura.maxDurability / 4)))) {
         attacker.playSound("item.axe.break");
     }
 });
