@@ -243,16 +243,16 @@ async function DeleteCountry(player) {
         };
         const newform = new MessageFormData()
         const playerData = playerDatas.get(player.id)
-        const countryData = playerData.country ? countryDatas.get(playerData.country) : "none";
+        const countryData = countries[response.selection];
         newform.title({ translate: "cw.scform.delete" })
         newform.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
         newform.button1({ translate: "cw.form.yes" })
         newform.button2({ translate: "cw.form.no" })
         newform.show(player).then((res) => {
             if (res.canceled || res.selection == 1) return;
-            const selectedCountry = countries[response.selection];
-            if (!selectedCountry) return; // safety check
-            Country.delete(selectedCountry);
+
+            if (!countryData) return; // safety check
+            Country.delete(countryData);
         })
     });
 }
