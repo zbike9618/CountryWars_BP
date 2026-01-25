@@ -1,0 +1,17 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_furnace": {
+        "description": {
+            "identifier": "cw:end_ingot_recipe"
+        },
+
+        "unlock": [
+            {
+                "item": "cw:end_raw"
+            }
+        ],
+        "tags": ["furnace", "blast_furnace"],
+        "input": "cw:end_raw",
+        "output": "cw:end_ingot"
+    }
+}

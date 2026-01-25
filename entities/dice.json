@@ -27,9 +27,17 @@
       },
       "minecraft:movement": {
         "value": 0.0
+      },"minecraft:is_collidable": {
       },
       "minecraft:knockback_resistance": {
         "value": 1.0
+      },"minecraft:damage_sensor": {
+        "triggers":[
+          {
+            "cause": "all",
+            "deals_damage": "no"
+          }
+        ]
       }
     }
   }
