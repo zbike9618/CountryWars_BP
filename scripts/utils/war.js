@@ -4,6 +4,7 @@ import { Chunk } from "./chunk.js";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 import { Country } from "./country.js";
+import config from "../config/config.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
@@ -66,16 +67,17 @@ export class War {
         //if (this.isBalanced(myplayers.length, enemyplayers.length)) {
         mineData.warcountry.push(enemyData.id);
         enemyData.warcountry.push(mineData.id);
-        countryDatas.set(mineData.id, mineData);
-        countryDatas.set(enemyData.id, enemyData);
-        mineData.wardeath += myplayers.length;
-        enemyData.wardeath += enemyplayers.length;
+
+        mineData.wardeath += myplayers.length * 5;
+        enemyData.wardeath += enemyplayers.length * 5;
         for (const player of myplayers) {
             player.addTag("cw:duringwar")
         }
         for (const player of enemyplayers) {
             player.addTag("cw:duringwar")
         }
+        countryDatas.set(mineData.id, mineData);
+        countryDatas.set(enemyData.id, enemyData);
         //}
     }
     /**
@@ -119,6 +121,239 @@ export class War {
                 player.removeTag("cw:duringwar")
             }
         }
+        const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
+        for (const core of cores) {
+            const chunkId = core.getDynamicProperty("core");
+            const cc = Chunk.checkChunk(chunkId)
+            const countryData = countryDatas.get(cc)
+            if (countryData.id == winnerData.id) {
+                core.remove()
+            }
+        }
+    }
+
+    /**
+     * 講和を提案する
+     * @param {Object} proposerCountry 提案する国
+     * @param {Object} targetCountry 提案される国
+     * @param {number} moneyOffer 金額（正=提供、負=要求）
+     */
+    static proposePeace(proposerCountry, targetCountry, moneyOffer) {
+        if (!proposerCountry.peaceProposals) {
+            proposerCountry.peaceProposals = {};
+        }
+
+        proposerCountry.peaceProposals[targetCountry.id] = {
+            proposedMoney: moneyOffer,
+            proposerAccepted: false,
+            targetAccepted: false
+        };
+
+        countryDatas.set(proposerCountry.id, proposerCountry);
+
+        // 両国のプレイヤーに通知
+        const proposerPlayers = Util.GetCountryPlayer(proposerCountry);
+        const targetPlayers = Util.GetCountryPlayer(targetCountry);
+        const moneyText = moneyOffer > 0
+            ? { translate: "cw.warform.peace.proposal.money.offer", with: [`${moneyOffer}`] }
+            : moneyOffer < 0
+                ? { translate: "cw.warform.peace.proposal.money.request", with: [`${Math.abs(moneyOffer)}`] }
+                : { translate: "cw.warform.peace.proposal.equal" };
+
+        for (const p of proposerPlayers) {
+            p.sendMessage({
+                rawtext: [
+                    { text: "§a" },
+                    { text: targetCountry.name },
+                    { translate: "cw.war.peace.proposed.sender.middle" },
+                    moneyText,
+                    { text: ")" }
+                ]
+            });
+        }
+        for (const p of targetPlayers) {
+            p.sendMessage({
+                rawtext: [
+                    { text: "§6" },
+                    { text: proposerCountry.name },
+                    { translate: "cw.war.peace.proposed.receiver.middle" },
+                    moneyText,
+                    { text: ")" }
+                ]
+            });
+        }
+    }
+
+    /**
+     * 講和を承認する
+     * @param {Object} acceptingCountry 承認する国
+     * @param {Object} otherCountry 相手国
+     */
+    static acceptPeace(acceptingCountry, otherCountry) {
+        // 提案を探す
+        let proposal = null;
+        let proposerCountry = null;
+        let targetCountry = null;
+
+        if (acceptingCountry.peaceProposals && acceptingCountry.peaceProposals[otherCountry.id]) {
+            proposal = acceptingCountry.peaceProposals[otherCountry.id];
+            proposerCountry = acceptingCountry;
+            targetCountry = otherCountry;
+            proposal.proposerAccepted = true;
+        } else if (otherCountry.peaceProposals && otherCountry.peaceProposals[acceptingCountry.id]) {
+            proposal = otherCountry.peaceProposals[acceptingCountry.id];
+            proposerCountry = otherCountry;
+            targetCountry = acceptingCountry;
+            proposal.targetAccepted = true;
+        } else {
+            return false; // 提案が存在しない
+        }
+
+        countryDatas.set(proposerCountry.id, proposerCountry);
+
+        // 両方が承認したか確認
+        if (proposal.proposerAccepted && proposal.targetAccepted) {
+            this.finalizePeace(proposerCountry, targetCountry, proposal);
+        } else {
+            // 片方だけ承認した通知
+            const acceptingPlayers = Util.GetCountryPlayer(acceptingCountry);
+            const otherPlayers = Util.GetCountryPlayer(otherCountry);
+
+            for (const p of acceptingPlayers) {
+                p.sendMessage({ translate: "cw.war.peace.accepted.self", with: [otherCountry.name] });
+            }
+            for (const p of otherPlayers) {
+                p.sendMessage({ translate: "cw.war.peace.accepted.other", with: [acceptingCountry.name] });
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * 講和を拒否する
+     * @param {Object} rejectingCountry 拒否する国
+     * @param {Object} otherCountry 相手国
+     */
+    static rejectPeace(rejectingCountry, otherCountry) {
+        let proposerCountry = null;
+
+        if (rejectingCountry.peaceProposals && rejectingCountry.peaceProposals[otherCountry.id]) {
+            proposerCountry = rejectingCountry;
+            delete rejectingCountry.peaceProposals[otherCountry.id];
+        } else if (otherCountry.peaceProposals && otherCountry.peaceProposals[rejectingCountry.id]) {
+            proposerCountry = otherCountry;
+            delete otherCountry.peaceProposals[rejectingCountry.id];
+        } else {
+            return false;
+        }
+
+        countryDatas.set(proposerCountry.id, proposerCountry);
+
+        // 両国に通知
+        const rejectingPlayers = Util.GetCountryPlayer(rejectingCountry);
+        const otherPlayers = Util.GetCountryPlayer(otherCountry);
+
+        for (const p of rejectingPlayers) {
+            p.sendMessage({ translate: "cw.war.peace.rejected.self", with: [otherCountry.name] });
+        }
+        for (const p of otherPlayers) {
+            p.sendMessage({ translate: "cw.war.peace.rejected.other", with: [rejectingCountry.name] });
+        }
+
+        return true;
+    }
+
+    /**
+     * 講和を成立させる
+     * @param {Object} proposerCountry 提案した国
+     * @param {Object} targetCountry 提案された国
+     * @param {Object} proposal 提案内容
+     */
+    static finalizePeace(proposerCountry, targetCountry, proposal) {
+        const moneyAmount = proposal.proposedMoney;
+        // お金の移動（正=提案者が支払う、負=提案者が受け取る）
+        if (moneyAmount > 0) {
+            // 提案者が支払う
+            if (proposerCountry.money < moneyAmount) {
+                // お金が足りない
+                const players = Util.GetCountryPlayer(proposerCountry);
+                for (const p of players) {
+                    p.sendMessage({ translate: "cw.war.peace.insufficient" });
+                }
+                return false;
+            }
+            proposerCountry.money -= moneyAmount;
+            targetCountry.money += moneyAmount;
+        } else if (moneyAmount < 0) {
+            // 提案者が受け取る
+            const actualAmount = Math.abs(moneyAmount);
+            if (targetCountry.money < actualAmount) {
+                // お金が足りない
+                const players = Util.GetCountryPlayer(targetCountry);
+                for (const p of players) {
+                    p.sendMessage({ translate: "cw.war.peace.insufficient" });
+                }
+                return false;
+            }
+            targetCountry.money -= actualAmount;
+            proposerCountry.money += actualAmount;
+        }
+
+        // 戦争状態を解除
+        proposerCountry.warcountry.splice(proposerCountry.warcountry.indexOf(targetCountry.id), 1);
+        targetCountry.warcountry.splice(targetCountry.warcountry.indexOf(proposerCountry.id), 1);
+
+        // 講和提案を削除
+        if (proposerCountry.peaceProposals) {
+            delete proposerCountry.peaceProposals[targetCountry.id];
+        }
+
+        // データを保存
+        countryDatas.set(proposerCountry.id, proposerCountry);
+        countryDatas.set(targetCountry.id, targetCountry);
+
+        // プレイヤーからタグを削除
+        const proposerPlayers = Util.GetCountryPlayer(proposerCountry);
+        const targetPlayers = Util.GetCountryPlayer(targetCountry);
+
+        for (const p of proposerPlayers) {
+            if (proposerCountry.warcountry.length === 0) {
+                p.removeTag("cw:duringwar");
+            }
+        }
+        for (const p of targetPlayers) {
+            if (targetCountry.warcountry.length === 0) {
+                p.removeTag("cw:duringwar");
+            }
+        }
+
+        // コアを削除
+        const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
+        for (const core of cores) {
+            const chunkId = core.getDynamicProperty("core");
+            const cc = Chunk.checkChunk(chunkId);
+            const countryData = countryDatas.get(cc);
+            if (countryData && (countryData.id === proposerCountry.id || countryData.id === targetCountry.id)) {
+                core.remove();
+            }
+        }
+
+        // 講和を発表
+        const moneyMsg = moneyAmount > 0
+            ? { translate: "cw.war.peace.finalized.offer", with: [proposerCountry.name, targetCountry.name, `${moneyAmount}`] }
+            : moneyAmount < 0
+                ? { translate: "cw.war.peace.finalized.request", with: [targetCountry.name, proposerCountry.name, `${Math.abs(moneyAmount)}`] }
+                : { translate: "cw.war.peace.finalized.equal", with: [proposerCountry.name, targetCountry.name] };
+
+        world.sendMessage({
+            rawtext: [
+                { translate: "cw.war.peace.finalized.prefix" },
+                moneyMsg
+            ]
+        });
+
+        return true;
     }
 }
 world.afterEvents.entityDie.subscribe(ev => {

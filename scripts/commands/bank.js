@@ -2,7 +2,6 @@ import * as server from "@minecraft/server";
 import { world, system, CommandPermissionLevel, CustomCommandStatus } from "@minecraft/server";
 import { Util } from "../utils/util";
 import { Bank } from "../utils/bank";
-
 server.system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
         name: "cw:money",

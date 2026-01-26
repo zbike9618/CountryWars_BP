@@ -36,6 +36,6 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
     if (ev.id == "cw:test") {
-
+        world.sendMessage(`${playerDatas.get(ev.sourceEntity.id).country}`)
     }
 })

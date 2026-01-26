@@ -62,13 +62,14 @@ export class Chunk {
         }
     }
     static async sell(player, chunkId) {
+        const playerData = playerDatas.get(player.id)
         const chunkData = chunkDatas.get(chunkId);
         if (!chunkData) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
         const countryData = countryDatas.get(chunkData.country)
-        if (!countryData) {
+        if (countryData != playerData.country) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
@@ -80,7 +81,7 @@ export class Chunk {
         const res = await form.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            const playerData = playerDatas.get(player.id)
+
             player.sendMessage({ translate: "cw.chunk.sell.success", with: [`${countryData.money}`, `${countryData.money + config.chunkprice / 2}`] })
             countryData.money += config.chunkprice / 2;
             countryData.chunkAmount -= 1;
@@ -112,11 +113,12 @@ export class Chunk {
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+
+
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
         player.sendMessage({ translate: "cw.chunk.break", with: [countryDatas.get(countryData).name] })
 
@@ -128,29 +130,28 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
 world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
-
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+        ev.cancel = true;
         player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
-
-        ev.cancel = true
-
+        return;
     }
+
+
 
 })
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const player = ev.player
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return;
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
     const countryData = Chunk.checkChunk(chunkId)
-    if (playerData.country !== countryData && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
 
-        player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
+    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+
+        player.sendMessage({ translate: "cw.chunk.interact", with: [countryDatas.get(countryData).name] })
 
         ev.cancel = true
 

@@ -35,43 +35,49 @@ world.afterEvents.playerSpawn.subscribe(ev => {
         else {
             player.addTag("cw:duringwar")
         }
-
     }
 })
 
 world.afterEvents.playerLeave.subscribe(ev => {
     const playerId = ev.playerId;
-    shortPlayerDatas.delete(playerId)
-})
+    const data = new ShortPlayerData(playerId);
+    data.set("tpa", []);
+    data.set("tpaRequest", []);
+});
 
 function DoInitialSpawn(player) {
     player.sendMessage({ translate: "cw.initialSpawn" })
 }
-const shortPlayerDatas = new Map();
+
+const shortPlayerDypro = new Dypro("shortPlayer");
+
 export class ShortPlayerData {
     constructor(playerId) {
-        this.id = playerId
+        this.id = playerId;
     }
     set(key, data) {
-        const d = Object.assign(shortPlayerDatas.get(this.id) || {}, { [key]: data })
-        shortPlayerDatas.set(this.id, d)
+        let currentData = shortPlayerDypro.get(this.id) || {};
+        currentData[key] = data;
+        shortPlayerDypro.set(this.id, currentData);
     }
     get(key) {
-        const getData = shortPlayerDatas.get(this.id)
-        return getData ? getData[key] : undefined;
+        const currentData = shortPlayerDypro.get(this.id);
+        if (!currentData) return undefined;
+        return currentData[key];
     }
     remove(key, secondkey = undefined) {
+        let currentData = shortPlayerDypro.get(this.id);
+        if (!currentData) return;
         if (secondkey) {
-            const getData = shortPlayerDatas.get(this.id)
-            if (getData) {
-                delete getData[key][secondkey]
+            if (currentData[key]) {
+                delete currentData[key][secondkey];
+                shortPlayerDypro.set(this.id, currentData);
             }
-        }
-        else {
-            shortPlayerDatas.delete(this.id)
+        } else {
+            shortPlayerDypro.delete(this.id);
         }
     }
     clear() {
-        shortPlayerDatas.delete(this.id)
+        shortPlayerDypro.delete(this.id);
     }
 }

@@ -54,24 +54,28 @@ async function movemoney(player) {
         }
         const currentMoney = Util.getMoney(selectedPlayer);
         let newMoney;
+        let actionmoney;
         let action;
         if (operation === 0) { // 増やす
             Util.addMoney(selectedPlayer, amount);
             newMoney = currentMoney + amount;
+            actionmoney = amount;
             action = "add";
         } else if (operation === 1) { // 減らす
             Util.addMoney(selectedPlayer, -amount);
             newMoney = Math.max(0, currentMoney - amount); // マイナスにならないように
+            actionmoney = -amount;
             action = "remove";
         } else if (operation === 2) { // 設定
             Util.setMoney(selectedPlayer, amount);
             newMoney = amount;
+            actionmoney = amount;
             action = "set";
         } else {
             player.sendMessage({ translate: "cw.menu.movemoney.error.invalidoperation" });
             return;
         }
-        player.sendMessage({ translate: `cw.menu.movemoney.success.${action}`, with: [`${selectedPlayer.name}`, `${newMoney}`] });
+        player.sendMessage({ translate: `cw.menu.movemoney.success.${action}`, with: [`${selectedPlayer.name}`, `${actionmoney}`, `${newMoney}`] });
     });
 }
 
@@ -210,14 +214,15 @@ async function PlayerDataReset(player) {
             Menu.showForm(player);
             return;
         };
-        if (response.formValues[1] !== true) {
+        if (!response.formValues[1]) {
             player.sendMessage({ translate: "cw.menu.playerdatareset.error" });
             return;
-        } else if (response.formValues[1] === true) {
-            const playerId = allPlayers[response.formValues[0]];
-            playerDatas.delete(playerId)
-            world.getEntity(playerId).setDynamicProperty("initial", false);
-            player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${playerId.name}`] });
+        } else {
+            const player = allPlayers[response.formValues[0]];
+            playerDatas.delete(player.id)
+            player.setDynamicProperty("initial", false);
+            player.runCommand("kick @s プレイヤーデータのリセット")
+            player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${player.name}`] });
         }
     })
 }
@@ -238,16 +243,16 @@ async function DeleteCountry(player) {
         };
         const newform = new MessageFormData()
         const playerData = playerDatas.get(player.id)
-        const countryData = playerData.country ? countryDatas.get(playerData.country) : "none";
+        const countryData = countries[response.selection];
         newform.title({ translate: "cw.scform.delete" })
         newform.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
         newform.button1({ translate: "cw.form.yes" })
         newform.button2({ translate: "cw.form.no" })
         newform.show(player).then((res) => {
             if (res.canceled || res.selection == 1) return;
-            const selectedCountry = countries[response.selection];
-            if (!selectedCountry) return; // safety check
-            Country.delete(selectedCountry);
+
+            if (!countryData) return; // safety check
+            Country.delete(countryData);
         })
     });
 }

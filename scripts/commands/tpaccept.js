@@ -276,14 +276,14 @@ function tpaSend(player, target, type) {
         player.sendMessage({ translate: "cw.tpa.send", with: [target.name] })
         target.sendMessage({ translate: "cw.tpa.notice", with: [player.name] })
     } else if (type == "request") {
-        const playerData = new ShortPlayerData(player.id)
+        const playerData = new ShortPlayerData(target.id)
         const tpaReq = playerData.get("tpaRequest") || [];
-        if (tpaReq.includes(target.id)) {
+        if (tpaReq.includes(player.id)) {
             player.sendMessage({ translate: "cw.tpa.secondrequest", with: [target.name] })
             target.sendMessage({ translate: "cw.tpa.secondrequestnotice", with: [player.name] })
             return;
         }
-        tpaReq.push(target.id)
+        tpaReq.push(player.id)
         playerData.set("tpaRequest", tpaReq)
         player.sendMessage({ translate: "cw.tpa.request", with: [target.name] })
         target.sendMessage({ translate: "cw.tpa.requestnotice", with: [player.name] })

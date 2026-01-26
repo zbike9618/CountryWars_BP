@@ -40,7 +40,8 @@ export class Country {
      * 
      */
     static make(player, { countryName, isPeace }) {
-        const id = countryDatas.idList.length + 1;
+        const { idList } = countryDatas
+        const id = Number(idList[idList.length - 1] || "0") + 1;
         const countryData =
         {
             id,
@@ -62,6 +63,7 @@ export class Country {
             wardeath: 0,//戦争中に死んでいい回数
             //同盟国などはあとで
             warcountry: [],//戦争中
+            peaceProposals: {},//講和提案
 
 
         }
@@ -97,13 +99,44 @@ export class Country {
             }
         }
 
-
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
     }
+    static join(player, countryData) {
+        const playerData = playerDatas.get(player.id);
+        if (playerData.country) {
+            player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
+            return false;
+        }
+        playerData.country = countryData.id;
+        playerDatas.set(player.id, playerData);
+        countryData.players.push(player.id);
+        countryDatas.set(countryData.id, countryData);
+        for (const p of Util.GetCountryPlayer(countryData)) {
+            const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.joinMessage", with: [${countryData.name}] })`
+            sendDataForPlayers(data)
+        }
+        return true;
+    }
+    static exit(player, countryData) {
+        const playerData = playerDatas.get(player.id);
+        if (!playerData.country) {
+            player.sendMessage({ translate: "cw.form.unjoincountry" })
+            return false;
+        }
+        playerData.country = undefined;
+        playerDatas.set(player.id, playerData);
+        countryData.players.splice(countryData.players.indexOf(player.id), 1);
+        countryDatas.set(countryData.id, countryData);
+        for (const p of Util.GetCountryPlayer(countryData)) {
+            const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.exitMessage", with: [${countryData.name}] })`
+            sendDataForPlayers(data)
+        }
+        return true;
+    }
     static async setting(player, countryData) {
         if (countryData == "none") {
-            world.sendMessage({ translate: "cw.form.unjoincountry" })
+            player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
         const form = new ActionFormData()
@@ -381,12 +414,26 @@ class Member {
         world.getEntity(playerId).sendMessage({ translate: "cw.scform.member.invited", with: [countryData.name] })
     }
     static async kick(player, countryData) {
+
+        const players = countryData.players//.filter(playerId => countryDatas.get(playerDatas.get(playerId).country).owner != playerId && playerId != player.id)
+        if (players.length == 0) {
+            const form = new MessageFormData()
+            form.title({ translate: "cw.scform.member.kick" })
+            form.body({ translate: "cw.form.noplayers" })
+            form.button1({ translate: "cw.form.redo" })
+            form.button2({ translate: "cw.form.cancel" })
+            const res = await form.show(player)
+            if (res.canceled) return;
+            if (res.selection == 0) {
+                this.member(player, countryData)
+            }
+            return;
+        }
         const form = new ModalFormData()
-        form.title({ translate: "cw.scform.member.kick" })
-        form.dropdown({ translate: "cw.form.playerchoise" }, countryData.players.map(playerId => playerDatas.get(playerId).name))
+        form.dropdown({ translate: "cw.form.playerchoise" }, players.map(playerId => playerDatas.get(playerId).name))
         const res = await form.show(player)
         if (res.canceled) return;
-        const playerId = countryData.players[res.formValues[0]]
+        const playerId = players[res.formValues[0]]
         const playerData = playerDatas.get(playerId)
         playerData.country = undefined
         playerDatas.set(playerId, playerData)
