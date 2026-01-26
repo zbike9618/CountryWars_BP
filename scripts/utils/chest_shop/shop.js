@@ -40,8 +40,8 @@ async function buyForm(player, itemData) {
     const { id, price } = itemData;
     const modal = new ModalFormData();
     modal.title({ translate: "shop.purchase_confirm" });
-    modal.slider({ translate: "shop.amount" }, 1, 64, 1, 1);
-    modal.toggle({ translate: "shop.stack_calculation" }, false);
+    modal.slider({ translate: "shop.amount" }, 1, 64);
+    modal.toggle({ translate: "shop.stack_calculation" });
 
     const res = await modal.show(player);
     if (res.canceled) return;
@@ -65,11 +65,22 @@ async function buyForm(player, itemData) {
         return;
     }
 
-    const inventory = player.getComponent("minecraft:inventory").container;
-    const itemStack = new ItemStack(id, finalAmount);
+    const inv = player.getComponent("minecraft:inventory").container;
 
     Util.addMoney(player, -totalPrice);
-    inventory.addItem(itemStack);
+    if (finalAmount != 0) {
+        const count = Math.floor(finalAmount / 64);
+        for (let i = 0; i < count; i++) {
+            const item = new server.ItemStack(id, 64)
+            inv.addItem(item)
+        }
+        const result = finalAmount - (count * 64)
+        if (result != 0) {
+
+            const item = new server.ItemStack(id, result)
+            inv.addItem(item)
+        }
+    }
 
     player.sendMessage({
         rawtext: [
