@@ -9,6 +9,21 @@ const sizes = new Map([
     ["small", 27],
     ["large", 54]
 ]);
+
+/**
+ * @param {string} str 
+ * @returns {import("@minecraft/server").RawMessage}
+ */
+function formatStr(str) {
+    if (typeof str !== "string") return { text: String(str || "") };
+    if (str.includes(".") || str.includes(":") || str.includes(" ")) {
+        if (!str.includes(" ") || str.startsWith("item.") || str.startsWith("tile.")) {
+            return { translate: str };
+        }
+    }
+    return { text: str };
+}
+
 export class ChestFormData {
     /** @type {ActionFormData} */
     #formData
@@ -37,7 +52,7 @@ export class ChestFormData {
         try {
             let titleRaw = [];
             if (typeof title === 'string') {
-                titleRaw = [{ translate: title }];
+                titleRaw = [formatStr(title)];
             } else if (title && typeof title === 'object' && title.rawtext) {
                 titleRaw = title.rawtext;
             } else if (Array.isArray(title)) {
@@ -72,32 +87,35 @@ export class ChestFormData {
             };
 
             if (typeof item.name === 'string') {
-                text.rawtext.push({ translate: `${item.name}` }, { text: `§r` });
+                text.rawtext.push(formatStr(item.name), { text: `§r` });
             } else if (item.name && typeof item.name === 'object' && item.name.rawtext) {
-                text.rawtext.push(...item.name.rawtext);
+                for (const r of item.name.rawtext) text.rawtext.push(r);
             } else if (Array.isArray(item.name)) {
-                text.rawtext.push(...item.name);
-            } else {
+                for (const r of item.name) text.rawtext.push(r);
+            } else if (item.name) {
                 text.rawtext.push(item.name);
             }
 
             // lore のフォーマット処理
             const formattedLore = [];
-            if (item.lore && item.lore.length > 0) {
-                if (item.lore.rawtext) {
-                    formattedLore.push({ text: "\n§r" }, ...item.lore.rawtext);
-                } else if (typeof item.lore[0] === 'string') {
-                    formattedLore.push(...item.lore.flatMap((l) => [
-                        { text: "\n§r" },
-                        { translate: `${l}` }
-                    ]));
-                } else {
-                    formattedLore.push({ text: "\n§r" }, ...item.lore);
+            if (item.lore) {
+                const loreArray = typeof item.lore === 'string' ? [item.lore] : item.lore;
+                if (loreArray.length > 0) {
+                    if (loreArray.rawtext) {
+                        formattedLore.push({ text: "\n§r" });
+                        for (const r of loreArray.rawtext) formattedLore.push(r);
+                    } else if (typeof loreArray[0] === 'string') {
+                        for (const l of loreArray) {
+                            formattedLore.push({ text: "\n§r" }, formatStr(l));
+                        }
+                    } else {
+                        for (const l of loreArray) formattedLore.push({ text: "\n§r" }, l);
+                    }
                 }
             }
 
             // formattedLore を rawtext に追加
-            text.rawtext.push(...formattedLore);
+            for (const f of formattedLore) text.rawtext.push(f);
             const texture = (id * 65536 + (item.isGlint ? 32768 : 0)) || item.iconPath;
 
             this.#buttons.splice(slot, 1, { text: text, icon: String(texture) });
