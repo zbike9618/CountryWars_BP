@@ -4,7 +4,8 @@
     "description": {
       "identifier": "st:happy_c",
       "menu_category": {
-        "category": "construction"
+        "category": "construction",
+        "group": "itemGroup.name.playerdolls"
       },
       "traits": {
         "minecraft:placement_direction": {
