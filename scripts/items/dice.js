@@ -49,6 +49,7 @@ world.afterEvents.entitySpawn.subscribe((event) => {
     const entity = event.entity;
     if (entity.typeId != "cw:dice") return;
     system.runTimeout(() => {
-        entity.remove()
+        if (entity.isValid)
+            entity.remove()
     }, 400);
 });

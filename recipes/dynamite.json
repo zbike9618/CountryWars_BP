@@ -1,0 +1,33 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:dynamite_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "CCC",
+            "CXC",
+            "CCC"
+        ],
+        "key": {
+            "X": {
+                "item": "cw:nitroglycerin_bucket"
+            },
+            "C": {
+                "item": "minecraft:clay"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:nitroglycerin_bucket"
+            }
+        ],
+        "result": {
+            "item": "cw:dynamite",
+            "count": 3
+        }
+    }
+}

@@ -9,7 +9,7 @@
     },
     "components": {
       "minecraft:max_stack_size": 1,
-      "minecraft:icon": "airboard_key",
+      "minecraft:icon": "air_board_key",
       "minecraft:durability": {
         "max_durability": 32
       },
@@ -19,13 +19,19 @@
         "movement_modifier": 1.0
       },
       "minecraft:repairable": {
-        "repair_items": [{
-            "items": ["minecraft:coal"]
-        }],
+        "repair_items": [
+          {
+            "items": [
+              "minecraft:coal"
+            ]
+          }
+        ],
         "repair_amount": 32
       },
       "minecraft:use_animation": "bow",
-      "minecraft:custom_components": ["cw:airboard_key_component"]
+      "minecraft:custom_components": [
+        "cw:airboard_key_component"
+      ]
     }
   }
 }
