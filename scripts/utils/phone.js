@@ -88,7 +88,7 @@ function show_form(player) {
         iconPath: "textures/items/gold_ingot",
         name: "cw.bankform.title",
         stackAmount: 1,
-        lore: ["comming soon..."],
+        lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(9, {
