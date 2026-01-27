@@ -11,6 +11,7 @@ import "./platinum_armor.js";
 import "./fabric_armor.js";
 import "./airboard.js";
 import "./end.js";
+import "./timer_bomb.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
