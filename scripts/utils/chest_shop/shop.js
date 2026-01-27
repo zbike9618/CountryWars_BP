@@ -6,7 +6,7 @@ import shop_config from "../../config/shop_config";
 import { itemIdToPath } from "../../config/texture_config"
 import { Util } from "../util";
 export async function openShop(player) {
-    const form = new ChestFormData();
+    const form = new ChestFormData("small");
     form.setTitle({ translate: "shop.title" });
     for (const i in shop_config) {
         form.setButton(i, {
