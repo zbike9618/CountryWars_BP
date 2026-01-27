@@ -31,7 +31,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
             const dimension = ev.dimension;
             // 起動中に壊された場合は即座に爆発
             system.run(() => {
-                dimension.createExplosion(location, 16);
+                dimension.createExplosion(location, 8);
             });
         }
     }
@@ -48,7 +48,7 @@ system.beforeEvents.startup.subscribe(init => {
                 let minute = Math.floor((remaining % 3600) / 60).toString();
                 if (minute.length == 1) minute = `0${minute}`;
                 let second = Math.floor(remaining % 60).toString();
-                if (second.length == 1) hour = `0${second}`
+                if (second.length == 1) second = `0${second}`
                 arg.player.onScreenDisplay.setActionBar({
                     translate: "cw.timer_bomb.check",
                     with: [hour, minute, second]
