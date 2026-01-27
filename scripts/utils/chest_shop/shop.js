@@ -17,7 +17,9 @@ export async function openShop(player) {
         });
     }
     const res = await form.show(player);
-    if (res.canceled) return;
+    if (res.canceled) {
+        return;
+    }
     const items = shop_config[res.selection].items;
     const inform = new ChestFormData();
     inform.setTitle({ translate: "shop.title" });
@@ -29,7 +31,10 @@ export async function openShop(player) {
         });
     }
     const resp = await inform.show(player);
-    if (resp.canceled || resp.selection === undefined) return;
+    if (resp.canceled || resp.selection === undefined) {
+        openShop(player);
+        return;
+    }
     buyForm(player, items[resp.selection]);
 }
 /**
