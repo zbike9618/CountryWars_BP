@@ -12,7 +12,7 @@
                 "minecraft:explode": {
                     "fuse_length": 3,
                     "fuse_lit": true,
-                    "power": 10,
+                    "power": 4,
                     "causes_fire": false
                 }
             }

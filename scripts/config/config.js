@@ -1,5 +1,7 @@
 export default {
     // 初期所持金
+    //localChatの範囲
+    localChatDistance: 20,
     //通貨
 
     //建国するのに必要な金額
