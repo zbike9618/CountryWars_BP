@@ -160,10 +160,26 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
 })
 
 world.beforeEvents.explosion.subscribe((ev) => {
-    if (!ev.source) return;
+    if (ev.source && explosionMap.has(ev.source.id)) {
+        const locations = explosionMap.get(ev.source.id);
+        const dimension = ev.dimension;
+        const blocksToDestroy = [];
 
-    if (!explosionMap.has(ev.source.id)) {
+        for (const loc of locations) {
+            const block = dimension.getBlock(loc);
+            if (block) {
+                blocksToDestroy.push(block);
+            }
+        }
+        if (blocksToDestroy.length > 0) {
+            ev.setImpactedBlocks(blocksToDestroy);
+        }
+
+        // Cleanup to prevent data bloat
+        explosionMap.delete(ev.source.id);
+    } else {
         const blocks = ev.getImpactedBlocks();
+        if (blocks.length === 0) return;
         const dimension = ev.dimension;
         let explodedInCountry = false;
         const destroyBlockLocations = [];
@@ -200,29 +216,13 @@ world.beforeEvents.explosion.subscribe((ev) => {
         }
 
         if (destroyBlockLocations.length > 0) {
-            const spawnpos = world.getAllPlayers()[0].location
+            const players = world.getAllPlayers();
+            if (players.length === 0) return;
+            const spawnpos = players[0].location;
             system.run(() => {
                 const entity = dimension.spawnEntity("cw:explosion", { x: spawnpos.x, y: 320, z: spawnpos.z });
                 explosionMap.set(entity.id, destroyBlockLocations);
             });
         }
-    } else {
-        const locations = explosionMap.get(ev.source.id);
-        const dimension = ev.dimension;
-        const blocksToDestroy = [];
-
-        for (const loc of locations) {
-            const block = dimension.getBlock(loc);
-            if (block) {
-                blocksToDestroy.push(block);
-            }
-        }
-
-        if (blocksToDestroy.length > 0) {
-            ev.setImpactedBlocks(blocksToDestroy);
-        }
-
-        // Cleanup to prevent data bloat
-        explosionMap.delete(ev.source.id);
     }
 });

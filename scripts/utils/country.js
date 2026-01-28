@@ -49,10 +49,10 @@ export class Country {
             description: "",
             money: 0,
             tax: {
-                consumption: 0,
-                income: 0,
-                country: 0,
-                customs: 0
+                consumption: 0,//消費税
+                income: 0,//所得税
+                country: 0,//国民税
+                customs: 0//関税
             },//税率[%]
             isPeace: isPeace,
             owner: player.id,
@@ -114,7 +114,7 @@ export class Country {
         countryDatas.set(countryData.id, countryData);
         for (const p of Util.GetCountryPlayer(countryData)) {
             const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.joinMessage", with: [${countryData.name}] })`
-            sendDataForPlayers(data)
+            sendDataForPlayers(data, player.id)
         }
         return true;
     }
@@ -130,7 +130,7 @@ export class Country {
         countryDatas.set(countryData.id, countryData);
         for (const p of Util.GetCountryPlayer(countryData)) {
             const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.exitMessage", with: [${countryData.name}] })`
-            sendDataForPlayers(data)
+            sendDataForPlayers(data, player.id)
         }
         return true;
     }

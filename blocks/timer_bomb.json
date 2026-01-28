@@ -19,7 +19,7 @@
                 "explosion_resistance": 5
             },
             "minecraft:destructible_by_mining": {
-                "seconds_to_destroy": 30
+                "seconds_to_destroy": 0.1
             },
             "minecraft:light_emission": 0,
             "minecraft:material_instances": {

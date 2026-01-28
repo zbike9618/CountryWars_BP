@@ -135,6 +135,9 @@ function show_form(player) {
             case 8:
                 Bank.bankForm(player);
                 break;
+            case 9:
+                player.runCommand("sc")
+                break;
             case 26:
                 Help.mainForm(player);
                 break;
