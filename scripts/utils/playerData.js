@@ -20,7 +20,8 @@ world.afterEvents.playerSpawn.subscribe(ev => {
                 before: ["一般的な"],
                 after: ["鯖民"],
                 now: [0, 0]
-            }
+            },
+            chattype: "world"
         }
         playerDatas.set(player.id, playerData);
         DoInitialSpawn(player);//初期スポーンメッセージ等 

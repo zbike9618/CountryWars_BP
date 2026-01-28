@@ -67,6 +67,7 @@ export class Bank {
         form.show(player).then((result) => {
             if (result.canceled || result.selection === 1) {
                 player.sendMessage("§c預け入れを中断しました");
+                this.bankForm(player);
                 return;
             }
             const amount = getTotalMoney(player);
@@ -86,12 +87,15 @@ export class Bank {
                         }
                     }
                     player.sendMessage(`§a${amount}円を預けました！`);
+                    this.bankForm(player);
                 } catch (e) {
                     player.sendMessage("§cエラーが発生したため、預け入れを中断しました。");
                     console.warn(`Deposit Error: ${e}`);
+                    this.bankForm(player);
                 }
             } else {
                 player.sendMessage("§c預けるための現金を持っていません。");
+                this.bankForm(player);
             }
         });
     }

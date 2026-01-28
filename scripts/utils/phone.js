@@ -88,7 +88,7 @@ function show_form(player) {
         iconPath: "textures/items/gold_ingot",
         name: "cw.bankform.title",
         stackAmount: 1,
-        lore: ["comming soon..."],
+        lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(9, {
@@ -134,6 +134,9 @@ function show_form(player) {
                 break;
             case 8:
                 Bank.bankForm(player);
+                break;
+            case 9:
+                player.runCommand("sc")
                 break;
             case 26:
                 Help.mainForm(player);
