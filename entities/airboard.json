@@ -4,7 +4,11 @@
     "description": {
       "identifier": "cw:airboard",
       "is_spawnable": true,
-      "is_summonable": true
+      "is_summonable": true,
+      "spawn_egg": {
+  "texture": "airboard",
+  "texture_index": 2
+}
     },
     "components": {
       "minecraft:rideable": {

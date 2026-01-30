@@ -11,7 +11,7 @@ const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export async function openShop(player) {
     const form = new ChestFormData("small");
-    form.setTitle({ translate: "shop.title" });
+    form.setTitle({ translate: "cw.shop.title" });
     for (const i in shop_config) {
         form.setButton(i, {
             name: shop_config[i].name,
@@ -26,7 +26,7 @@ export async function openShop(player) {
     }
     const items = shop_config[res.selection].items;
     const inform = new ChestFormData();
-    inform.setTitle({ translate: "shop.title" });
+    inform.setTitle({ translate: "cw.shop.title" });
     for (const i in items) {
         inform.setButton(i, {
             name: Util.langChangeItemName(items[i].id),
@@ -48,9 +48,9 @@ export async function openShop(player) {
 async function buyForm(player, itemData) {
     const { id, price } = itemData;
     const modal = new ModalFormData();
-    modal.title({ translate: "shop.purchase_confirm" });
-    modal.slider({ translate: "shop.amount" }, 1, 64);
-    modal.toggle({ translate: "shop.stack_calculation" });
+    modal.title({ translate: "cw.shop.purchase_confirm" });
+    modal.slider({ translate: "cw.shop.amount" }, 1, 64);
+    modal.toggle({ translate: "cw.shop.stack_calculation" });
 
     const res = await modal.show(player);
     if (res.canceled) return;
@@ -83,7 +83,7 @@ async function buyForm(player, itemData) {
             rawtext: [
                 { text: "§c" },
                 {
-                    translate: "shop.not_enough_money",
+                    translate: "cw.shop.not_enough_money",
                     with: [totalPrice.toString(), playerMoney.toString()]
                 }
             ]
@@ -121,11 +121,11 @@ async function buyForm(player, itemData) {
     player.sendMessage({
         rawtext: [
             { text: "§a" },
-            { translate: "shop.purchased" },
+            { translate: "cw.shop.purchased" },
             { translate: Util.langChangeItemName(id) },
             { text: ` x${finalAmount} ` },
-            { translate: "shop.total_price" },
-            { text: `¥${totalPrice}\n§7(内消費税: ¥${taxAmount})` }
+            { translate: "cw.shop.total_price" },
+            { text: `¥${totalPrice}` }
         ]
     });
 

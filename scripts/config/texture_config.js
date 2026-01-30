@@ -662,6 +662,7 @@ export const itemIdToPath = {
   'minecraft:scute': 'textures/items/armadillo_scute',
   'minecraft:slime_ball': 'textures/items/slimeball',
   'minecraft:clay_ball': 'textures/items/clay_ball',
+  'minecraft:prismarine': 'textures/items/prismarine',
   'minecraft:prismarine_shard': 'textures/items/prismarine_shard',
   'minecraft:prismarine_crystals': 'textures/items/prismarine_crystals',
   'minecraft:nautilus_shell': 'textures/items/nautilus',
