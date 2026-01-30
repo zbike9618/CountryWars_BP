@@ -9,7 +9,7 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
 
     if (!settingData.get(player)?.swapTools) return;
     const inv = player.getComponent("minecraft:inventory").container;
-    const block = player.getBlockFromViewDirection({ maxDistance: 5 })
+    const block = player.getBlockFromViewDirection({ maxDistance: 6 })
     if (!block) return;
     const blockType = block.block.typeId;
     const toolType = Appropriatetools[blockType];
@@ -30,7 +30,6 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
             break;
         }
     }
-    world.sendMessage(`${slot}`)
     if (slot == undefined) return;
     inv.swapItems(player.selectedSlotIndex, slot, inv)
 })
@@ -38,7 +37,7 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
     const player = ev.player;
     if (ev.swingSource != "Attack") return
     if (!settingData.get(player)?.swapTools) return;
-    const target = player.getEntitiesFromViewDirection({ maxDistance: 5 })
+    const target = player.getEntitiesFromViewDirection({ maxDistance: 4 })
     if (!target[0]?.entity) return;
     const inv = player.getComponent("minecraft:inventory").container;
     const tool = inv.getItem(player.selectedSlotIndex);
