@@ -18,6 +18,7 @@ export class Data {
             "member_kick",
             "money_deposit",
             "money_withdraw",
+            "diplomacy"
         ]
     static enchantsLang = {
         "power": "enchantment.arrowDamage",

@@ -64,6 +64,19 @@ export class Country {
             //同盟国などはあとで
             warcountry: [],//戦争中
             peaceProposals: {},//講和提案
+            diplomacy: {
+                ally: [], // 同盟国 (相互承諾)
+                friend: [], // 友好国 (一方的)
+                neutral: [], // 中立国 (デフォルト)
+                enemy: [], // 敵対国 (一方的)
+                requests: [] // 同盟申請受信リスト
+            },
+            diplomacyPermissions: { // 外交関係ごとの権限設定
+                ally: [],
+                friend: [],
+                neutral: [],
+                enemy: []
+            }
 
 
         }
@@ -98,7 +111,23 @@ export class Country {
                 chunkDatas.delete(chunkId);
             }
         }
-
+        //同盟関係も消す
+        for (const countryId of countryDatas.idList) {
+            const countryData = countryDatas.get(countryId);
+            if (countryData && countryData.diplomacy && countryData.diplomacy.ally && countryData.diplomacy.ally.includes(countryData.id)) {
+                countryData.diplomacy.ally.splice(countryData.diplomacy.ally.indexOf(countryData.id), 1);
+                countryDatas.set(countryId, countryData);
+            }
+        }
+        //国庫の50%を国王に、残りの50%を国民に分配する
+        const kingData = playerDatas.get(countryData.owner);
+        kingData.money += Math.floor(countryData.money * 0.5);
+        playerDatas.set(countryData.owner, kingData);
+        for (const playerId of players) {
+            const playerData = playerDatas.get(playerId);
+            playerData.money += Math.floor(countryData.money * 0.5 / players.length);
+            playerDatas.set(playerId, playerData);
+        }
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
     }
@@ -146,6 +175,7 @@ export class Country {
         form.button({ translate: "cw.scform.money" })
         form.button({ translate: "cw.scform.tax" })
         form.button({ translate: "cw.scform.permission" })
+        form.button({ translate: "cw.scform.diplomacy" }) // 新規追加: 外交設定
         form.button({ translate: "cw.scform.delete" })
 
         const res = await form.show(player)
@@ -175,6 +205,13 @@ export class Country {
                 break;
 
             case 5:
+                if (hasPermission(player, "diplomacy")) {
+                    Diplomacy.diplomacy(player, countryData)
+                } else if (await noPermission(player)) {
+                    this.setting(player, countryData)
+                }
+                break;
+            case 6:
                 const newform = new MessageFormData()
                 newform.title({ translate: "cw.scform.delete" })
                 newform.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
@@ -553,6 +590,8 @@ class Tax {
         if (res.canceled) return;
         countryData.tax.consumption = res.formValues[0]
         countryData.tax.income = res.formValues[1]
+        countryData.tax.country = res.formValues[2]
+        countryData.tax.customs = res.formValues[3]
         countryDatas.set(countryData.id, countryData)
         player.sendMessage({ translate: "cw.scform.tax.success", with: [`${countryData.tax.consumption}`] })
     }
@@ -574,4 +613,385 @@ export async function noPermission(player) {
     const res = await form.show(player)
     if (res.canceled) return;
     return res.selection == 0
+}
+
+class Diplomacy {
+    // 外交権限のリスト
+    static permissions = [
+        "enter_territory", // 領土への侵入
+        "break_block", // ブロック破壊
+        "place_block", // ブロック設置
+        "open_container", // コンテナを開く
+        "interact", // ブロック/エンティティへの干渉
+        "attack" // 攻撃
+    ];
+
+    static relationJP = {
+        "ally": "同盟",
+        "friend": "友好",
+        "neutral": "中立",
+        "enemy": "敵対"
+    };
+
+    /**
+     * 外交関連のメインメニュー
+     */
+    static async diplomacy(player, countryData) {
+        const form = new ActionFormData();
+        form.title({ translate: "cw.scform.diplomacy" });
+        form.button({ translate: "cw.scform.diplomacy.list" }); // 関係一覧
+        form.button({ translate: "cw.scform.diplomacy.change" }); // 関係変更
+        form.button({ translate: "cw.scform.diplomacy.requests" }); // 同盟申請確認
+        // 申請数が0より大きければバッジを表示したいが、ActionFormDataでは無理なのでテキストで表現
+        if (countryData.diplomacy.requests && countryData.diplomacy.requests.length > 0) {
+            form.body({ translate: "cw.scform.diplomacy.request_pending", with: [`${countryData.diplomacy.requests.length}`] });
+        }
+        form.button({ translate: "cw.scform.diplomacy.permission" }); // 外交権限設定
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        switch (res.selection) {
+            case 0:
+                this.list(player, countryData);
+                break;
+            case 1:
+                this.changeRelationMenu(player, countryData);
+                break;
+            case 2:
+                this.checkRequests(player, countryData);
+                break;
+            case 3:
+                this.permissionMenu(player, countryData);
+                break;
+        }
+    }
+
+    /**
+     * 外交関係一覧表示
+     */
+    static async list(player, countryData) {
+        const form = new ActionFormData();
+        form.title({ translate: "cw.scform.diplomacy.list" });
+
+        const relations = ["ally", "friend", "neutral", "enemy"];
+        let bodyText = "";
+
+        for (const rel of relations) {
+            const countryIds = countryData.diplomacy[rel];
+            let names = "";
+            if (countryIds && countryIds.length > 0) {
+                names = countryIds.map(id => {
+                    const c = countryDatas.get(id);
+                    return c ? c.name : `Unknown(${id})`;
+                }).join(", ");
+            } else {
+                names = "None"; // 翻訳キーがあれば変更
+            }
+            bodyText += `§l${this.relationJP[rel]}§r: ${names}\n`;
+        }
+
+        form.body(bodyText);
+        form.button({ translate: "cw.form.redo" });
+
+        await form.show(player);
+        this.diplomacy(player, countryData);
+    }
+
+    /**
+     * 関係変更メニュー（国選択）
+     */
+    static async changeRelationMenu(player, countryData) {
+        // 全ての他の国を取得
+        const allCountries = countryDatas.idList
+            .filter(id => id != countryData.id) // 自分以外
+            .map(id => countryDatas.get(id))
+            .filter(c => c); // undefined除外
+
+        if (allCountries.length === 0) {
+            player.sendMessage({ translate: "cw.scform.diplomacy.nocountries" });
+            return;
+        }
+
+        const form = new ModalFormData();
+        form.title({ translate: "cw.scform.diplomacy.change" });
+        form.dropdown({ translate: "cw.scform.diplomacy.select_country" }, allCountries.map(c => c.name));
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        const targetCountryStr = allCountries[res.formValues[0]];
+        // データを再取得して整合性を保つ
+        const targetCountry = countryDatas.get(targetCountryStr.id);
+
+        if (!targetCountry) {
+            player.sendMessage({ translate: "cw.error.country_not_found" });
+            return;
+        }
+
+        this.selectRelationAction(player, countryData, targetCountry);
+    }
+
+    /**
+     * 特定の国との関係アクション選択
+     */
+    static async selectRelationAction(player, countryData, targetCountry) {
+        // 現在の関係を確認
+        let currentRelation = "neutral";
+        if (countryData.diplomacy.ally.includes(targetCountry.id)) currentRelation = "ally";
+        else if (countryData.diplomacy.friend.includes(targetCountry.id)) currentRelation = "friend";
+        else if (countryData.diplomacy.enemy.includes(targetCountry.id)) currentRelation = "enemy";
+
+        const form = new ActionFormData();
+        form.title({ translate: "cw.scform.diplomacy.action", with: [targetCountry.name] });
+        form.body({ translate: "cw.scform.diplomacy.current_relation", with: [this.relationJP[currentRelation]] });
+
+        // アクションボタン
+        form.button({ translate: "cw.scform.diplomacy.req_ally" }); // 同盟申請
+        form.button({ translate: "cw.scform.diplomacy.set_friend" }); // 友好国に設定
+        form.button({ translate: "cw.scform.diplomacy.set_neutral" }); // 中立国に設定
+        form.button({ translate: "cw.scform.diplomacy.set_enemy" }); // 敵対国に設定
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        switch (res.selection) {
+            case 0:
+                this.requestAlly(player, countryData, targetCountry);
+                break;
+            case 1:
+                this.setRelation(player, countryData, targetCountry, "friend");
+                break;
+            case 2:
+                this.setRelation(player, countryData, targetCountry, "neutral");
+                break;
+            case 3:
+                this.setRelation(player, countryData, targetCountry, "enemy");
+                break;
+        }
+    }
+
+    /**
+     * 同盟申請
+     */
+    static requestAlly(player, countryData, targetCountry) {
+        if (!targetCountry.diplomacy) {
+            player.sendMessage({ rawtext: [{ text: "§cThe target country does not support diplomacy yet. (Old Data)" }] });
+            return;
+        }
+        // 既に同盟なら中止
+        if (countryData.diplomacy.ally.includes(targetCountry.id)) {
+            player.sendMessage({ translate: "cw.scform.diplomacy.already_ally" });
+            return;
+        }
+        // 既に申請済みかチェック
+        if (targetCountry.diplomacy.requests.includes(countryData.id)) {
+            player.sendMessage({ translate: "cw.scform.diplomacy.already_requested" });
+            return;
+        }
+
+        targetCountry.diplomacy.requests.push(countryData.id);
+        countryDatas.set(targetCountry.id, targetCountry);
+
+        player.sendMessage({ translate: "cw.scform.diplomacy.request_sent", with: [targetCountry.name] });
+
+        // 相手国のオーナーに通知
+        const ownerId = targetCountry.owner;
+        const msg = `world.getEntity('${ownerId}').sendMessage({ translate: "cw.scform.diplomacy.receive_request", with: ["${countryData.name}"] })`;
+        sendDataForPlayers(msg, ownerId);
+    }
+
+    /**
+     * 関係設定 (Friendly, Neutral, Enemy)
+     * 一方的に設定可能
+     */
+    static setRelation(player, countryData, targetCountry, newRelation) {
+        const targetId = targetCountry.id;
+
+        // 現在の関係から削除
+        const relations = ["ally", "friend", "neutral", "enemy"];
+        relations.forEach(rel => {
+            const idx = countryData.diplomacy[rel].indexOf(targetId);
+            if (idx !== -1) {
+                countryData.diplomacy[rel].splice(idx, 1);
+            }
+        });
+
+        // 相互承諾が必要な同盟を一方的に破棄する場合の処理も上記でカバーされる
+        // ただし、相手側のリストからも削除するか？
+        // 友好・敵対は「自国が相手をどう思っているか」なので、相手のリストはいじらないのが基本だが、
+        // 「同盟」だけは双方向データの整合性が必要。
+        // もし元が同盟だったなら、相手の同盟リストからも自分を消す必要がある。
+
+        // ここで再取得しないとデータが古い可能性があるが、countryDataはこの関数のローカル変数なので、
+        // setRelationの前にリフレッシュされている前提、またはここで相手のデータを取得。
+
+        // 相手側の同盟リストから自分を削除する処理 (もし元が同盟だったら)
+        // 相手データ取得
+        const freshTargetData = countryDatas.get(targetId);
+        if (freshTargetData && freshTargetData.diplomacy && freshTargetData.diplomacy.ally) {
+            const allyIdx = freshTargetData.diplomacy.ally.indexOf(countryData.id);
+            if (allyIdx !== -1) {
+                // 向こうも同盟だった -> 同盟解消通知
+                freshTargetData.diplomacy.ally.splice(allyIdx, 1);
+                // 向こうは自動的に中立(リストにない状態)になるか、明示的にneutralに入れるか。
+                // 初期化構造では neutral: [] だが、neutralは「他のリストにない」状態とみなすことも多い。
+                // ただ、country.jsの初期データ構造には neutral: [] があるので、一応入れておく？
+                // しかし、get時は neutral 配列を見る実装をしているなら入れる必要がある。
+                // ここでは「中立」明示リストに入れる。
+                freshTargetData.diplomacy.neutral.push(countryData.id);
+                countryDatas.set(freshTargetData.id, freshTargetData);
+
+                const msg = `world.getEntity('${freshTargetData.owner}').sendMessage({ translate: "cw.scform.diplomacy.ally_broken", with: ["${countryData.name}"] })`;
+                sendDataForPlayers(msg, freshTargetData.owner);
+            }
+        }
+
+        // 新しい関係に追加 (neutral以外)
+        if (newRelation !== "neutral") {
+            countryData.diplomacy[newRelation].push(targetId);
+        } else {
+            // neutralなら明示的にリストに入れる (構造定義に従う)
+            countryData.diplomacy.neutral.push(targetId);
+        }
+
+        countryDatas.set(countryData.id, countryData);
+        player.sendMessage({ translate: "cw.scform.diplomacy.relation_updated", with: [targetCountry.name, this.relationJP[newRelation]] });
+    }
+
+    /**
+     * 申請確認メニュー
+     */
+    static async checkRequests(player, countryData) {
+        const requests = countryData.diplomacy.requests;
+        if (requests.length === 0) {
+            player.sendMessage({ translate: "cw.scform.diplomacy.no_requests" });
+            return;
+        }
+
+        const requesterNames = requests.map(id => {
+            const c = countryDatas.get(id);
+            return c ? c.name : `Unknown(${id})`;
+        });
+
+        const form = new ActionFormData();
+        form.title({ translate: "cw.scform.diplomacy.requests" });
+        requesterNames.forEach(name => {
+            form.button(name);
+        });
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        const targetId = requests[res.selection];
+        const targetCountry = countryDatas.get(targetId);
+
+        if (!targetCountry) {
+            // 国がない場合、申請リストから削除
+            requests.splice(res.selection, 1);
+            countryDatas.set(countryData.id, countryData);
+            return;
+        }
+
+        this.handleRequest(player, countryData, targetCountry);
+    }
+
+    /**
+     * 個別申請の処理 (承諾/拒否)
+     */
+    static async handleRequest(player, countryData, requesterCountry) {
+        const form = new MessageFormData();
+        form.title({ translate: "cw.scform.diplomacy.request_handle" });
+        form.body({ translate: "cw.scform.diplomacy.request_body", with: [requesterCountry.name] });
+        form.button1({ translate: "cw.scform.diplomacy.accept" });
+        form.button2({ translate: "cw.scform.diplomacy.deny" });
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        // 申請リストから削除
+        const reqIdx = countryData.diplomacy.requests.indexOf(requesterCountry.id);
+        if (reqIdx !== -1) countryData.diplomacy.requests.splice(reqIdx, 1);
+
+        if (res.selection === 1) { // Accept
+            // 自分側: 各リストから削除して ally に追加
+            ["friend", "neutral", "enemy"].forEach(rel => {
+                const idx = countryData.diplomacy[rel].indexOf(requesterCountry.id);
+                if (idx !== -1) countryData.diplomacy[rel].splice(idx, 1);
+            });
+            countryData.diplomacy.ally.push(requesterCountry.id);
+
+            // 相手側: 各リストから削除して ally に追加
+            // 再取得 (整合性)
+            let freshRequester = countryDatas.get(requesterCountry.id);
+            ["friend", "neutral", "enemy"].forEach(rel => {
+                const idx = freshRequester.diplomacy[rel].indexOf(countryData.id);
+                if (idx !== -1) freshRequester.diplomacy[rel].splice(idx, 1);
+            });
+            freshRequester.diplomacy.ally.push(countryData.id);
+            countryDatas.set(freshRequester.id, freshRequester);
+
+            player.sendMessage({ translate: "cw.scform.diplomacy.accepted", with: [requesterCountry.name] });
+            const msg = `world.getEntity('${freshRequester.owner}').sendMessage({ translate: "cw.scform.diplomacy.request_accepted", with: ["${countryData.name}"] })`;
+            sendDataForPlayers(msg, freshRequester.owner);
+
+        } else { // Deny
+            player.sendMessage({ translate: "cw.scform.diplomacy.denied", with: [requesterCountry.name] });
+            const msg = `world.getEntity('${requesterCountry.owner}').sendMessage({ translate: "cw.scform.diplomacy.request_denied", with: ["${countryData.name}"] })`;
+            sendDataForPlayers(msg, requesterCountry.owner);
+        }
+
+        countryDatas.set(countryData.id, countryData);
+    }
+
+    /**
+     * 外交権限設定メニュー (Ally, Friend, Neutral, Enemy ごとに設定)
+     */
+    static async permissionMenu(player, countryData) {
+        const form = new ActionFormData();
+        form.title({ translate: "cw.scform.diplomacy.permission_settings" });
+        form.button(`${this.relationJP["ally"]} 権限`);
+        form.button(`${this.relationJP["friend"]} 権限`);
+        form.button(`${this.relationJP["neutral"]} 権限`);
+        form.button(`${this.relationJP["enemy"]} 権限`);
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        const relations = ["ally", "friend", "neutral", "enemy"];
+        const selectedRel = relations[res.selection];
+
+        this.editPermissions(player, countryData, selectedRel);
+    }
+
+    /**
+     * 権限編集画面
+     */
+    static async editPermissions(player, countryData, relation) {
+        const form = new ModalFormData();
+        form.title({ translate: "cw.scform.diplomacy.edit_perm", with: [this.relationJP[relation]] });
+
+        // 現在の設定
+        const currentPerms = countryData.diplomacyPermissions[relation] || [];
+
+        this.permissions.forEach(perm => {
+            const isEnabled = currentPerms.includes(perm);
+            form.toggle({ translate: `cw.diplomacy.perm.${perm}` }, { defaultValue: isEnabled });
+        });
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        const newPerms = [];
+        this.permissions.forEach((perm, index) => {
+            if (res.formValues[index]) {
+                newPerms.push(perm);
+            }
+        });
+
+        countryData.diplomacyPermissions[relation] = newPerms;
+        countryDatas.set(countryData.id, countryData);
+
+        player.sendMessage({ translate: "cw.scform.diplomacy.perm_updated", with: [relation.toUpperCase()] });
+    }
 }

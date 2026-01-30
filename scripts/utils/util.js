@@ -4,6 +4,7 @@ import "./phone.js";
 import { Dypro } from "./dypro";
 import { Data } from "./data";
 const playerDatas = new Dypro("player");
+const countryDatas = new Dypro("country");
 export class Util {
     static getAllPlayerIdsSorted() {
         return playerDatas.idList.sort((a, b) => {
@@ -45,7 +46,25 @@ export class Util {
     }
     static addMoney(player, int) {
         const playerData = playerDatas.get(player.id);
-        playerData.money += int;
+        if (!playerData) return;
+
+        let amountToAdd = int;
+
+        // 所得税 (Income Tax) の計算 - 収入がある場合のみ
+        if (int > 0 && playerData.country) {
+            const countryData = countryDatas.get(playerData.country);
+            if (countryData && countryData.tax.income > 0) {
+                const tax = Math.floor(int * (countryData.tax.income / 100));
+                if (tax > 0) {
+                    countryData.money += tax;
+                    countryDatas.set(countryData.id, countryData);
+                    amountToAdd -= tax;
+                    // 通知が必要な場合はここに追記可能
+                }
+            }
+        }
+
+        playerData.money += amountToAdd;
         playerDatas.set(player.id, playerData);
     }
     static getMoney(player) {

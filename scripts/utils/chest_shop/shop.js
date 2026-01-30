@@ -5,6 +5,10 @@ import { ChestFormData } from "./chest-ui";
 import shop_config from "../../config/shop_config";
 import { itemIdToPath } from "../../config/texture_config"
 import { Util } from "../util";
+import { Dypro } from "../dypro";
+import { Chunk } from "../chunk";
+const countryDatas = new Dypro("country");
+const playerDatas = new Dypro("player");
 export async function openShop(player) {
     const form = new ChestFormData("small");
     form.setTitle({ translate: "shop.title" });
@@ -53,7 +57,24 @@ async function buyForm(player, itemData) {
 
     const [amount, isStack] = res.formValues;
     const finalAmount = isStack ? amount * 64 : amount;
-    const totalPrice = finalAmount * price;
+    const basePrice = finalAmount * price;
+
+    // 税金の計算
+    const playerData = playerDatas.get(player.id);
+    const countryId = playerData?.country;
+    let taxRate = 0;
+    if (countryId) {
+        const countryData = countryDatas.get(countryId);
+        if (countryData) {
+            taxRate = countryData.tax.consumption || 0;
+        }
+    }
+    const taxAmount = Math.floor(basePrice * (taxRate / 100));
+
+    // 関税 (Customs) の計算 - 削除
+    const customsAmount = 0;
+
+    const totalPrice = basePrice + taxAmount;
 
     const playerMoney = Util.getMoney(player);
 
@@ -73,6 +94,16 @@ async function buyForm(player, itemData) {
     const inv = player.getComponent("minecraft:inventory").container;
 
     Util.addMoney(player, -totalPrice);
+
+    // 消費税を国庫に入れる
+    if (countryId && taxAmount > 0) {
+        const countryData = countryDatas.get(countryId);
+        if (countryData) {
+            countryData.money += taxAmount;
+            countryDatas.set(countryId, countryData);
+        }
+    }
+
     if (finalAmount != 0) {
         const count = Math.floor(finalAmount / 64);
         for (let i = 0; i < count; i++) {
@@ -94,7 +125,7 @@ async function buyForm(player, itemData) {
             { translate: Util.langChangeItemName(id) },
             { text: ` x${finalAmount} ` },
             { translate: "shop.total_price" },
-            { text: `¥${totalPrice}` }
+            { text: `¥${totalPrice}\n§7(内消費税: ¥${taxAmount})` }
         ]
     });
 

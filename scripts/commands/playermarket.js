@@ -8,6 +8,7 @@ import { itemIdToPath } from "../config/texture_config.js";
 import { ActionForm } from "../utils/form_class.js";
 const marketDatas = new Dypro("playermarket");
 const playerDatas = new Dypro("player");
+const countryDatas = new Dypro("country");
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -88,46 +89,84 @@ async function showPlayerMarket(player) {
 }
 async function buyForm(player, { slot, page }) {
     const data = marketDatas.get(`${page}`)[slot];
+    const buyerData = playerDatas.get(player.id);
+    const countryId = buyerData?.country;
+
+    // 消費税 (Consumption Tax) の計算 (購入者ベース)
+    let taxRate = 0;
+    if (countryId) {
+        const countryData = countryDatas.get(countryId);
+        if (countryData) {
+            taxRate = countryData.tax.consumption || 0;
+        }
+    }
+    const currentPrice = Array.isArray(data.price) ? data.price[data.price.length - 1] : data.price;
+    const taxAmount = Math.floor(currentPrice * (taxRate / 100));
+    const totalToPay = currentPrice + taxAmount;
+
     const form = new MessageFormData()
-    const playerData = playerDatas.get(player.id)
     form.title({ translate: "cw.playermarket.buy" })
-    if (playerData.money < data.price[data.price.length - 1]) {
+
+    // 詳細情報の作成 (Lore と エンチャント)
+    let itemDetails = "";
+    if (data.enchants && data.enchants.length > 0) {
+        itemDetails += "\n§f付与されている効果:";
+        for (const enchant of data.enchants) {
+            itemDetails += `\n §7- ${enchant.id} (Lv.${enchant.level})`;
+        }
+    }
+    if (data.lore) {
+        itemDetails += `\n§fアイテムのロア:\n §7${data.lore.replace(/\n/g, "\n ")}`;
+    }
+
+    if (buyerData.money < totalToPay) {
         form.body({ translate: "cw.form.nomoney" })
         form.button1({ translate: "cw.form.redo" })
         form.button2({ translate: "cw.form.cancel" })
         const res = await form.show(player)
         if (res.canceled) return;
         if (res.selection == 0) {
-            const loc = await playerMarketSystem.show(player, 0)
+            const loc = await playerMarketSystem.show(player, page)
             if (loc == "none") return;
             buyForm(player, loc)
         }
         return;
     }
+
     form.body({
-        rawtext: [{ translate: "cw.playermarket.buy.body" },
-        { translate: Util.langChangeItemName(data.itemId) },
-        { translate: "cw.playermarket.buy.body2", with: [`${playerData.money}`, `${data.price[data.price.length - 1]}`, `${data.lore}`, `${data.amount}`, `${data.description}`, `${playerDatas.get(data.player)?.name}`] }]
+        translate: "cw.playermarket.buy.body2",
+        with: [
+            { translate: Util.langChangeItemName(data.itemId) }, // %1: 商品名
+            data.amount.toString(),                             // %2: 数量
+            totalToPay.toString(),                               // %3: 税込価格
+            currentPrice.toString(),                             // %4: 税抜価格
+            playerDatas.get(data.player)?.name || "Unknown",     // %5: 出品者
+            data.description || "---",                           // %6: 説明
+            itemDetails || "§7(なし)",                            // %7: 詳細情報
+            buyerData.money.toString()                           // %8: 所持金
+        ]
     })
     form.button1({ translate: "cw.form.buy" })
     form.button2({ translate: "cw.form.cancel" })
+
     const res = await form.show(player)
-    if (res.canceled) return;
+    if (res.canceled) {
+        const loc = await playerMarketSystem.show(player, page)
+        if (loc !== "none") buyForm(player, loc);
+        return;
+    }
+
     if (res.selection === 0) {
         player.sendMessage({
             rawtext: [
-                { translate: Util.langChangeItemName(data.itemId) },
-                { translate: "cw.playermarket.buy.success", with: [`${data.amount}`] }
+                { translate: "cw.playermarket.buy.success", with: [{ translate: Util.langChangeItemName(data.itemId) }] }
             ]
         })
         playerMarketSystem.buy(player, { slot, page })
+    } else {
+        const loc = await playerMarketSystem.show(player, page)
+        if (loc !== "none") buyForm(player, loc);
     }
-    if (res.selection === 1) {
-        const loc = await playerMarketSystem.show(player)
-        buyForm(player, loc)
-    }
-
-
 }
 /**
  * @param {server.Player} player 

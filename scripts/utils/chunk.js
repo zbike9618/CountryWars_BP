@@ -109,56 +109,91 @@ export class Chunk {
         countryDatas.set(countryData.id, countryData)
 
     }
+    static checkPermission(player, chunkId, permType) {
+        const countryId = this.checkChunk(chunkId);
+        if (countryId === "wasteland") return { allowed: true };
+
+        const countryData = countryDatas.get(countryId);
+        if (!countryData) return { allowed: true };
+
+        if (countryData.warcountry && countryData.warcountry.length > 0) return { allowed: true };
+
+        const playerData = playerDatas.get(player.id);
+        const playerCountryId = playerData.country;
+
+        if (playerCountryId === countryId) return { allowed: true };
+
+        let relation = "neutral";
+        if (playerCountryId && countryData.diplomacy) {
+            if (countryData.diplomacy.ally && countryData.diplomacy.ally.includes(playerCountryId)) relation = "ally";
+            else if (countryData.diplomacy.friend && countryData.diplomacy.friend.includes(playerCountryId)) relation = "friend";
+            else if (countryData.diplomacy.enemy && countryData.diplomacy.enemy.includes(playerCountryId)) relation = "enemy";
+        }
+
+        const perms = countryData.diplomacyPermissions ? (countryData.diplomacyPermissions[relation] || []) : [];
+        if (perms.includes(permType)) return { allowed: true };
+
+        return { allowed: false, countryName: countryData.name };
+    }
 }
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player
-    const playerData = playerDatas.get(player.id)
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
-    const countryData = Chunk.checkChunk(chunkId)
 
-
-    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
-
-        player.sendMessage({ translate: "cw.chunk.break", with: [countryDatas.get(countryData).name] })
-
+    const check = Chunk.checkPermission(player, chunkId, "break_block");
+    if (!check.allowed) {
+        player.sendMessage({ translate: "cw.chunk.break", with: [check.countryName] })
         ev.cancel = true
-
     }
-
 })
 world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
     const player = ev.player
-    const playerData = playerDatas.get(player.id)
     const loc = ev.block.location
     const chunkId = Chunk.positionToChunkId(loc)
-    const countryData = Chunk.checkChunk(chunkId)
-    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+
+    const check = Chunk.checkPermission(player, chunkId, "place_block");
+    if (!check.allowed) {
         ev.cancel = true;
-        player.sendMessage({ translate: "cw.chunk.place", with: [countryDatas.get(countryData).name] })
-        return;
+        player.sendMessage({ translate: "cw.chunk.place", with: [check.countryName] })
     }
-
-
-
 })
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const player = ev.player
-    const playerData = playerDatas.get(player.id)
-    const loc = ev.block.location
-    const chunkId = Chunk.positionToChunkId(loc)
-    const countryData = Chunk.checkChunk(chunkId)
+    const chunkId = Chunk.positionToChunkId(ev.block.location)
 
-    if ((!playerData.country || playerData.country !== countryData) && countryData !== "wasteland" && countryDatas.get(countryData).warcountry.length == 0) {
+    let permType = "interact";
+    const inventory = ev.block.getComponent("minecraft:inventory");
+    if (inventory) permType = "open_container";
 
-        player.sendMessage({ translate: "cw.chunk.interact", with: [countryDatas.get(countryData).name] })
-
+    const check = Chunk.checkPermission(player, chunkId, permType);
+    if (!check.allowed) {
+        player.sendMessage({ translate: "cw.chunk.interact", with: [check.countryName] })
         ev.cancel = true
-
     }
-
 })
 
+world.afterEvents.entityHurt.subscribe((ev) => {
+    const entity = ev.hurtEntity
+    if (entity.typeId == "minecraft:player") return;
+
+    const damageSource = ev.damageSource;
+    const attacker = damageSource.damagingEntity;
+    if (!attacker || attacker.typeId !== "minecraft:player") return;
+
+    const loc = entity.location
+    const chunkId = Chunk.positionToChunkId(loc)
+
+    const check = Chunk.checkPermission(attacker, chunkId, "attack");
+
+    if (!check.allowed) {
+        attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
+        const comp = entity.getComponent("minecraft:health")
+        if (comp && ev.damage) {
+            comp.setCurrentValue(comp.currentValue + ev.damage)
+        }
+    }
+})
 world.beforeEvents.explosion.subscribe((ev) => {
     if (ev.source && explosionMap.has(ev.source.id)) {
         const locations = explosionMap.get(ev.source.id);
