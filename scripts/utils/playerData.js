@@ -1,6 +1,7 @@
 import * as server from "@minecraft/server";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
+import {default as config} from "../config/config.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
@@ -13,7 +14,7 @@ world.afterEvents.playerSpawn.subscribe(ev => {
             id: player.id,
             name: player.name,
             country: undefined,
-            money: 0,
+            money: config.initialMoney,
             job: undefined,//levelはこのの中にobjectとして入れる
             permission: "",
             secondname: {
