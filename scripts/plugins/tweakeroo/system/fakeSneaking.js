@@ -3,7 +3,6 @@ const { world, system } = server;
 import { JsonDypro } from "../util/jsonDypro.js";
 const settingData = new JsonDypro("tweakeroo_setting")
 
-const fasterSneakingPlayers = new Set();
 
 system.runInterval(() => {
     for (const player of world.getPlayers()) {

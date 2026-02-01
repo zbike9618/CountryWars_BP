@@ -43,12 +43,14 @@ async function BlocksSetting(player) {
     const form = new ModalFormData()
     form.title("BlocksSetting")
     form.toggle("TweakHandRestock", { defaultValue: settingData.get(player)?.handRestock })
+    form.toggle("TweakFastBlockPlacement", { defaultValue: settingData.get(player)?.fastBlockPlacement })
     const res = await form.show(player)
     if (res.canceled) {
         tweakerooSetting(player);
         return;
     }
     settingData.set(player, "handRestock", res.formValues[0])
+    settingData.set(player, "fastBlockPlacement", res.formValues[1])
 }
 async function MoveSetting(player) {
     const form = new ModalFormData()

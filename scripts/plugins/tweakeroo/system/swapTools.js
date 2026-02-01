@@ -18,7 +18,9 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
     const tool = inv.getItem(player.selectedSlotIndex);
     if (tool) {
         const toolType2 = tool.typeId.split("_")[1];
-        if (toolType2 == toolType) return;
+        const dura = tool.getComponent("minecraft:durability");
+        const isProtected = settingData.get(player)?.swapAlmostBrokenTools && dura && (dura.maxDurability - dura.damage <= 5);
+        if (toolType2 == toolType && !isProtected) return;
     }
     let slot = undefined;
     for (let i = 0; i < inv.size; i++) {
@@ -26,6 +28,10 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
         if (!item2) continue;
         const toolType2 = item2.typeId.split("_")[1];
         if (toolType2 === toolType) {
+            if (settingData.get(player)?.swapAlmostBrokenTools) {
+                const dura2 = item2.getComponent("minecraft:durability");
+                if (dura2 && (dura2.maxDurability - dura2.damage <= 5)) continue;
+            }
             slot = i;
             break;
         }
@@ -43,7 +49,9 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
     const tool = inv.getItem(player.selectedSlotIndex);
     if (tool) {
         const toolType2 = tool.typeId.split("_")[1];
-        if (toolType2 == "sword") return;
+        const dura = tool.getComponent("minecraft:durability");
+        const isProtected = settingData.get(player)?.swapAlmostBrokenTools && dura && (dura.maxDurability - dura.damage <= 5);
+        if (toolType2 == "sword" && !isProtected) return;
     }
     let slot = undefined;
     for (let i = 0; i < inv.size; i++) {
@@ -51,6 +59,10 @@ world.afterEvents.playerSwingStart.subscribe((ev) => {
         if (!item2) continue;
         const toolType2 = item2.typeId.split("_")[1];
         if (toolType2 === "sword") {
+            if (settingData.get(player)?.swapAlmostBrokenTools) {
+                const dura2 = item2.getComponent("minecraft:durability");
+                if (dura2 && (dura2.maxDurability - dura2.damage <= 5)) continue;
+            }
             slot = i;
             break;
         }
