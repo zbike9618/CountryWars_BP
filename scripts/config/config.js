@@ -1,5 +1,6 @@
 export default {
     // 初期所持金
+    initialMoney: 2000,
     //localChatの範囲
     localChatDistance: 20,
     //通貨
