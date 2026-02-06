@@ -1,7 +1,7 @@
 import * as server from "@minecraft/server";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
-import {default as config} from "../config/config.js";
+import { default as config } from "../config/config.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
@@ -22,6 +22,7 @@ world.afterEvents.playerSpawn.subscribe(ev => {
                 after: ["鯖民"],
                 now: [0, 0]
             },
+            stock: {},
             chattype: "world"
         }
         playerDatas.set(player.id, playerData);

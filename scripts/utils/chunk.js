@@ -7,6 +7,7 @@ import config from "../config/config"
 const countryDatas = new Dypro("country")
 const playerDatas = new Dypro("player")
 const chunkDatas = new Dypro("chunk")
+import { Data } from "./data";
 const explosionMap = new Map();
 
 
@@ -29,6 +30,10 @@ export class Chunk {
         const playerData = playerDatas.get(player.id)
         if (!playerData.country) {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
+            return;
+        }
+        if (countryData.warcountry && countryData.warcountry.length > 0) {
+            player.sendMessage({ translate: "cw.chunk.buy.war" })
             return;
         }
         if (countryData.chunkAmount >= config.maxchunk) {
@@ -69,8 +74,12 @@ export class Chunk {
             return;
         }
         const countryData = countryDatas.get(chunkData.country)
-        if (countryData != playerData.country) {
+        if (chunkData.country != playerData.country) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
+            return;
+        }
+        if (countryData.warcountry && countryData.warcountry.length > 0) {
+            player.sendMessage({ translate: "cw.chunk.sell.war" })
             return;
         }
         const form = new MessageFormData()
@@ -129,7 +138,6 @@ export class Chunk {
             else if (countryData.diplomacy.friend && countryData.diplomacy.friend.includes(playerCountryId)) relation = "friend";
             else if (countryData.diplomacy.enemy && countryData.diplomacy.enemy.includes(playerCountryId)) relation = "enemy";
         }
-
         const perms = countryData.diplomacyPermissions ? (countryData.diplomacyPermissions[relation] || []) : [];
         if (perms.includes(permType)) return { allowed: true };
 
@@ -161,10 +169,12 @@ world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const player = ev.player
     const chunkId = Chunk.positionToChunkId(ev.block.location)
+    const blockId = ev.block.typeId
 
-    let permType = "interact";
     const inventory = ev.block.getComponent("minecraft:inventory");
-    if (inventory) permType = "open_container";
+    let permType = "interact";
+
+    if (!inventory && ((!Data.usableBlocks.includes(blockId) && !player.isSneaking) || player.isSneaking)) return;
 
     const check = Chunk.checkPermission(player, chunkId, permType);
     if (!check.allowed) {
@@ -175,7 +185,6 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
 
 world.afterEvents.entityHurt.subscribe((ev) => {
     const entity = ev.hurtEntity
-    if (entity.typeId == "minecraft:player") return;
 
     const damageSource = ev.damageSource;
     const attacker = damageSource.damagingEntity;
@@ -184,13 +193,15 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const loc = entity.location
     const chunkId = Chunk.positionToChunkId(loc)
 
-    const check = Chunk.checkPermission(attacker, chunkId, "attack");
+    const permType = entity.typeId === "minecraft:player" ? "attack_player" : "attack_entity";
+    const check = Chunk.checkPermission(attacker, chunkId, permType);
 
     if (!check.allowed) {
         attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
         const comp = entity.getComponent("minecraft:health")
         if (comp && ev.damage) {
-            comp.setCurrentValue(comp.currentValue + ev.damage)
+            comp.setCurrentValue(Math.min(comp.currentValue + ev.damage, comp.effectiveMax));
+            entity.clearVelocity()
         }
     }
 })

@@ -83,7 +83,6 @@ async function declareForm(player, countryData) {
     }
 
     form.title({ translate: `cw.warform.declare` })
-    world.sendMessage(`${countriesData.map(data => data.name)}`)
     form.dropdown({ translate: `cw.form.countrychoise` }, countriesData.map(data => data.name))
     const res = await form.show(player)
     if (res.canceled) return;

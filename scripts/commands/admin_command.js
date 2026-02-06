@@ -1,6 +1,7 @@
 import { Util } from "../utils/util";
 import { world, system } from "@minecraft/server";
 import { Dypro } from "../utils/dypro";
+import { Stock } from "../utils/stock";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 // ===== 管理者用金銭操作コマンド =====
@@ -36,6 +37,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
     if (ev.id == "cw:test") {
-        world.sendMessage(`${playerDatas.get(ev.sourceEntity.id).country}`)
+        const playerData = playerDatas.get(ev.sourceEntity.id);
+        const countryData = countryDatas.get(playerData.country)
+        world.sendMessage(`${playerData.country}`)
     }
 })

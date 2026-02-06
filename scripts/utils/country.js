@@ -64,6 +64,7 @@ export class Country {
             //同盟国などはあとで
             warcountry: [],//戦争中
             peaceProposals: {},//講和提案
+            stock: [{ price: 10, date: Date.now() }],//株
             diplomacy: {
                 ally: [], // 同盟国 (相互承諾)
                 friend: [], // 友好国 (一方的)
@@ -618,12 +619,11 @@ export async function noPermission(player) {
 class Diplomacy {
     // 外交権限のリスト
     static permissions = [
-        "enter_territory", // 領土への侵入
         "break_block", // ブロック破壊
         "place_block", // ブロック設置
-        "open_container", // コンテナを開く
         "interact", // ブロック/エンティティへの干渉
-        "attack" // 攻撃
+        "attack_player", // プレイヤーへの攻撃
+        "attack_entity" // エンティティへの攻撃
     ];
 
     static relationJP = {
