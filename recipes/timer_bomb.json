@@ -1,0 +1,35 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:timer_bomb_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "RCR",
+            "TTT"
+        ],
+        "key": {
+            "C": {
+                "item": "cw:dynamite"
+            },
+            "T": {
+                "item": "minecraft:clock"
+            },
+            "R": {
+                "item": "minecraft:redstone"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:dynamite"
+            }
+        ],
+        "result": {
+            "item": "cw:timer_bomb",
+            "count": 1
+        }
+    }
+}
