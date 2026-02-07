@@ -201,7 +201,12 @@ export class Country {
                 Money.money(player, countryData)
                 break;
             case 3:
-                Tax.tax(player, countryData)
+                if (hasPermission(player, "tax_manage")) {
+                    Tax.tax(player, countryData)
+                }
+                else if (await noPermission(player)) {
+                    this.setting(player, countryData)
+                }
                 break;
             case 4:
                 if (hasPermission(player, "permission")) {
@@ -221,13 +226,17 @@ export class Country {
                 }
                 break;
             case 6:
-                const newform = new MessageFormData()
-                newform.title({ translate: "cw.scform.delete" })
-                newform.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
-                newform.button1({ translate: "cw.form.yes" })
-                newform.button2({ translate: "cw.form.no" })
-                const res = await newform.show(player)
-                if (res.canceled || res.selection == 1) return;
+                if (player.id !== countryData.owner) {
+                    player.sendMessage({ translate: "cw.scform.permission.nopermission" })
+                    return;
+                }
+                const deleteCheckForm = new MessageFormData()
+                deleteCheckForm.title({ translate: "cw.scform.delete" })
+                deleteCheckForm.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
+                deleteCheckForm.button1({ translate: "cw.form.yes" })
+                deleteCheckForm.button2({ translate: "cw.form.no" })
+                const delRes = await deleteCheckForm.show(player)
+                if (delRes.canceled || delRes.selection == 1) return;
                 this.delete(countryData)
                 break
         }
@@ -418,17 +427,20 @@ class Member {
     static async member(player, countryData) {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.member" })
-        form.button({ translate: "cw.scform.member.invite" })
-        form.button({ translate: "cw.scform.member.kick" })
+        if (hasPermission(player, "member_invite")) {
+            form.button({ translate: "cw.scform.member.invite" })
+        }
+        if (hasPermission(player, "member_kick")) {
+            form.button({ translate: "cw.scform.member.kick" })
+        }
         const res = await form.show(player)
         if (res.canceled) return;
-        if (res.selection == 0) {
+        if (res.selection == 0 && hasPermission(player, "member_invite")) {
             this.invite(player, countryData)
         }
-        else if (res.selection == 1) {
+        else if ((res.selection == 1 && hasPermission(player, "member_kick")) || (res.selection == 0 && !hasPermission(player, "member_invite"))) {
             this.kick(player, countryData)
         }
-
     }
     static async invite(player, countryData) {
 

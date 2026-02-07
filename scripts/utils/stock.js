@@ -2,6 +2,7 @@ import { ChestFormData } from "./chest_shop/chest-ui";
 import { world } from "@minecraft/server";
 import { ModalFormData } from "@minecraft/server-ui";
 import { Dypro } from "./dypro";
+import { hasPermission } from "./country";
 import config from "../config/config";
 
 const playerDatas = new Dypro("player")
@@ -208,6 +209,7 @@ export class Stock {
     /** @param {number} int */
     set(int) {
         if (!this.countryData.stock) this.countryData.stock = [];
+        if (this.countryData.stock.length > 72) this.countryData.stock.shift();
         this.countryData.stock.push({ price: int, date: Date.now() });
         countryDatas.set(this.countryData.id, this.countryData);
     }
@@ -219,7 +221,6 @@ export class Stock {
         const money = countryData.money
         const nowprice = this.latestPrice
         //nowpriceの10パーセントを+-する
-
         const moneyInt = Math.floor(money * 0.001);
         const playerInt = Math.floor(playeramount * 100);
         const chunkInt = Math.floor(chunkamount * 10);

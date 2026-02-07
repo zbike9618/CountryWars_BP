@@ -8,6 +8,7 @@ const countryDatas = new Dypro("country")
 const playerDatas = new Dypro("player")
 const chunkDatas = new Dypro("chunk")
 import { Data } from "./data";
+import { hasPermission } from "./country";
 const explosionMap = new Map();
 
 
@@ -30,6 +31,10 @@ export class Chunk {
         const playerData = playerDatas.get(player.id)
         if (!playerData.country) {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
+            return;
+        }
+        if (!hasPermission(player, "chunk_buy")) {
+            player.sendMessage({ translate: "cw.scform.permission.nopermission" })
             return;
         }
         if (countryData.warcountry && countryData.warcountry.length > 0) {
@@ -76,6 +81,10 @@ export class Chunk {
         const countryData = countryDatas.get(chunkData.country)
         if (chunkData.country != playerData.country) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
+            return;
+        }
+        if (!hasPermission(player, "chunk_sell")) {
+            player.sendMessage({ translate: "cw.scform.permission.nopermission" })
             return;
         }
         if (countryData.warcountry && countryData.warcountry.length > 0) {

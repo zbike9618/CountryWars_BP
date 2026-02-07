@@ -6,6 +6,7 @@ const countryDatas = new Dypro("country")
 const playerDatas = new Dypro("player")
 import { Util } from "../utils/util.js";
 import { ActionFormData, MessageFormData, ModalFormData } from "@minecraft/server-ui";
+import { hasPermission } from "../utils/country.js";
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -56,6 +57,10 @@ function DoCommand(origin) {
 async function warForm(player, countryData) {
     if (!countryData) {
         player.sendMessage({ translate: "cw.form.unjoincountry" })
+        return;
+    }
+    if (!hasPermission(player, "war_manage")) {
+        player.sendMessage({ translate: "cw.scform.permission.nopermission" })
         return;
     }
     const form = new ActionFormData()
