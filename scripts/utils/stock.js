@@ -2,6 +2,7 @@ import { ChestFormData } from "./chest_shop/chest-ui";
 import { world } from "@minecraft/server";
 import { ModalFormData } from "@minecraft/server-ui";
 import { Dypro } from "./dypro";
+import config from "../config/config";
 
 const playerDatas = new Dypro("player")
 const countryDatas = new Dypro("country")
@@ -62,8 +63,8 @@ export class Stock {
 
             form.setButton(slot, {
                 iconPath: "textures/items/paper",
-                name: { translate: "cw.stock.price_label", with: [String(entry.price)] },
-                lore: [{ translate: "cw.stock.date_label", with: [this.formatDate(entry.date)] }],
+                name: `§ePrice: ¥${entry.price}`,
+                lore: [`§7Date: ${this.formatDate(entry.date)}`],
             });
         });
 
@@ -71,8 +72,8 @@ export class Stock {
         if (currentPage > 0) {
             form.setButton(45, {
                 iconPath: "textures/ui/arrow_dark_left_stretch",
-                name: { translate: "cw.form.prev_page" },
-                lore: [{ translate: "cw.form.page_info", with: [String(currentPage), String(totalPages)] }],
+                name: "§aPrevious Page",
+                lore: [`§7${currentPage} / ${totalPages} Page`],
                 stackAmount: 1
             });
         }
@@ -82,30 +83,33 @@ export class Stock {
 
         form.setButton(49, {
             iconPath: "textures/items/nether_star",
-            name: { translate: "cw.stock.now_price" },
-            lore: [{ translate: "cw.stock.price_value", with: [String(currentPrice)] }],
+            name: "§bCurrent Price",
+            lore: [`§e¥${currentPrice}`],
             stackAmount: 1
         });
 
         form.setButton(50, {
             iconPath: "textures/items/emerald",
-            name: { translate: "cw.stock.buy" },
-            lore: [{ translate: "cw.stock.price_value", with: [String(currentPrice)] }],
+            name: "§aBuy",
+            lore: [`§ePrice: ¥${currentPrice}/1 stock`],
             stackAmount: 1
         });
 
         form.setButton(51, {
             iconPath: "textures/items/gold_nugget",
-            name: { translate: "cw.stock.sell" },
-            lore: [{ translate: "cw.stock.owned_value", with: [String(ownedCount), String(currentPrice * ownedCount)] }],
+            name: "§6Sell",
+            lore: [
+                `§7Owned: ${ownedCount} Stocks`,
+                `§7AllPrice: §e¥${currentPrice * ownedCount}`
+            ],
             stackAmount: 1
         });
 
         if (startIndex + pageSize < stockData.length) {
             form.setButton(53, {
                 iconPath: "textures/ui/arrow_dark_right_stretch",
-                name: { translate: "cw.form.next_page" },
-                lore: [{ translate: "cw.form.page_info", with: [String(currentPage + 2), String(totalPages)] }],
+                name: "§a次のページ",
+                lore: [`§7${currentPage + 2} / ${totalPages} ページ`],
                 stackAmount: 1
             });
         }
@@ -132,13 +136,13 @@ export class Stock {
 
         const form = new ModalFormData();
         form.title({ rawtext: [{ translate: "cw.stock.buy" }, { text: ` (¥${playerData.money})` }] });
-        form.textField({ translate: "cw.stock.buy.text", with: [String(price)] }, "Amount", "1");
+        form.textField({ translate: "cw.stock.buy.text", with: [String(price)] }, "Press Amount");
 
         const res = await form.show(player);
         if (res.canceled) return;
 
         const amount = Math.floor(Number(res.formValues[0]));
-        if (isNaN(amount) || amount <= 0) {
+        if (!Number.isInteger(amount) || amount <= 0) {
             player.sendMessage({ translate: "cw.stock.invalid_amount" });
             return;
         }
@@ -153,6 +157,9 @@ export class Stock {
         playerData.stock[this.countryData.id] = (playerData.stock[this.countryData.id] || 0) + amount;
 
         playerDatas.set(player.id, playerData);
+        const countryData = this.countryData
+        countryData.money += total;
+        countryDatas.set(countryData.id, countryData);
         player.sendMessage({ translate: "cw.stock.buy_success", with: [String(amount)] });
     }
 
@@ -169,23 +176,33 @@ export class Stock {
         const price = this.latestPrice;
         const form = new ModalFormData();
         form.title({ translate: "cw.stock.sell" });
-        form.textField({ translate: "cw.stock.sell.text", with: [String(price), String(owned)] }, "Amount", String(owned));
+        form.textField({ translate: "cw.stock.sell.text", with: [String(price), String(owned)] }, "Press Amount");
 
         const res = await form.show(player);
         if (res.canceled) return;
 
         const amount = Math.floor(Number(res.formValues[0]));
-        if (isNaN(amount) || amount <= 0 || amount > owned) {
+        if (!Number.isInteger(amount) || amount <= 0 || amount > owned) {
             player.sendMessage({ translate: "cw.stock.invalid_amount" });
             return;
         }
-
         const total = price * amount;
-        playerData.money += total;
-        playerData.stock[this.countryData.id] -= amount;
+        let resultAmount = amount;
+        let resultTotal = total;
+        if (total + config.stockMaxSell > this.countryData.money) {
+            player.sendMessage({ translate: "cw.stock.no_money_country" });
+            const reduceamount = amount - Math.floor((total + config.stockMaxSell - this.countryData.money) / price);
+            resultAmount = reduceamount;
+            resultTotal = price * reduceamount;
+        }
+
+        playerData.money += resultTotal;
+        playerData.stock[this.countryData.id] -= resultAmount;
 
         playerDatas.set(player.id, playerData);
-        player.sendMessage({ translate: "cw.stock.sell_success", with: [String(amount)] });
+        this.countryData.money -= resultTotal;
+        countryDatas.set(this.countryData.id, this.countryData);
+        player.sendMessage({ translate: "cw.stock.sell_success", with: [String(resultAmount)] });
     }
 
     /** @param {number} int */
@@ -193,5 +210,21 @@ export class Stock {
         if (!this.countryData.stock) this.countryData.stock = [];
         this.countryData.stock.push({ price: int, date: Date.now() });
         countryDatas.set(this.countryData.id, this.countryData);
+    }
+    randomset() {
+        const countryData = this.countryData
+        const playeramount = countryData.players.length;
+
+        const chunkamount = countryData.chunkAmount
+        const money = countryData.money
+        const nowprice = this.latestPrice
+        //nowpriceの10パーセントを+-する
+
+        const moneyInt = Math.floor(money * 0.001);
+        const playerInt = Math.floor(playeramount * 100);
+        const chunkInt = Math.floor(chunkamount * 10);
+        const nowpriceInt = Math.floor((Math.random() * nowprice * 0.2) - (nowprice * 0.1));
+        const int = moneyInt + playerInt + chunkInt + nowpriceInt
+        this.set(Math.floor(int));
     }
 }

@@ -17,4 +17,6 @@ export default {
     maxhome: 3,
     //最大戦争勝利金
     maxWarMoney: 500000,
+    //株売却時の国に必ず残るお金
+    stockMaxSell: 100000,
 };

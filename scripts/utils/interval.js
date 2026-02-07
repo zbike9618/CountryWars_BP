@@ -7,6 +7,7 @@ import config from "../config/config";
 import { sendDataForPlayers } from "./sendData";
 import { Country } from "./country";
 import { Util } from "./util";
+import { Stock } from "./stock";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 world.afterEvents.worldLoad.subscribe(() => {
@@ -73,3 +74,17 @@ world.afterEvents.worldLoad.subscribe(() => {
         }
     }, 20)
 })
+system.runInterval(() => {
+    for (const countryId of countryDatas.idList) {
+        const countryData = countryDatas.get(countryId)
+        if (!countryData) continue;
+        const time = new Date()
+        time.setHours(time.getHours() + 9)//時差 (JST)
+        const minute = time.getMinutes()
+        const second = time.getSeconds()
+        if (minute == 0 && second == 0) {
+            const stock = new Stock(countryData)
+            stock.randomset()
+        }
+    }
+}, 20)

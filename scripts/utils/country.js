@@ -129,6 +129,14 @@ export class Country {
             playerData.money += Math.floor(countryData.money * 0.5 / players.length);
             playerDatas.set(playerId, playerData);
         }
+        //株も消す
+        for (const playerId of playerDatas.idList) {
+            const pData = playerDatas.get(playerId);
+            if (pData.stock && pData.stock[countryData.id]) {
+                delete pData.stock[countryData.id];
+                playerDatas.set(playerId, pData);
+            }
+        }
         countryDatas.delete(countryData.id);
         world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
     }
