@@ -17,7 +17,7 @@ system.runInterval(() => {
             // ブロックがまだタイマー爆弾であることを確認して爆発
             if (dimension.getBlock(location)?.typeId === "cw:timer_bomb") {
                 dimension.setBlockType(location, "minecraft:air");
-                dimension.createExplosion(location, 16);
+                dimension.createExplosion(location, 8);
 
             }
         }
@@ -34,7 +34,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
             // 起動中に壊された場合は即座に爆発
             system.run(() => {
                 dimension.setBlockType(location, "minecraft:air");
-                dimension.createExplosion(location, 8);
+                dimension.createExplosion(location, 6);
             });
         }
     }
