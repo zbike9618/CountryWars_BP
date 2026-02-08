@@ -111,11 +111,12 @@ export class Chunk {
     }
     static setChunk(chunkId, countryData) {
         const chunk = this.checkChunk(chunkId);
-        world.sendMessage(`${chunk}`)
         if (chunk !== "wasteland" && chunk !== "admin") {
             const enemyData = countryDatas.get(chunk);
+            world.sendMessage(`${enemyData.chunkAmount}`)
             enemyData.chunkAmount -= 1;
-            countryDatas.set(enemyData.id, enemyData)
+            world.sendMessage(`${enemyData.chunkAmount}`)
+            countryDatas.set(chunk, enemyData)
         }
         chunkDatas.set(chunkId, {
             id: chunkId,

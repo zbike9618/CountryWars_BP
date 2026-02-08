@@ -380,8 +380,9 @@ world.afterEvents.entityDie.subscribe(ev => {
         countryDatas.set(countryData.id, countryData);
         Chunk.setChunk(chunkId, mineData)
         world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
-        if (countryData.chunkAmount == 1) {
-            War.finish(mineData, countryData, "invade")
+        const newcountryData = countryDatas.get(countryData.id)
+        if (newcountryData.chunkAmount == 0) {
+            War.finish(mineData, newcountryData, "invade")
         }
     }
     //----------------------------------------------

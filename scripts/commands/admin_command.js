@@ -39,7 +39,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
     if (ev.id == "cw:test") {
         const playerData = playerDatas.get(ev.sourceEntity.id);
         const countryData = countryDatas.get(playerData.country)
-        const stock = new Stock(countryData);
-        stock.randomset();
+        countryData.chunkAmount = 0;
+        countryDatas.set(countryData.id, countryData)
     }
 })
