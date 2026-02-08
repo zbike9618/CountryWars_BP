@@ -10,11 +10,23 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     const playerData = playerDatas.get(player.id);
     const countryname = countryDatas.get(playerData.country)?.name || "§7未所属";
     ev.cancel = true;
-    const secondname = playerData.secondname;
-    const send = `§r[${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r][${countryname}§r] <${player.name}> ${message}`
+    let chatType = "";
     switch (playerData.chattype) {
         case "world":
-            for (const pc of ArrayFilter(world.getAllPlayers(), "world")) {
+            chatType = "§aW";
+            break;
+        case "country":
+            chatType = "§eC";
+            break;
+        case "local":
+            chatType = "§cL";
+            break;
+    }
+    const secondname = playerData.secondname;
+    const send = `[${chatType}§r][${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r][${countryname}§r] <${player.name}> ${message}`
+    switch (playerData.chattype) {
+        case "world":
+            for (const pc of world.getAllPlayers()) {
                 pc.sendMessage(send)
             }
             break;
