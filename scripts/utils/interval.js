@@ -22,9 +22,14 @@ world.afterEvents.worldLoad.subscribe(() => {
             if (chunk == "wasteland") {
                 player.onScreenDisplay.setActionBar({ translate: "cw.chunk.actionbar.wasteland" })
             }
+            else if (chunk == "admin") {
+                player.onScreenDisplay.setActionBar("§c管理者領土 (Admin Territory)")
+            }
             else {
                 const countryData = countryDatas.get(chunk)
-                player.onScreenDisplay.setTitle({ text: countryData.name }, { fadeInDuration: 5, fadeOutDuration: 40, stayDuration: 20, subtitle: { text: countryData.description } })
+                if (countryData) {
+                    player.onScreenDisplay.setTitle({ text: countryData.name }, { fadeInDuration: 5, fadeOutDuration: 40, stayDuration: 20, subtitle: { text: countryData.description } })
+                }
             }
             playerData.set("DisplayChunk", chunk)
         }

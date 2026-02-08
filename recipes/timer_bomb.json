@@ -13,10 +13,10 @@
         ],
         "key": {
             "C": {
-                "item": "cw:dynamite"
+                "item": "minecraft:clock"
             },
             "T": {
-                "item": "minecraft:clock"
+                "item": "cw:dynamite"
             },
             "R": {
                 "item": "minecraft:redstone"

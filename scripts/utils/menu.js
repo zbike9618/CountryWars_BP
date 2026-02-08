@@ -5,15 +5,17 @@ import { Util } from "../utils/util";
 import { Dypro } from "../utils/dypro";
 import { Country } from "../utils/country";
 import { War } from "../utils/war";
+import { Chunk } from "./chunk";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
-
+const chunkDatas = new Dypro("chunk");
 export class Menu {
     static async showForm(player) {
         const form = new ui.ActionFormData();
         form.title("cw.menu.title");
         form.button({ translate: "cw.menu.movemoney" });
         form.button({ translate: "cw.menu.secondname" });
+        form.button({ translate: "cw.menu.adminchunk" });
         form.button({ translate: "cw.menu.playerdatareset" });
         form.button({ translate: "cw.menu.deletecountry" })
         form.show(player).then((response) => {
@@ -23,8 +25,10 @@ export class Menu {
             } else if (response.selection === 1) {
                 SecondName(player);
             } else if (response.selection === 2) {
-                PlayerDataReset(player);
+                AdminChunk(player);
             } else if (response.selection === 3) {
+                PlayerDataReset(player);
+            } else if (response.selection === 4) {
                 DeleteCountry(player);
             }
         });
@@ -126,7 +130,75 @@ async function addsecondname(player) {
         }
     })
 }
+async function AdminChunk(player) {
+    const form = new ui.ActionFormData();
+    form.title("cw.menu.adminchunk");
+    const chunkId = Chunk.positionToChunkId(player.location);
+    const countryId = Chunk.checkChunk(chunkId);
 
+    let status = countryId === "admin" ? "§cAdmin" : countryId === "wasteland" ? "§7Wasteland" : `§6${countryDatas.get(countryId)?.name || countryId}`;
+    form.body(`Chunk ID: ${chunkId}\nStatus: ${status}`);
+    if (countryId === "admin") {
+        form.button({ translate: "cw.menu.adminchunk.remove" });
+        form.button({ translate: "cw.menu.adminchunk.setting" });
+    } else if (countryId === "wasteland") {
+        form.button({ translate: "cw.menu.adminchunk.set" });
+    }
+
+    form.show(player).then((res) => {
+        if (res.canceled) {
+            Menu.showForm(player);
+            return;
+        };
+        if (countryId == "admin") {
+            if (res.selection === 0) {
+                removeAdminChunk(player);
+            } else if (res.selection === 1) {
+                AdminChunkSetting(player, chunkId);
+            }
+        } else if (countryId == "wasteland") {
+            if (res.selection === 0) {
+                addAdminChunk(player);
+            }
+        }
+    })
+}
+async function addAdminChunk(player) {
+    const chunkId = Chunk.positionToChunkId(player.location);
+    Chunk.setAdmin(chunkId);
+    player.sendMessage({ translate: "cw.menu.adminchunk.set.success", with: [chunkId] });
+    AdminChunk(player);
+}
+async function removeAdminChunk(player) {
+    const chunkId = Chunk.positionToChunkId(player.location);
+    Chunk.removeAdmin(chunkId);
+    player.sendMessage({ translate: "cw.menu.adminchunk.remove.success", with: [chunkId] });
+    AdminChunk(player);
+}
+async function AdminChunkSetting(player, chunkId) {
+    const form = new ui.ModalFormData();
+    form.title("cw.menu.adminchunk.setting");
+    form.toggle({ translate: "cw.menu.adminchunk.setting.place" });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.break" });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.interact" });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtEntity" });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtPlayer" });
+    form.show(player).then((res) => {
+        if (res.canceled) {
+            AdminChunk(player);
+            return;
+        };
+        const chunkData = chunkDatas.get(chunkId)
+        chunkData.setting.place = res.formValues[0]
+        chunkData.setting.break = res.formValues[1]
+        chunkData.setting.interact = res.formValues[2]
+        chunkData.setting.hurtEntity = res.formValues[3]
+        chunkData.setting.hurtPlayer = res.formValues[4]
+        chunkDatas.set(chunkId, chunkData)
+        player.sendMessage({ translate: "cw.menu.adminchunk.setting.success", with: [chunkId] });
+        AdminChunk(player);
+    })
+}
 async function removesecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);

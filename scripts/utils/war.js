@@ -26,9 +26,9 @@ export class War {
         const chunkId = Chunk.positionToChunkId(player.location)
         const chunk = Chunk.checkChunk(chunkId);
         const dimension = player.dimension;
-        if (chunk == "wasteland") return false;
+        if (chunk == "wasteland" || chunk == "admin") return false;
         const enemycountryData = countryDatas.get(chunk);
-        if (enemycountryData.id == countryData.id) return false;
+        if (enemycountryData && enemycountryData.id == countryData.id) return false;
 
         const entities = dimension.getEntities({ location: player.location, maxDistance: 60 }).filter(e => e.typeId == "cw:core");
         for (const e of entities) {

@@ -21,6 +21,7 @@ export class Chunk {
     }
     static checkChunk(chunkId) {
         const chunkData = chunkDatas.get(chunkId);
+        if (chunkData && chunkData.country === "admin") return "admin";
         if (chunkData && !countryDatas.get(chunkData.country)) {
             chunkDatas.delete(chunkId);
             return "wasteland";
@@ -111,10 +112,9 @@ export class Chunk {
     static setChunk(chunkId, countryData) {
         const chunk = this.checkChunk(chunkId);
 
-        const enemyData = countryDatas.get(chunk);
-        if (chunk != "wasteland") {
-            const existingChunk = chunkDatas.get(chunkId);
-            if (existingChunk) {
+        if (chunk !== "wasteland" && chunk !== "admin") {
+            const enemyData = countryDatas.get(chunk);
+            if (enemyData) {
                 enemyData.chunkAmount -= 1;
                 countryDatas.set(enemyData.id, enemyData)
             }
@@ -127,9 +127,39 @@ export class Chunk {
         countryDatas.set(countryData.id, countryData)
 
     }
+    static setAdmin(chunkId) {
+        chunkDatas.set(chunkId, {
+            id: chunkId,
+            country: "admin",
+            setting: {
+                place: false,
+                break: false,
+                interact: false,
+                hurtEntity: false,
+                hurtPlayer: false
+            }
+        });
+    }
+    static removeAdmin(chunkId) {
+        const chunk = chunkDatas.get(chunkId);
+        if (chunk && chunk.country === "admin") {
+            chunkDatas.delete(chunkId);
+        }
+    }
     static checkPermission(player, chunkId, permType) {
         const countryId = this.checkChunk(chunkId);
         if (countryId === "wasteland") return { allowed: true };
+        if (countryId === "admin") {
+            const chunkData = chunkDatas.get(chunkId);
+            if (!chunkData || !chunkData.setting) return { allowed: false, countryName: "Admin" };
+            let allowed = false;
+            if (permType === "place_block") allowed = chunkData.setting.place;
+            else if (permType === "break_block") allowed = chunkData.setting.break;
+            else if (permType === "interact") allowed = chunkData.setting.interact;
+            else if (permType === "attack_entity") allowed = chunkData.setting.hurtEntity;
+            else if (permType === "attack_player") allowed = chunkData.setting.hurtPlayer;
+            return { allowed, countryName: "Admin" };
+        }
 
         const countryData = countryDatas.get(countryId);
         if (!countryData) return { allowed: true };

@@ -54,6 +54,8 @@ function DoCommand(origin) {
 
         if (countryId === "wasteland") {
             player.sendMessage({ translate: "cw.chunk.wasteland" });
+        } else if (countryId === "admin") {
+            player.sendMessage("§c管理者領土 (Admin Territory)");
         } else {
             const country = countryDatas.get(countryId);
             const countryName = country?.name || "Unknown";
