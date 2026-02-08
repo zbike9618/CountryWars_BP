@@ -111,7 +111,7 @@ export class Chunk {
     }
     static setChunk(chunkId, countryData) {
         const chunk = this.checkChunk(chunkId);
-
+        world.sendMessage(`${chunk}`)
         if (chunk !== "wasteland" && chunk !== "admin") {
             const enemyData = countryDatas.get(chunk);
             enemyData.chunkAmount -= 1;
