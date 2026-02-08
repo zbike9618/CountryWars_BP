@@ -114,10 +114,8 @@ export class Chunk {
 
         if (chunk !== "wasteland" && chunk !== "admin") {
             const enemyData = countryDatas.get(chunk);
-            if (enemyData) {
-                enemyData.chunkAmount -= 1;
-                countryDatas.set(enemyData.id, enemyData)
-            }
+            enemyData.chunkAmount -= 1;
+            countryDatas.set(enemyData.id, enemyData)
         }
         chunkDatas.set(chunkId, {
             id: chunkId,
