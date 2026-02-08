@@ -202,24 +202,36 @@ async function AdminChunkSetting(player, chunkId) {
 async function removesecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
-    const playerData = playerDatas.get(player.id);
     const form = new ui.ModalFormData();
-    let before = [...playerData.secondname.before, "-"]
-    let after = [...playerData.secondname.after, "-"]
-    // player.sendMessage(`${before}><${after}`);//debug
     form.title("cw.menu.secondname.removetitle");
     form.dropdown({ translate: "cw.menu.secondname.player" }, playerNames);
-    form.dropdown({ translate: "cw.menu.secondname.remove.before" }, before, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
-    form.dropdown({ translate: "cw.menu.secondname.remove.after" }, after, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
     form.show(player).then((response) => {
         if (response.canceled) {
             SecondName(player);
             return;
         };
         const selectedIndex = response.formValues[0];
-        const beforeIndex = response.formValues[1];
-        const afterIndex = response.formValues[2];
         const selectedPlayer = allPlayers[selectedIndex];
+        removesecondnameSelect(player, selectedPlayer);
+    })
+}
+
+async function removesecondnameSelect(player, selectedPlayer) {
+    const playerData = playerDatas.get(selectedPlayer.id);
+    const form = new ui.ModalFormData();
+    let before = [...playerData.secondname.before, "-"]
+    let after = [...playerData.secondname.after, "-"]
+    // player.sendMessage(`${before}><${after}`);//debug
+    form.title("cw.menu.secondname.removetitle");
+    form.dropdown({ translate: "cw.menu.secondname.remove.before" }, before, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
+    form.dropdown({ translate: "cw.menu.secondname.remove.after" }, after, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
+    form.show(player).then((response) => {
+        if (response.canceled) {
+            removesecondname(player);
+            return;
+        };
+        const beforeIndex = response.formValues[0];
+        const afterIndex = response.formValues[1];
 
         // Before (前) の削除処理
         if (beforeIndex !== before.length - 1) { // 最後の "-" 以外が選択された場合
