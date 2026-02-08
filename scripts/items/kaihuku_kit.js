@@ -2,7 +2,6 @@ import { world, system, Player } from "@minecraft/server";
 import { Util } from "../utils/util";
 const cooldowns = new Map();
 
-
 const healArray = [10, 25, 40]
 /**
  * 
