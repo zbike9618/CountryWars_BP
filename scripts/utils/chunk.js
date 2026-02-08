@@ -272,7 +272,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
             const chunkId = Chunk.positionToChunkId(block.location);
             const countryDataId = Chunk.checkChunk(chunkId);
 
-            if (countryDataId && (countryDataId == "admind" || (countryDataId !== "wasteland" && countryDatas.get(countryDataId).warcountry.length == 0))) {
+            if (countryDataId && (countryDataId == "admin" || (countryDataId !== "wasteland" && countryDatas.get(countryDataId).warcountry.length == 0))) {
                 if (!explodedInCountry) {
                     ev.cancel = true;
                     system.run(() => {
