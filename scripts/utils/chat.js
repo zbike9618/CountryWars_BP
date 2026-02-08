@@ -23,7 +23,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
             break;
     }
     const secondname = playerData.secondname;
-    const send = `[${chatType}§r][${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r][${countryname}§r] <${player.name}> ${message}`
+    const send = `[${chatType}§r][${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r/${countryname}§r] <${player.name}> ${message}`
     switch (playerData.chattype) {
         case "world":
             for (const pc of world.getAllPlayers()) {
