@@ -37,9 +37,11 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
     if (ev.id == "cw:test") {
-        const playerData = playerDatas.get(ev.sourceEntity.id);
-        const countryData = countryDatas.get(playerData.country)
-        countryData.chunkAmount = 0;
-        countryDatas.set(countryData.id, countryData)
+        const player = ev.sourceEntity;
+        player.dimension.getEntities({ type: "cw:tank" }).forEach(entity => {
+            entity.setProperty("cw:health_type", 3);
+            const comp = entity.getComponent("minecraft:health");
+            comp.resetToMaxValue();
+        })
     }
 })

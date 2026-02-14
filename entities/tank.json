@@ -1,0 +1,223 @@
+{
+    "format_version": "1.21.70",
+    "minecraft:entity": {
+        "description": {
+            "identifier": "cw:tank",
+            "is_spawnable": true,
+            "is_summonable": true,
+            "is_experimental": false,
+            "properties": {
+                "cw:health_type": {
+                    "type": "int",
+                    "range": [
+                        0,
+                        3
+                    ],
+                    "default": 0
+                }
+            }
+        },
+        "components": {
+            "minecraft:is_stackable": {},
+            "minecraft:type_family": {
+                "family": [
+                    "tank",
+                    "inanimate"
+                ]
+            },
+            "minecraft:movement": {
+                "value": 0.15
+            },
+            "minecraft:knockback_resistance": {
+                "value": 1
+            },
+            "minecraft:leashable": {
+                "soft_distance": 2.0,
+                "hard_distance": 3.0,
+                "max_distance": 100.0
+            },
+            "minecraft:behavior.controlled_by_player": {
+                "priority": 0
+            },
+            "minecraft:movement.basic": {},
+            "minecraft:jump.static": {},
+            "minecraft:health": {
+                "value": 100,
+                "max": 100
+            },
+            "minecraft:collision_box": {
+                "width": 0.98,
+                "height": 0.7
+            },
+            "minecraft:scale": {
+                "value": 4
+            },
+            "minecraft:is_collidable": {},
+            "minecraft:rideable": {
+                "seat_count": 1,
+                "interact_text": "action.interact.ride.horse",
+                "pull_in_entities": true,
+                "seats": {
+                    "position": [
+                        0.0,
+                        0.6,
+                        -0.2
+                    ]
+                },
+                "family_types": [
+                    "player"
+                ]
+            },
+            "minecraft:input_ground_controlled": {},
+            "minecraft:physics": {},
+            "minecraft:pushable": {
+                "is_pushable": true,
+                "is_pushable_by_piston": true
+            },
+            "minecraft:conditional_bandwidth_optimization": {
+                "default_values": {
+                    "max_optimized_distance": 60.0,
+                    "max_dropped_ticks": 20,
+                    "use_motion_prediction_hints": true
+                },
+                "conditional_values": [
+                    {
+                        "max_optimized_distance": 0.0,
+                        "max_dropped_ticks": 0,
+                        "conditional_values": [
+                            {
+                                "test": "is_moving",
+                                "subject": "self",
+                                "operator": "==",
+                                "value": true
+                            }
+                        ]
+                    }
+                ]
+            },
+            "minecraft:variable_max_auto_step": {
+                "controlled_value": 2
+            },
+            "minecraft:environment_sensor": {
+                "triggers": [
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:health_type",
+                            "value": 0
+                        },
+                        "event": "cw:health_0"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:health_type",
+                            "value": 1
+                        },
+                        "event": "cw:health_1"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:health_type",
+                            "value": 2
+                        },
+                        "event": "cw:health_2"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:health_type",
+                            "value": 3
+                        },
+                        "event": "cw:health_3"
+                    }
+                ]
+            }
+        },
+        "component_groups": {
+            "cw:health_0": {
+                "minecraft:health": {
+                    "max": 100
+                }
+            },
+            "cw:health_1": {
+                "minecraft:health": {
+                    "max": 200
+                }
+            },
+            "cw:health_2": {
+                "minecraft:health": {
+                    "max": 300
+                }
+            },
+            "cw:health_3": {
+                "minecraft:health": {
+                    "max": 400
+                }
+            }
+        },
+        "events": {
+            "cw:health_0": {
+                "add": {
+                    "component_groups": [
+                        "cw:health_0"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:health_1",
+                        "cw:health_2",
+                        "cw:health_3"
+                    ]
+                }
+            },
+            "cw:health_1": {
+                "add": {
+                    "component_groups": [
+                        "cw:health_1"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:health_0",
+                        "cw:health_2",
+                        "cw:health_3"
+                    ]
+                }
+            },
+            "cw:health_2": {
+                "add": {
+                    "component_groups": [
+                        "cw:health_2"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:health_0",
+                        "cw:health_1",
+                        "cw:health_3"
+                    ]
+                }
+            },
+            "cw:health_3": {
+                "add": {
+                    "component_groups": [
+                        "cw:health_3"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:health_0",
+                        "cw:health_1",
+                        "cw:health_2"
+                    ]
+                }
+            }
+        }
+    }
+}

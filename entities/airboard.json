@@ -6,13 +6,13 @@
       "is_spawnable": true,
       "is_summonable": true,
       "spawn_egg": {
-  "texture": "airboard",
-  "texture_index": 2
-}
+        "texture": "airboard",
+        "texture_index": 2
+      }
     },
     "components": {
       "minecraft:rideable": {
-        "dismount_mode" : "on_top_center",
+        "dismount_mode": "on_top_center",
         "seat_count": 4,
         "crouching_skip_interact": true,
         "pull_in_entities": true,
@@ -49,22 +49,38 @@
           {
             "min_rider_count": 0,
             "max_rider_count": 4,
-            "position": [0, 0.03, -0.02]
+            "position": [
+              0,
+              0.03,
+              -0.02
+            ]
           },
           {
             "min_rider_count": 1,
             "max_rider_count": 4,
-            "position": [0, 1.45, -0.02]
+            "position": [
+              0,
+              1.45,
+              -0.02
+            ]
           },
           {
             "min_rider_count": 2,
             "max_rider_count": 4,
-            "position": [0, 2.87, -0.02]
+            "position": [
+              0,
+              2.87,
+              -0.02
+            ]
           },
           {
             "min_rider_count": 3,
             "max_rider_count": 4,
-            "position": [0, 4.29, -0.02]
+            "position": [
+              0,
+              4.29,
+              -0.02
+            ]
           }
         ]
       },
@@ -83,7 +99,8 @@
       },
       "minecraft:movement": {
         "value": 0.15
-      },"minecraft:boostable": {
+      },
+      "minecraft:boostable": {
         "speed_multiplier": 2.0,
         "duration": 3.0,
         "boost_items": [
@@ -95,8 +112,8 @@
       },
       "minecraft:physics": {
         "has_gravity": false
-      },"minecraft:is_collidable": {
       },
+      "minecraft:is_collidable": {},
       "minecraft:damage_sensor": {
         "triggers": {
           "cause": "fall",
