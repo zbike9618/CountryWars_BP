@@ -1,0 +1,44 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:tank_item_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "IGI",
+            "TXT",
+            "ICI"
+        ],
+        "key": {
+            "I": {
+                "item": "cw:iron_plate"
+            },
+            "G": {
+                "item": "minecraft:green_dye"
+            },
+            "T": {
+                "item": "cw:caterpillar"
+            },
+            "C": {
+                "item": "cw:cannon"
+            },
+            "X": {
+                "item": "minecraft:redstone_block"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:wheel"
+            }
+        ],
+        "result": {
+            "item": "cw:tank_item",
+            "count": 1
+        }
+    }
+}

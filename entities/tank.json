@@ -3,7 +3,7 @@
     "minecraft:entity": {
         "description": {
             "identifier": "cw:tank",
-            "is_spawnable": true,
+            "is_spawnable": false,
             "is_summonable": true,
             "is_experimental": false,
             "properties": {
@@ -250,17 +250,17 @@
             },
             "cw:fast_0": {
                 "minecraft:movement": {
-                    "value": 0.15
+                    "value": 0.05
                 }
             },
             "cw:fast_1": {
                 "minecraft:movement": {
-                    "value": 0.22
+                    "value": 0.15
                 }
             },
             "cw:fast_2": {
                 "minecraft:movement": {
-                    "value": 0.30
+                    "value": 0.25
                 }
             },
             "cw:fast_3": {
@@ -268,7 +268,11 @@
                     "value": 0.38
                 }
             },
-            "cw:fast_underwater_0": {},
+            "cw:fast_underwater_0": {
+                "minecraft:underwater_movement": {
+                    "value": 0.05
+                }
+            },
             "cw:fast_underwater_1": {
                 "minecraft:can_breathe": {
                     "can_breathe": true

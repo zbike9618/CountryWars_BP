@@ -1,0 +1,31 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:iron_plate_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "XXX",
+            "XXX"
+        ],
+        "key": {
+            "X": {
+                "item": "minecraft:iron_block"
+            }
+        },
+        "unlock": [
+            {
+                "item": "minecraft:iron_block"
+            }
+        ],
+        "result": {
+            "item": "cw:iron_plate",
+            "count": 1
+        }
+    }
+}
