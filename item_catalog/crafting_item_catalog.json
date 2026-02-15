@@ -1,0 +1,28 @@
+{
+    "format_version": "1.21.60",
+    "minecraft:crafting_items_catalog": {
+        "categories": [
+            {
+                "category_name": "items",
+                "groups": [
+                    {
+                        "group_identifier": {
+                            "icon": "cw:tank_template",
+                            "name": "cw:itemGroup.name.tank_template"
+                        },
+                        "items": [
+                            "cw:tank_template",
+                            "cw:antiwater_tank_template",
+                            "cw:fast_tank_template",
+                            "cw:fast_underwater_tank_template",
+                            "cw:more_fly_tank_template",
+                            "cw:shield_tank_template",
+                            "cw:attack_tank_template",
+                            "cw:explosion_tank_template"
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

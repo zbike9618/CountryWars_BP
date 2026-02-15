@@ -1,0 +1,33 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:fast_underwater_tank_template_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "XXX",
+            "XTX",
+            "XXX"
+        ],
+        "key": {
+            "T": {
+                "item": "cw:tank_template"
+            },
+            "X": {
+                "item": "minecraft:packed_ice"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:tank_template"
+            }
+        ],
+        "result": {
+            "item": "cw:fast_underwater_tank_template",
+            "count": 1
+        }
+    }
+}

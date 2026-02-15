@@ -1,0 +1,33 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:more_fly_tank_template_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "XXX",
+            "XTX",
+            "XXX"
+        ],
+        "key": {
+            "T": {
+                "item": "cw:tank_template"
+            },
+            "X": {
+                "item": "minecraft:tnt"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:tank_template"
+            }
+        ],
+        "result": {
+            "item": "cw:more_fly_tank_template",
+            "count": 1
+        }
+    }
+}

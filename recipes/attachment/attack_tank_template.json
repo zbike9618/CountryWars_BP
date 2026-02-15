@@ -1,0 +1,33 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:attack_tank_template_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "XXX",
+            "XTX",
+            "XXX"
+        ],
+        "key": {
+            "T": {
+                "item": "cw:tank_template"
+            },
+            "X": {
+                "item": "cw:dynamite"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:tank_template"
+            }
+        ],
+        "result": {
+            "item": "cw:attack_tank_template",
+            "count": 1
+        }
+    }
+}

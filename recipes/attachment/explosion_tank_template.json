@@ -1,0 +1,33 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:explosion_tank_template_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "XXX",
+            "XTX",
+            "XXX"
+        ],
+        "key": {
+            "T": {
+                "item": "cw:tank_template"
+            },
+            "X": {
+                "item": "cw:timer_bomb"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:tank_template"
+            }
+        ],
+        "result": {
+            "item": "cw:explosion_tank_template",
+            "count": 1
+        }
+    }
+}

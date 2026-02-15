@@ -14,6 +14,22 @@
                         3
                     ],
                     "default": 0
+                },
+                "cw:fast": {
+                    "type": "int",
+                    "range": [
+                        0,
+                        3
+                    ],
+                    "default": 0
+                },
+                "cw:fast_underwater": {
+                    "type": "int",
+                    "range": [
+                        0,
+                        3
+                    ],
+                    "default": 0
                 }
             }
         },
@@ -135,6 +151,78 @@
                             "value": 3
                         },
                         "event": "cw:health_3"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast",
+                            "value": 0
+                        },
+                        "event": "cw:fast_0"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast",
+                            "value": 1
+                        },
+                        "event": "cw:fast_1"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast",
+                            "value": 2
+                        },
+                        "event": "cw:fast_2"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast",
+                            "value": 3
+                        },
+                        "event": "cw:fast_3"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast_underwater",
+                            "value": 0
+                        },
+                        "event": "cw:fast_underwater_0"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast_underwater",
+                            "value": 1
+                        },
+                        "event": "cw:fast_underwater_1"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast_underwater",
+                            "value": 2
+                        },
+                        "event": "cw:fast_underwater_2"
+                    },
+                    {
+                        "filters": {
+                            "test": "int_property",
+                            "subject": "self",
+                            "domain": "cw:fast_underwater",
+                            "value": 3
+                        },
+                        "event": "cw:fast_underwater_3"
                     }
                 ]
             }
@@ -158,6 +246,51 @@
             "cw:health_3": {
                 "minecraft:health": {
                     "max": 400
+                }
+            },
+            "cw:fast_0": {
+                "minecraft:movement": {
+                    "value": 0.15
+                }
+            },
+            "cw:fast_1": {
+                "minecraft:movement": {
+                    "value": 0.22
+                }
+            },
+            "cw:fast_2": {
+                "minecraft:movement": {
+                    "value": 0.30
+                }
+            },
+            "cw:fast_3": {
+                "minecraft:movement": {
+                    "value": 0.38
+                }
+            },
+            "cw:fast_underwater_0": {},
+            "cw:fast_underwater_1": {
+                "minecraft:can_breathe": {
+                    "can_breathe": true
+                },
+                "minecraft:underwater_movement": {
+                    "value": 0.1
+                }
+            },
+            "cw:fast_underwater_2": {
+                "minecraft:can_breathe": {
+                    "can_breathe": true
+                },
+                "minecraft:underwater_movement": {
+                    "value": 0.2
+                }
+            },
+            "cw:fast_underwater_3": {
+                "minecraft:can_breathe": {
+                    "can_breathe": true
+                },
+                "minecraft:underwater_movement": {
+                    "value": 0.3
                 }
             }
         },
@@ -215,6 +348,118 @@
                         "cw:health_0",
                         "cw:health_1",
                         "cw:health_2"
+                    ]
+                }
+            },
+            "cw:fast_0": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_0"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_1",
+                        "cw:fast_2",
+                        "cw:fast_3"
+                    ]
+                }
+            },
+            "cw:fast_1": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_1"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_0",
+                        "cw:fast_2",
+                        "cw:fast_3"
+                    ]
+                }
+            },
+            "cw:fast_2": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_2"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_0",
+                        "cw:fast_1",
+                        "cw:fast_3"
+                    ]
+                }
+            },
+            "cw:fast_3": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_3"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_0",
+                        "cw:fast_1",
+                        "cw:fast_2"
+                    ]
+                }
+            },
+            "cw:fast_underwater_0": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_underwater_0"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_underwater_1",
+                        "cw:fast_underwater_2",
+                        "cw:fast_underwater_3"
+                    ]
+                }
+            },
+            "cw:fast_underwater_1": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_underwater_1"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_underwater_0",
+                        "cw:fast_underwater_2",
+                        "cw:fast_underwater_3"
+                    ]
+                }
+            },
+            "cw:fast_underwater_2": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_underwater_2"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_underwater_0",
+                        "cw:fast_underwater_1",
+                        "cw:fast_underwater_3"
+                    ]
+                }
+            },
+            "cw:fast_underwater_3": {
+                "add": {
+                    "component_groups": [
+                        "cw:fast_underwater_3"
+                    ]
+                },
+                "remove": {
+                    "component_groups": [
+                        "cw:fast_underwater_0",
+                        "cw:fast_underwater_1",
+                        "cw:fast_underwater_2"
                     ]
                 }
             }
