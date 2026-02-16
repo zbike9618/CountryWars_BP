@@ -1,0 +1,26 @@
+{
+  "format_version": "1.20.80",
+  "minecraft:block": {
+    "description": {
+      "identifier": "cw:landmine"
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 4, 16]
+      },
+      "minecraft:selection_box": {
+        "origin": [-8, 0, -8],
+        "size": [16, 2, 16]
+      },
+      "minecraft:custom_components": ["cw:landmine"],
+      "minecraft:geometry": "geometry.landmine",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "landmine",
+          "render_method": "alpha_test"
+        }
+      }
+    }
+  }
+}
