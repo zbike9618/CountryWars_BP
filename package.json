@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@minecraft/server": "^2.5.0-beta.1.21.130-stable",
-    "@minecraft/server-ui": "^2.1.0-beta.1.21.130-stable"
+    "@minecraft/server-ui": "^2.1.0-beta.1.21.130-stable",
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0"
   }
 }
