@@ -1,10 +1,10 @@
-import { world } from "@minecraft/server";
+import { world, system } from "@minecraft/server";
 
-world.beforeEvents.worldInitialize.subscribe(ev => {
+system.beforeEvents.startup.subscribe(ev => {
     ev.blockComponentRegistry.registerCustomComponent("cw:landmine", {
         onStepOn(event) {
             const { block, entity } = event;
-            
+
             // エンティティが存在し、プレイヤーである場合のみ爆発
             if (entity && entity.typeId === "minecraft:player") {
                 explode(block);
@@ -20,10 +20,10 @@ function explode(block) {
 
     // 爆発を作成（座標の中心に調整）
     dimension.createExplosion(
-        { 
-            x: location.x + 0.5, 
-            y: location.y + 0.5, 
-            z: location.z + 0.5 
+        {
+            x: location.x + 0.5,
+            y: location.y + 0.5,
+            z: location.z + 0.5
         },
         4,  // 爆発の強さ
         {
