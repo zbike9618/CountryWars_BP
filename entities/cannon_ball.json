@@ -15,6 +15,16 @@
                     ],
                     "default": 0,
                     "client_sync": true
+                },
+                "cw:allow_water": {
+                    "type": "bool",
+                    "default": false,
+                    "client_sync": true
+                },
+                "cw:will_clear_water": {
+                    "type": "bool",
+                    "default": false,
+                    "client_sync": true
                 }
             }
         },
@@ -24,18 +34,11 @@
                     "fuse_length": 0,
                     "fuse_lit": true,
                     "power": 5.0,
-                    "causes_fire": false
+                    "causes_fire": false,
+                    "allow_underwater": false
                 }
             },
             "cw:exploding_1": {
-                "minecraft:explode": {
-                    "fuse_length": 0,
-                    "fuse_lit": true,
-                    "power": 6.0,
-                    "causes_fire": false
-                }
-            },
-            "cw:exploding_2": {
                 "minecraft:explode": {
                     "fuse_length": 0,
                     "fuse_lit": true,
@@ -43,12 +46,27 @@
                     "causes_fire": false
                 }
             },
+            "cw:exploding_2": {
+                "minecraft:explode": {
+                    "fuse_length": 0,
+                    "fuse_lit": true,
+                    "power": 9.0,
+                    "causes_fire": false
+                }
+            },
             "cw:exploding_3": {
                 "minecraft:explode": {
                     "fuse_length": 0,
                     "fuse_lit": true,
-                    "power": 8.0,
+                    "power": 12.0,
                     "causes_fire": false
+                }
+            },
+            "cw:exploding_underwater": {
+                "minecraft:explode": {
+                    "fuse_length": 0,
+                    "fuse_lit": true,
+                    "allow_underwater": true
                 }
             }
         },
@@ -156,6 +174,20 @@
                         "add": {
                             "component_groups": [
                                 "cw:exploding_3"
+                            ]
+                        }
+                    },
+                    {
+                        "filters": {
+                            "test": "bool_property",
+                            "subject": "self",
+                            "operator": "==",
+                            "domain": "cw:allow_water",
+                            "value": true
+                        },
+                        "add": {
+                            "component_groups": [
+                                "cw:exploding_underwater"
                             ]
                         }
                     }

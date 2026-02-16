@@ -1,3 +1,5 @@
 import "./rider.js"
 import "./arrow.js"
 import "./cannon.js"
+import "./attachment.js"
+import "./self_explosion.js"

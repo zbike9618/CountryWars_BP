@@ -1,0 +1,36 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:tank_template_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "pattern": [
+            "IAI",
+            "APA",
+            "IAI"
+        ],
+        "key": {
+            "I": {
+                "item": "minecraft:iron_ingot"
+            },
+            "P": {
+                "item": "cw:platinum_ingot"
+            },
+            "A": {
+                "item": "cw:platinum_iron_alloy"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:platinum_iron_alloy"
+            }
+        ],
+        "result": {
+            "item": "cw:tank_template",
+            "count": 1
+        }
+    }
+}

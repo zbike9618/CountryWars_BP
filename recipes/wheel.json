@@ -2,7 +2,7 @@
     "format_version": "1.20.10",
     "minecraft:recipe_shaped": {
         "description": {
-            "identifier": "cw:mega_item_recipe"
+            "identifier": "cw:wheel_recipe"
         },
         "tags": [
             "crafting_table"
@@ -10,31 +10,25 @@
         "assume_symmetry": false,
         "priority": 1,
         "pattern": [
-            "YYY",
-            "XCX",
-            "XDX"
+            "*O*",
+            "OXO",
+            "*O*"
         ],
         "key": {
             "X": {
-                "item": "minecraft:planks"
+                "item": "minecraft:black_dye"
             },
-            "Y": {
-                "item": "minecraft:iron_block"
-            },
-            "C": {
-                "item": "minecraft:chest"
-            },
-            "D": {
-                "item": "minecraft:diamond"
+            "O": {
+                "item": "cw:sbr"
             }
         },
         "unlock": [
             {
-                "item": "minecraft:chest"
+                "item": "cw:sbr"
             }
         ],
         "result": {
-            "item": "cw:mega_item",
+            "item": "cw:wheel",
             "count": 1
         }
     }

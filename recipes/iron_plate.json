@@ -2,7 +2,7 @@
     "format_version": "1.20.10",
     "minecraft:recipe_shaped": {
         "description": {
-            "identifier": "cw:mega_item_recipe"
+            "identifier": "cw:iron_plate_recipe"
         },
         "tags": [
             "crafting_table"
@@ -10,31 +10,21 @@
         "assume_symmetry": false,
         "priority": 1,
         "pattern": [
-            "YYY",
-            "XCX",
-            "XDX"
+            "XXX",
+            "XXX"
         ],
         "key": {
             "X": {
-                "item": "minecraft:planks"
-            },
-            "Y": {
                 "item": "minecraft:iron_block"
-            },
-            "C": {
-                "item": "minecraft:chest"
-            },
-            "D": {
-                "item": "minecraft:diamond"
             }
         },
         "unlock": [
             {
-                "item": "minecraft:chest"
+                "item": "minecraft:iron_block"
             }
         ],
         "result": {
-            "item": "cw:mega_item",
+            "item": "cw:iron_plate",
             "count": 1
         }
     }

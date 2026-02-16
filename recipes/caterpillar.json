@@ -1,0 +1,38 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:caterpillar_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "GGG",
+            "III",
+            "WWW"
+        ],
+        "key": {
+            "G": {
+                "item": "minecraft:green_dye"
+            },
+            "I": {
+                "item": "cw:iron_plate"
+            },
+            "W": {
+                "item": "cw:wheel"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:sbr"
+            }
+        ],
+        "result": {
+            "item": "cw:caterpillar",
+            "count": 1
+        }
+    }
+}
