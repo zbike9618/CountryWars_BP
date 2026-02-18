@@ -8,6 +8,7 @@ import { Data } from "./data";
 import { ShortPlayerData } from "./playerData";
 import { sendDataForPlayers } from "./sendData";
 import { War } from "./war";
+import config from "../config/config.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 const chunkDatas = new Dypro("chunk");
@@ -59,6 +60,8 @@ export class Country {
             players: [player.id],
             permissions: { "国王": Data.permissions },
             chunkAmount: 0,
+            buildtime: Date.now(),
+            lastDefeated: 0,
             robbedChunkAmount: [],//国ごとに保存
             wardeath: 0,//戦争中に死んでいい回数
             //同盟国などはあとで
@@ -179,67 +182,69 @@ export class Country {
         }
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.title" })
+        const actions = [];
+
         form.button({ translate: "cw.scform.information" })
+        actions.push(() => Information.information(player, countryData));
+
         form.button({ translate: "cw.scform.member" })
+        actions.push(() => Member.member(player, countryData));
+
         form.button({ translate: "cw.scform.money" })
+        actions.push(() => Money.money(player, countryData));
+
         form.button({ translate: "cw.scform.tax" })
+        actions.push(async () => {
+            if (hasPermission(player, "tax_manage")) {
+                Tax.tax(player, countryData)
+            } else if (await noPermission(player)) {
+                this.setting(player, countryData)
+            }
+        });
+
         form.button({ translate: "cw.scform.permission" })
-        form.button({ translate: "cw.scform.diplomacy" }) // 新規追加: 外交設定
+        actions.push(async () => {
+            if (hasPermission(player, "permission")) {
+                Permission.permission(player, countryData)
+            } else if (await noPermission(player)) {
+                this.setting(player, countryData)
+            }
+        });
+
+        form.button({ translate: "cw.scform.diplomacy" })
+        actions.push(async () => {
+            if (hasPermission(player, "diplomacy")) {
+                Diplomacy.diplomacy(player, countryData)
+            } else if (await noPermission(player)) {
+                this.setting(player, countryData)
+            }
+        });
+
+        // 戦争保護解除ボタン (国王のみ、かつ保護中)
+        if (War.isProtected(countryData) && player.id === countryData.owner) {
+            form.button({ translate: "cw.scform.protection.cancel" });
+            actions.push(() => War.cancelProtectionForm(player, countryData));
+        }
+
         form.button({ translate: "cw.scform.delete" })
+        actions.push(async () => {
+            if (player.id !== countryData.owner) {
+                player.sendMessage({ translate: "cw.scform.permission.nopermission" })
+                return;
+            }
+            const deleteCheckForm = new MessageFormData()
+            deleteCheckForm.title({ translate: "cw.scform.delete" })
+            deleteCheckForm.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
+            deleteCheckForm.button1({ translate: "cw.form.yes" })
+            deleteCheckForm.button2({ translate: "cw.form.no" })
+            const delRes = await deleteCheckForm.show(player)
+            if (delRes.canceled || delRes.selection == 1) return;
+            this.delete(countryData)
+        });
 
         const res = await form.show(player)
         if (res.canceled) return;
-        switch (res.selection) {
-            case 0:
-                Information.information(player, countryData)
-                break;
-
-            case 1:
-                Member.member(player, countryData)
-                break;
-            case 2:
-                Money.money(player, countryData)
-                break;
-            case 3:
-                if (hasPermission(player, "tax_manage")) {
-                    Tax.tax(player, countryData)
-                }
-                else if (await noPermission(player)) {
-                    this.setting(player, countryData)
-                }
-                break;
-            case 4:
-                if (hasPermission(player, "permission")) {
-                    Permission.permission(player, countryData)
-                }
-
-                else if (await noPermission(player)) {
-                    this.setting(player, countryData)
-                }
-                break;
-
-            case 5:
-                if (hasPermission(player, "diplomacy")) {
-                    Diplomacy.diplomacy(player, countryData)
-                } else if (await noPermission(player)) {
-                    this.setting(player, countryData)
-                }
-                break;
-            case 6:
-                if (player.id !== countryData.owner) {
-                    player.sendMessage({ translate: "cw.scform.permission.nopermission" })
-                    return;
-                }
-                const deleteCheckForm = new MessageFormData()
-                deleteCheckForm.title({ translate: "cw.scform.delete" })
-                deleteCheckForm.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
-                deleteCheckForm.button1({ translate: "cw.form.yes" })
-                deleteCheckForm.button2({ translate: "cw.form.no" })
-                const delRes = await deleteCheckForm.show(player)
-                if (delRes.canceled || delRes.selection == 1) return;
-                this.delete(countryData)
-                break
-        }
+        actions[res.selection]();
     }
 
 
@@ -261,7 +266,8 @@ class Information {
                 `${countryData.tax.consumption}`,
                 `${countryData.tax.income}`,
                 `${countryData.tax.country}`,
-                `${countryData.tax.customs}`
+                `${countryData.tax.customs}`,
+                War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし"
             ]
         })
         form.button({ translate: "cw.form.redo" })
@@ -427,20 +433,25 @@ class Member {
     static async member(player, countryData) {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.member" })
+        const actions = [];
+
         if (hasPermission(player, "member_invite")) {
             form.button({ translate: "cw.scform.member.invite" })
+            actions.push(() => this.invite(player, countryData));
         }
         if (hasPermission(player, "member_kick")) {
             form.button({ translate: "cw.scform.member.kick" })
+            actions.push(() => this.kick(player, countryData));
         }
+        // 国王のみ譲位が可能
+        if (player.id === countryData.owner) {
+            form.button({ translate: "cw.scform.member.transfer" })
+            actions.push(() => this.transferOwner(player, countryData));
+        }
+
         const res = await form.show(player)
         if (res.canceled) return;
-        if (res.selection == 0 && hasPermission(player, "member_invite")) {
-            this.invite(player, countryData)
-        }
-        else if ((res.selection == 1 && hasPermission(player, "member_kick")) || (res.selection == 0 && !hasPermission(player, "member_invite"))) {
-            this.kick(player, countryData)
-        }
+        if (actions[res.selection]) actions[res.selection]();
     }
     static async invite(player, countryData) {
 
@@ -473,7 +484,7 @@ class Member {
     }
     static async kick(player, countryData) {
 
-        const players = countryData.players//.filter(playerId => countryDatas.get(playerDatas.get(playerId).country).owner != playerId && playerId != player.id)
+        const players = countryData.players.filter(id => id !== countryData.owner)
         if (players.length == 0) {
             const form = new MessageFormData()
             form.title({ translate: "cw.scform.member.kick" })
@@ -488,18 +499,62 @@ class Member {
             return;
         }
         const form = new ModalFormData()
+        form.title({ translate: "cw.scform.member.kick" })
         form.dropdown({ translate: "cw.form.playerchoise" }, players.map(playerId => playerDatas.get(playerId).name))
         const res = await form.show(player)
         if (res.canceled) return;
         const playerId = players[res.formValues[0]]
         const playerData = playerDatas.get(playerId)
         playerData.country = undefined
+        playerData.permission = ""
         playerDatas.set(playerId, playerData)
         countryData.players.splice(countryData.players.indexOf(playerId), 1)
         countryDatas.set(countryData.id, countryData)
         player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerDatas.get(playerId).name] })
         const data = `world.getEntity('${playerId}').sendMessage({ translate: "cw.scform.member.kicked", with: ["${countryData.name}"] })`
         sendDataForPlayers(data, playerId)
+    }
+    static async transferOwner(player, countryData) {
+        const members = countryData.players.filter(id => id !== player.id);
+        if (members.length === 0) {
+            player.sendMessage({ translate: "cw.form.noplayers" });
+            return;
+        }
+
+        const form = new ModalFormData();
+        form.title({ translate: "cw.scform.member.transfer.title" });
+        form.dropdown({ translate: "cw.scform.member.transfer.select" }, members.map(id => playerDatas.get(id)?.name || "Unknown"));
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        const newOwnerId = members[res.formValues[0]];
+        const newOwnerName = playerDatas.get(newOwnerId)?.name || "Unknown";
+
+        const confirmForm = new MessageFormData();
+        confirmForm.title({ translate: "cw.scform.member.transfer.title" });
+        confirmForm.body({ translate: "cw.scform.member.transfer.confirm", with: [newOwnerName] });
+        confirmForm.button1({ translate: "cw.form.yes" });
+        confirmForm.button2({ translate: "cw.form.no" });
+
+        const confirmRes = await confirmForm.show(player);
+        if (confirmRes.canceled || confirmRes.selection === 1) return;
+
+        // 譲位処理
+        const oldOwnerData = playerDatas.get(player.id);
+        const newOwnerData = playerDatas.get(newOwnerId);
+
+        oldOwnerData.permission = ""; // 旧国王は権限なしに
+        newOwnerData.permission = "国王"; // 新国王に国王権限
+
+        countryData.owner = newOwnerId;
+
+        playerDatas.set(player.id, oldOwnerData);
+        playerDatas.set(newOwnerId, newOwnerData);
+        countryDatas.set(countryData.id, countryData);
+
+        player.sendMessage({ translate: "cw.scform.member.transfer.success", with: [newOwnerName] });
+        world.sendMessage({ translate: "cw.scform.member.transfer.announced", with: [countryData.name, newOwnerName] });
     }
 }
 class Money {

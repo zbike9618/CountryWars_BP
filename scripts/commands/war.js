@@ -111,15 +111,24 @@ async function declareForm(player, countryData) {
     mform.button2({ translate: "cw.form.no" })
     const resp = await mform.show(player)
     if (resp.selection === 0) {
-        War.declareTo(countryData, enemyData)
-        //宣戦布告を送信
-        world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
-        for (const player of world.getAllPlayers()) {
-            player.playSound("mob.enderdragon.growl")
+        if (War.isProtected(countryData)) {
+            player.sendMessage({ translate: "cw.warform.declare.protected.self" })
+            return
         }
-        for (const player of Util.GetCountryPlayer(enemyData)) {
-            player.onScreenDisplay.setTitle({ translate: `cw.warform.declared`, with: [countryData.name] })
-            player.playSound("random.anvil_use")
+        if (War.isProtected(enemyData)) {
+            player.sendMessage({ translate: "cw.warform.declare.protected.enemy", with: [enemyData.name] })
+            return
+        }
+        if (War.declareTo(countryData, enemyData)) {
+            //宣戦布告を送信
+            world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
+            for (const player of world.getAllPlayers()) {
+                player.playSound("mob.enderdragon.growl")
+            }
+            for (const player of Util.GetCountryPlayer(enemyData)) {
+                player.onScreenDisplay.setTitle({ translate: `cw.warform.declared`, with: [countryData.name] })
+                player.playSound("random.anvil_use")
+            }
         }
     }
 }

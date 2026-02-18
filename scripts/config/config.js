@@ -21,4 +21,6 @@ export default {
     stockMaxSell: 100000,
     // タンクのアタッチメント最大数
     tankMaxSlots: 5,
+    // 戦争保護期間 (日) - デフォルト7日間
+    warProtectionPeriod: 7,
 };
