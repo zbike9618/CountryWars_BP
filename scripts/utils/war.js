@@ -22,6 +22,55 @@ export class War {
         return diff <= threshold;
     }
 
+    /**
+     * 国が戦争保護期間中か確認
+     * @param {Object} countryData
+     * @returns {boolean}
+     */
+    static isProtected(countryData) {
+        if (!countryData || !countryData.buildtime) return false;
+        const now = Date.now();
+        const protectionEnd = countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+        return now < protectionEnd;
+    }
+
+    /**
+     * 国王による戦争保護の解除フォーム
+     * @param {server.Player} player
+     * @param {Object} countryData
+     */
+    static async cancelProtectionForm(player, countryData) {
+        if (player.id !== countryData.owner) {
+            player.sendMessage({ translate: "cw.scform.protection.cancel.noowner" });
+            return;
+        }
+        if (!this.isProtected(countryData)) {
+            player.sendMessage({ translate: "cw.scform.protection.cancel.already" });
+            return;
+        }
+
+        const now = Date.now();
+        const defeatCutoff = (countryData.lastDefeated || 0) + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+        if (now < defeatCutoff) {
+            const rem = defeatCutoff - now;
+            player.sendMessage({ translate: "cw.scform.protection.cancel.defeated", with: [Util.formatTime(rem)] });
+            return;
+        }
+
+        const form = new MessageFormData();
+        form.title({ translate: "cw.scform.protection.cancel" });
+        form.body({ translate: "cw.scform.protection.cancel.confirm" });
+        form.button1({ translate: "cw.form.yes" });
+        form.button2({ translate: "cw.form.no" });
+
+        const res = await form.show(player);
+        if (res.canceled || res.selection === 1) return;
+
+        countryData.buildtime = 0;
+        countryDatas.set(countryData.id, countryData);
+        player.sendMessage({ translate: "cw.scform.protection.cancel.success" });
+    }
+
     static CanInvade(player, countryData) {
         const chunkId = Chunk.positionToChunkId(player.location)
         const chunk = Chunk.checkChunk(chunkId);
@@ -60,6 +109,10 @@ export class War {
      * @param {Object} enemyData 敵の国
      */
     static declareTo(mineData, enemyData) {
+        // 保護期間のチェック
+        if (this.isProtected(mineData) || this.isProtected(enemyData)) {
+            return false;
+        }
         const myplayers = Util.GetCountryPlayer(mineData);
         const enemyplayers = Util.GetCountryPlayer(enemyData);
 
@@ -67,9 +120,18 @@ export class War {
         //if (this.isBalanced(myplayers.length, enemyplayers.length)) {
         mineData.warcountry.push(enemyData.id);
         enemyData.warcountry.push(mineData.id);
-
-        mineData.wardeath += myplayers.length * 5;
-        enemyData.wardeath += enemyplayers.length * 5;
+        if (mineData.isPeace) {
+            mineData.wardeath += myplayers.length * 5;
+        }
+        else {
+            mineData.wardeath += myplayers.length * 15;
+        }
+        if (enemyData.isPeace) {
+            enemyData.wardeath += enemyplayers.length * 5;
+        }
+        else {
+            enemyData.wardeath += enemyplayers.length * 15;
+        }
         for (const player of myplayers) {
             player.addTag("cw:duringwar")
         }
@@ -79,6 +141,7 @@ export class War {
         countryDatas.set(mineData.id, mineData);
         countryDatas.set(enemyData.id, enemyData);
         //}
+        return true;
     }
     /**
      * 戦闘を終了する
@@ -100,11 +163,28 @@ export class War {
 
             world.sendMessage({ translate: "cw.war.finish.invade", with: [winnerData.name, loserData.name] })
         }
+        if (type == "force") {//国は滅ぼさない
+            const chunkAmount = winnerData.robbedChunkAmount || 0;
+            const savePlayer = winnerData.wardeath || 0;
+            number = Math.min(chunkAmount[loserData.id] * 20000 || 0 + savePlayer * 30000 || 0, config.maxWarMoney);
+            world.sendMessage({ translate: "cw.war.finish.force", with: [loserData.name, winnerData.name] })
+        }
+        if (winnerData.isPeace) {
+            number *= 2;
+        }
+        if (loserData.isPeace) {
+            number *= 0.5;
+        }
 
         loserData.money -= number
         winnerData.money += number
         winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
         loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
+
+        // 敗北時の保護期間再設定
+        loserData.buildtime = Date.now();
+        loserData.lastDefeated = Date.now();
+
         countryDatas.set(loserData.id, loserData)
         countryDatas.set(winnerData.id, winnerData)
 

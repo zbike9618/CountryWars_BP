@@ -201,4 +201,23 @@ export class Util {
             return true; // 壊れなかった
         }
     }
+    /**
+     * ミリ秒をフォーマット (D日 H時間 M分)
+     * @param {number} ms 
+     * @returns {string}
+     */
+    static formatTime(ms) {
+        if (ms <= 0) return "0s";
+        const totalMinutes = Math.floor(ms / (1000 * 60));
+        const minutes = totalMinutes % 60;
+        const totalHours = Math.floor(totalMinutes / 60);
+        const hours = totalHours % 24;
+        const days = Math.floor(totalHours / 24);
+
+        let result = "";
+        if (days > 0) result += `${days}d `;
+        if (hours > 0 || days > 0) result += `${hours}h `;
+        result += `${minutes}m`;
+        return result.trim();
+    }
 }
