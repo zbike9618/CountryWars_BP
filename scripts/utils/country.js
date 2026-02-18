@@ -20,6 +20,13 @@ export class Country {
             player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
             return;
         }
+
+        // 建国費用のチェック
+        if (playerData.money < config.countryprice) {
+            player.sendMessage(`§c建国には§e${config.countryprice}§c必要です。現在の手持ち: §e${playerData.money}`);
+            return;
+        }
+
         const form = new ModalFormData()
         form.title({ translate: "cw.mcform.title" })
         form.textField({ translate: "cw.mcform.WriteCountryNameLabel" }, { translate: "cw.mcform.WriteCountryNamePlaceholder" })//国名
@@ -85,6 +92,10 @@ export class Country {
 
         }
         countryDatas.set(id, countryData);
+
+        // 建国費用の支払い
+        Util.addMoney(player, -config.countryprice);
+
         const playerData = playerDatas.get(player.id);
         playerData.country = id;
         playerData.permission = "国王";
