@@ -101,7 +101,10 @@ export class War {
         const core = dimension.spawnEntity("cw:core", player.location)
         core.nameTag = `Core : ${enemyCountryData.name}`
         core.setDynamicProperty("core", `${Chunk.positionToChunkId(player.location)}`)
-        world.sendMessage({ translate: "cw.war.invade", with: [player.name, enemyCountryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
+        system.run(() => {
+            const command = `tellraw @a {"rawtext":[{"text":"§e[§aW§r] "},{"translate":"cw.war.invade","with":["${player.name}", "${enemyCountryData.name}", "${Math.floor(player.location.x)}", "${Math.floor(player.location.z)}"]}]}`;
+            world.getDimension("overworld").runCommand(command);
+        });
     }
     /**
      * 宣戦布告
