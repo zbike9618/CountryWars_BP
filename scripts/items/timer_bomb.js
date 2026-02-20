@@ -40,28 +40,26 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     }
 });
 
-system.beforeEvents.startup.subscribe(init => {
-    init.blockComponentRegistry.registerCustomComponent("cw:timer_bomb", {
-        onPlayerInteract(arg) {
-            const key = getCoordKey(arg.block.location, arg.dimension.id);
-            if (bombtime.has(key)) {
-                const remaining = bombtime.get(key).time;
-                let hour = Math.floor(remaining / 3600).toString();
-                if (hour.length == 1) hour = `0${hour}`;
-                let minute = Math.floor((remaining % 3600) / 60).toString();
-                if (minute.length == 1) minute = `0${minute}`;
-                let second = Math.floor(remaining % 60).toString();
-                if (second.length == 1) second = `0${second}`
-                arg.player.onScreenDisplay.setActionBar({
-                    translate: "cw.timer_bomb.check",
-                    with: [hour, minute, second]
-                });
-                return;
-            }
-            bombsetting(arg.player, arg.block.location, arg.dimension);
-        }
-    })
-})
+import { blockInteractCallbacks } from "../utils/resister.js";
+blockInteractCallbacks.push((arg) => {
+    if (arg.block.typeId != "cw:timer_bomb") return;
+    const key = getCoordKey(arg.block.location, arg.dimension.id);
+    if (bombtime.has(key)) {
+        const remaining = bombtime.get(key).time;
+        let hour = Math.floor(remaining / 3600).toString();
+        if (hour.length == 1) hour = `0${hour}`;
+        let minute = Math.floor((remaining % 3600) / 60).toString();
+        if (minute.length == 1) minute = `0${minute}`;
+        let second = Math.floor(remaining % 60).toString();
+        if (second.length == 1) second = `0${second}`
+        arg.player.onScreenDisplay.setActionBar({
+            translate: "cw.timer_bomb.check",
+            with: [hour, minute, second]
+        });
+        return;
+    }
+    bombsetting(arg.player, arg.block.location, arg.dimension);
+});
 
 /**
  * @param {server.Player} player 

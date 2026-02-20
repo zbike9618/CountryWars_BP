@@ -54,7 +54,7 @@
                 ]
             },
             "minecraft:custom_components": [
-                "cw:timer_bomb"
+                "cw:interact"
             ]
         },
         "permutations": [
