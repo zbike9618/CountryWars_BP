@@ -59,3 +59,44 @@ export function ChangeChatType(player, type) {
     player.sendMessage({ translate: "cw.chattype.changed", with: [type] });
     player.playSound("random.orb");
 }
+
+// 通知済みプレイヤーと時間を記録するマップ
+const lastSpawnNotice = new Map();
+
+// 参加通知
+world.afterEvents.playerSpawn.subscribe((ev) => {
+    const { player, initialSpawn } = ev;
+    if (!initialSpawn) return;
+
+    const now = Date.now();
+    const lastTime = lastSpawnNotice.get(player.id) || 0;
+
+    // 前回の通知から3000ミリ秒（3秒）以上経っている場合のみ実行
+    if (now - lastTime > 3000) {
+        lastSpawnNotice.set(player.id, now); // 現在時刻を記録
+
+        const playerName = player.name;
+        system.run(() => {
+            const playerCount = world.getAllPlayers().length;
+            const msg = `[§aW§r] ${playerName} が参加しました (§f${playerCount}§7人)`;
+
+            world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"text":"${msg}"}]}`);
+        });
+    }
+});
+
+// 退出通知
+world.beforeEvents.playerLeave.subscribe((ev) => {
+    const { player } = ev;
+
+    // 退出時は記録を消去して、次回の参加に備える
+    lastSpawnNotice.delete(player.id);
+
+    const playerName = player.name;
+    system.run(() => {
+        const playerCount = world.getAllPlayers().length;
+        const msg = `[§aW§r] ${playerName} が退出しました (§f${playerCount}§7人)`;
+
+        world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"text":"${msg}"}]}`);
+    });
+});

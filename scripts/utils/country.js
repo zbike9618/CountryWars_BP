@@ -100,7 +100,9 @@ export class Country {
         playerData.country = id;
         playerData.permission = "国王";
         playerDatas.set(player.id, playerData);
-        world.sendMessage({ translate: "cw.mcform.createMessage", with: [countryData.name] })
+        // tellrawを使うことでWebSocketがイベントとして検知できるようになります
+        const countryName_2 = countryData.name;
+        world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.mcform.createMessage","with":["${countryName_2}"]}]}`);
     }
     static delete(countryData) {
         const players = countryData.players;
@@ -152,7 +154,9 @@ export class Country {
             }
         }
         countryDatas.delete(countryData.id);
-        world.sendMessage({ translate: "cw.scform.deleteMessage", with: [countryData.name] })
+        // tellrawを使うことでWebSocketがイベントとして検知できるようになります
+        const countryName_3 = countryData.name;
+        world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.scform.deleteMessage","with":["${countryName_3}"]}]}`);
     }
     static join(player, countryData) {
         const playerData = playerDatas.get(player.id);
