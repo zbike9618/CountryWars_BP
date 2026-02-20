@@ -237,21 +237,31 @@ export class Country {
             actions.push(() => War.cancelProtectionForm(player, countryData));
         }
 
-        form.button({ translate: "cw.scform.delete" })
-        actions.push(async () => {
-            if (player.id !== countryData.owner) {
-                player.sendMessage({ translate: "cw.scform.permission.nopermission" })
-                return;
-            }
-            const deleteCheckForm = new MessageFormData()
-            deleteCheckForm.title({ translate: "cw.scform.delete" })
-            deleteCheckForm.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
-            deleteCheckForm.button1({ translate: "cw.form.yes" })
-            deleteCheckForm.button2({ translate: "cw.form.no" })
-            const delRes = await deleteCheckForm.show(player)
-            if (delRes.canceled || delRes.selection == 1) return;
-            this.delete(countryData)
-        });
+        if (player.id === countryData.owner) {
+            form.button({ translate: "cw.scform.delete" })
+            actions.push(async () => {
+                const deleteCheckForm = new MessageFormData()
+                deleteCheckForm.title({ translate: "cw.scform.delete" })
+                deleteCheckForm.body({ translate: "cw.scform.delete.check", with: [countryData.name] })
+                deleteCheckForm.button1({ translate: "cw.form.yes" })
+                deleteCheckForm.button2({ translate: "cw.form.no" })
+                const delRes = await deleteCheckForm.show(player)
+                if (delRes.canceled || delRes.selection == 1) return;
+                this.delete(countryData)
+            });
+        } else {
+            form.button({ translate: "cw.scform.exit" })
+            actions.push(async () => {
+                const exitCheckForm = new MessageFormData()
+                exitCheckForm.title({ translate: "cw.scform.exit" })
+                exitCheckForm.body({ translate: "cw.scform.exit.check", with: [countryData.name] })
+                exitCheckForm.button1({ translate: "cw.form.yes" })
+                exitCheckForm.button2({ translate: "cw.form.no" })
+                const exitRes = await exitCheckForm.show(player)
+                if (exitRes.canceled || exitRes.selection == 1) return;
+                this.exit(player, countryData)
+            });
+        }
 
         const res = await form.show(player)
         if (res.canceled) return;
