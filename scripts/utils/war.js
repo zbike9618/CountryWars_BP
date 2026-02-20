@@ -5,6 +5,7 @@ import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 import { Country } from "./country.js";
 import config from "../config/config.js";
+import { DiscordRelay } from "./chat.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
@@ -104,6 +105,7 @@ export class War {
         system.run(() => {
             const command = `tellraw @a {"rawtext":[{"translate":"cw.war.invade","with":["${player.name}", "${enemyCountryData.name}", "${Math.floor(player.location.x)}", "${Math.floor(player.location.z)}"]}]}`;
             world.getDimension("overworld").runCommand(command);
+            DiscordRelay.sendTranslate("cw.war.invade", [player.name, enemyCountryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`]);
         });
     }
     /**
@@ -500,6 +502,7 @@ world.afterEvents.entityDie.subscribe(ev => {
                     world.sendMessage({
                         translate: "cw.war.death", with: [countryData.name, `${countryData.wardeath}`]
                     })
+                    DiscordRelay.sendTranslate("cw.war.death", [countryData.name, `${countryData.wardeath}`]);
                 }
             }
         }

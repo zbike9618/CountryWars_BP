@@ -1,0 +1,209 @@
+{
+    "format_version": "1.26.0",
+    "minecraft:block": {
+        "description": {
+            "identifier": "cw:redstone_antenna",
+            "menu_category": {
+                "category": "items"
+            },
+            "states": {
+                "cw:redstone_signal": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15
+                ]
+            }
+        },
+        "components": {
+            "minecraft:destructible_by_explosion": {
+                "explosion_resistance": 5
+            },
+            "minecraft:destructible_by_mining": {
+                "item_specific_speeds": [
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:wooden_tier')"
+                        },
+                        "destroy_speed": 1.15
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:stone_tier')"
+                        },
+                        "destroy_speed": 0.6
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:iron_tier')"
+                        },
+                        "destroy_speed": 0.4
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:golden_tier')"
+                        },
+                        "destroy_speed": 0.2
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:diamond_tier')"
+                        },
+                        "destroy_speed": 0.3
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:netherite_tier')"
+                        },
+                        "destroy_speed": 0.25
+                    }
+                ],
+                "seconds_to_destroy": 10
+            },
+            "minecraft:light_emission": 0,
+            "cw:interact": {}
+        },
+        "permutations": [
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 0",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 0
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 1",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 1
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 2",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 2
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 3",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 3
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 4",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 4
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 5",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 5
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 6",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 6
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 7",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 7
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 8",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 8
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 9",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 9
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 10",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 10
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 11",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 11
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 12",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 12
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 13",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 13
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 14",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 14
+                    }
+                }
+            },
+            {
+                "condition": "query.block_state('cw:redstone_signal') == 15",
+                "components": {
+                    "minecraft:redstone_producer": {
+                        "power": 15
+                    }
+                }
+            }
+        ]
+    }
+}
