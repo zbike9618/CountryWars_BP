@@ -14,7 +14,7 @@ import "./end.js";
 import "./landmine.js";
 import "./timer_bomb.js";
 import "./tank/import.js";
-
+import "./redstone.js"
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
@@ -35,3 +35,19 @@ world.afterEvents.worldLoad.subscribe((event) => {
 
     }, 20)
 });
+import { BlockInteract, RedstoneUpdate } from "../utils/resister.js";
+
+system.beforeEvents.startup.subscribe(init => {
+    init.blockComponentRegistry.registerCustomComponent("cw:interact", {
+        onPlayerInteract(arg) {
+            BlockInteract(arg)
+        }
+    })
+})
+system.beforeEvents.startup.subscribe(init => {
+    init.blockComponentRegistry.registerCustomComponent("cw:redstone_recieve", {
+        onRedstoneUpdate(arg) {
+            RedstoneUpdate(arg)
+        }
+    })
+})

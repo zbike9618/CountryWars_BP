@@ -1,0 +1,71 @@
+{
+    "format_version": "1.26.0",
+    "minecraft:block": {
+        "description": {
+            "identifier": "cw:redstone_connector",
+            "menu_category": {
+                "category": "items"
+            },
+            "traits": {
+                "minecraft:placement_direction": {
+                    "enabled_states": [
+                        "minecraft:cardinal_direction"
+                    ]
+                }
+            }
+        },
+        "components": {
+            "minecraft:destructible_by_explosion": {
+                "explosion_resistance": 5
+            },
+            "minecraft:destructible_by_mining": {
+                "item_specific_speeds": [
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:wooden_tier')"
+                        },
+                        "destroy_speed": 1.15
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:stone_tier')"
+                        },
+                        "destroy_speed": 0.6
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:iron_tier')"
+                        },
+                        "destroy_speed": 0.4
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:golden_tier')"
+                        },
+                        "destroy_speed": 0.2
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:diamond_tier')"
+                        },
+                        "destroy_speed": 0.3
+                    },
+                    {
+                        "item": {
+                            "tags": "q.all_tags('minecraft:is_pickaxe', 'minecraft:netherite_tier')"
+                        },
+                        "destroy_speed": 0.25
+                    }
+                ],
+                "seconds_to_destroy": 10
+            },
+            "minecraft:light_emission": 0,
+            "minecraft:redstone_consumer": {
+                "min_power": 0,
+                "propagates_power": true
+            },
+            "cw:interact": {},
+            "cw:redstone_recieve": {}
+        }
+    }
+}

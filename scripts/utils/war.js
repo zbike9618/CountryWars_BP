@@ -1,5 +1,6 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
+import { MessageFormData } from "@minecraft/server-ui";
 import { Chunk } from "./chunk.js";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
