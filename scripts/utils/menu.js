@@ -305,7 +305,6 @@ async function PlayerDataReset(player) {
             const player = allPlayers[response.formValues[0]];
             playerDatas.delete(player.id)
             player.setDynamicProperty("initial", false);
-            player.runCommand("kick @s プレイヤーデータのリセット")
             player.sendMessage({ translate: "cw.menu.playerdatareset.success", with: [`${player.name}`] });
         }
     })
