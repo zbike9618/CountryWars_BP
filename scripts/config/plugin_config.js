@@ -2,7 +2,11 @@
 /**
  * 有効にするプラグイン(.jsファイル名)
  */
-export const turnedOnPlugins = [
+export const turnedOnPlugins = {
     //"tweakeroo",
-    "websocket"
-]
+    "admin": {
+        blackList: [
+            "test"
+        ]
+    }
+}

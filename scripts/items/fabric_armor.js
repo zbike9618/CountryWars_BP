@@ -1,4 +1,4 @@
-import { world, system,} from "@minecraft/server";
+import { world, system, } from "@minecraft/server";
 
 system.runInterval(() => {
   const players = world.getPlayers();
@@ -11,8 +11,8 @@ system.runInterval(() => {
     if (equip.getEquipment("Head")?.typeId === "cw:fabric_helmet") { power++ };
     //player.sendMessage(`${power} ${speed}`);
     if (power > 0) {
-      const speed = poewr -1
-      player.addEffect("speed", 1, speed, false);
+      const speed = power - 1
+      player.addEffect("speed", 20, { amplifier: speed, showParticles: false });
     }
   }
 }, 10);

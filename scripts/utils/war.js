@@ -80,6 +80,23 @@ export class War {
         const enemycountryData = countryDatas.get(chunk);
         if (enemycountryData && enemycountryData.id == countryData.id) return false;
 
+        // 周囲8チャンクの所有状況を確認
+        const [cx, cz] = chunkId.split("_").map(Number);
+        let enemyNeighborCount = 0;
+        for (let x = -1; x <= 1; x++) {
+            for (let z = -1; z <= 1; z++) {
+                if (x === 0 && z === 0) continue;
+                const neighborId = `${cx + x}_${cz + z}`;
+                if (Chunk.checkChunk(neighborId) === enemycountryData.id) {
+                    enemyNeighborCount++;
+                }
+            }
+        }
+        if (enemyNeighborCount >= 5) {
+            player.sendMessage({ translate: "cw.war.invade.cancel.surrounded" });
+            return false;
+        }
+
         const entities = dimension.getEntities({ location: player.location, maxDistance: 60 }).filter(e => e.typeId == "cw:core");
         for (const e of entities) {
             const coreChunkId = Chunk.positionToChunkId(e.location)
