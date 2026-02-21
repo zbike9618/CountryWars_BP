@@ -1,6 +1,6 @@
 import { Dypro } from "../../utils/dypro";
 import * as server from "@minecraft/server";
-const { world } = server;
+const { world, system } = server;
 const playerDatas = new Dypro("player");
 import { blacklist } from "./import.js";
 

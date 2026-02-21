@@ -5,7 +5,7 @@ import { Country } from "../utils/country";
 import { Dypro } from "../utils/dypro";
 import { War } from "../utils/war";
 import { Util } from "../utils/util";
-import config from "../../config/config";
+import config from "../config/config";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 

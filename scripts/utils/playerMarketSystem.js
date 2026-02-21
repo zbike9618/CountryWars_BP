@@ -36,17 +36,17 @@ export class playerMarketSystem {
         marketDatas.set(`${page}`, marketData);
 
         player.sendMessage({
-            translate: "cw.playermarket.sell.success",
-            with: [itemData.amount.toString()]
+            rawtext: [
+                { translate: Util.langChangeItemName(itemData.itemId) },
+                { translate: "cw.playermarket.sell.success", with: [itemData.amount.toString()] }
+            ]
         });
 
         world.sendMessage({
             rawtext: [
                 { translate: "cw.playermarket.selled.success1" },
-                {
-                    translate: "cw.playermarket.selled.success2",
-                    with: [itemData.amount.toString()]
-                }
+                { translate: Util.langChangeItemName(itemData.itemId) },
+                { translate: "cw.playermarket.selled.success2" }
             ]
         });
     }
@@ -156,8 +156,11 @@ export class playerMarketSystem {
         sendDataForPlayers(data, seller);
 
         player.sendMessage({
-            translate: "cw.playermarket.buy.success",
-            with: [{ translate: Util.langChangeItemName(itemId) }]
+            rawtext: [
+                { translate: "cw.playermarket.buy.success.prefix" },
+                { translate: Util.langChangeItemName(itemId) },
+                { translate: "cw.playermarket.buy.success.suffix" }
+            ]
         });
 
         marketData.splice(slot, 1);
@@ -198,7 +201,7 @@ export class playerMarketSystem {
                     isDiscount = true;
                 }
             }
-            const lore = [{ text: `販売者:${playerDatas.get(itemData.player)?.name}` }]
+            const lore = [{ translate: "cw.playermarket.seller", with: [playerDatas.get(itemData.player)?.name || "Unknown"] }]
 
             // 消費税 (Consumption Tax) の計算 (閲覧者ベース)
             const buyerData = playerDatas.get(player.id);
@@ -215,7 +218,7 @@ export class playerMarketSystem {
             const totalWithTax = currentPrice + taxAmount;
 
             if (itemData.enchants) {
-                lore.push({ text: "\nEnchants : " })
+                lore.push({ translate: "cw.playermarket.enchants" })
                 for (const enchantment of itemData.enchants) {
                     lore.push({ text: "\n" })
                     lore.push({ translate: Data.enchantsLang[enchantment.id] })
@@ -223,9 +226,13 @@ export class playerMarketSystem {
                 }
             }
             if (itemData.durability) {
-                lore.push({ text: `\n§cDurability: ${itemData.durability} damage§r` })
+                lore.push({ translate: "cw.playermarket.item.durability", with: [itemData.durability.toString()] })
             }
-            if (itemData.lore) lore.push({ text: `\nLore: ${itemData.lore}` })
+            if (itemData.lore) {
+                lore.push({ text: `\n` });
+                lore.push({ translate: "cw.playermarket.lore" });
+                lore.push({ text: ` ${itemData.lore}` });
+            }
             lore.push({ text: `\n${itemData.description}` })
 
             // 価格表示の更新
@@ -237,11 +244,12 @@ export class playerMarketSystem {
             }
 
             if (taxRate > 0) {
-                lore.push({ text: `\n§7※あなたの国の消費税(${taxRate}%)が適用されています。` });
+                lore.push({ translate: "cw.playermarket.tax_notice", with: [taxRate.toString()] });
             }
 
             if (itemData.price.length > 1 && offInt > 0) {
-                lore.push({ text: isDiscount ? `\n§4${offInt}％OFF` : `\n§c${offInt}％UP` });
+                lore.push({ text: "\n" });
+                lore.push({ translate: isDiscount ? "cw.playermarket.discount" : "cw.playermarket.price_up", with: [offInt.toString()] });
             }
             form.setButton(i + 9, {
                 iconPath: itemIdToPath[itemData.itemId],

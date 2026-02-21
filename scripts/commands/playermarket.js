@@ -104,29 +104,30 @@ async function buyForm(player, { slot, page }) {
     const taxAmount = Math.floor(currentPrice * (taxRate / 100));
     const totalToPay = currentPrice + taxAmount;
 
-    const form = new MessageFormData()
+    const form = new ActionFormData()
     form.title({ translate: "cw.playermarket.buy" })
 
     // 詳細情報の作成 (Lore と エンチャント)
     let itemDetails = "";
     if (data.enchants && data.enchants.length > 0) {
-        itemDetails += "\n§f付与されている効果:";
+        itemDetails += "\n§fエンチャント:";
         for (const enchant of data.enchants) {
             itemDetails += `\n §7- ${enchant.id} (Lv.${enchant.level})`;
         }
     }
     if (data.durability) {
-        itemDetails += `\n§f耐久値の消耗: §c${data.durability}`;
+        itemDetails += `\n§f耐久値の消耗: §c${data.durability}§r`;
     }
     if (data.lore) {
         itemDetails += `\n§fアイテムのロア:\n §7${data.lore.replace(/\n/g, "\n ")}`;
     }
-
     if (buyerData.money < totalToPay) {
-        form.body({ translate: "cw.form.nomoney" })
-        form.button1({ translate: "cw.form.redo" })
-        form.button2({ translate: "cw.form.cancel" })
-        const res = await form.show(player)
+        const mform = new MessageFormData()
+        mform.title({ translate: "cw.playermarket.buy" })
+        mform.body({ translate: "cw.form.nomoney" })
+        mform.button1({ translate: "cw.form.redo" })
+        mform.button2({ translate: "cw.form.cancel" })
+        const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection == 0) {
             const loc = await playerMarketSystem.show(player, page)
@@ -136,21 +137,19 @@ async function buyForm(player, { slot, page }) {
         return;
     }
 
+    const sellerName = playerDatas.get(data.player)?.name || "Unknown";
+    const description = data.description || "---";
+    const buyerMoney = buyerData.money.toString();
+
     form.body({
-        translate: "cw.playermarket.buy.body2",
-        with: [
-            { translate: Util.langChangeItemName(data.itemId) }, // %1: 商品名
-            data.amount.toString(),                             // %2: 数量
-            totalToPay.toString(),                               // %3: 税込価格
-            currentPrice.toString(),                             // %4: 税抜価格
-            playerDatas.get(data.player)?.name || "Unknown",     // %5: 出品者
-            data.description || "---",                           // %6: 説明
-            itemDetails || "§7(なし)",                            // %7: 詳細情報
-            buyerData.money.toString()                           // %8: 所持金
+        rawtext: [
+            { text: "§7----------------------\n§f商品: §b" },
+            { translate: Util.langChangeItemName(data.itemId) },
+            { text: `\n§f数量: §e${data.amount}個\n§f価格: §a¥${totalToPay} §7(税抜: ¥${currentPrice})\n§f出品者: §d${sellerName}\n§7----------------------\n§f説明: §7${description}\n§f詳細情報: ${itemDetails || "§7(なし)"}\n\n§f現在の所持金: §a¥${buyerMoney}` }
         ]
-    })
-    form.button1({ translate: "cw.form.buy" })
-    form.button2({ translate: "cw.form.cancel" })
+    });
+    form.button({ translate: "cw.form.buy" })
+    form.button({ translate: "cw.form.cancel" })
 
     const res = await form.show(player)
     if (res.canceled) {
@@ -160,11 +159,6 @@ async function buyForm(player, { slot, page }) {
     }
 
     if (res.selection === 0) {
-        player.sendMessage({
-            rawtext: [
-                { translate: "cw.playermarket.buy.success", with: [{ translate: Util.langChangeItemName(data.itemId) }] }
-            ]
-        })
         playerMarketSystem.buy(player, { slot, page })
     } else {
         const loc = await playerMarketSystem.show(player, page)
@@ -251,19 +245,7 @@ async function sellFormS(player, item, maxamount) {
         if (newItem.typeId !== item.typeId) continue;
         inv.setItem(i)
     }
-    player.sendMessage({
-        rawtext: [
-            { translate: `${Util.langChangeItemName(item.typeId)}` },
-            { translate: "cw.playermarket.sell.success", with: [`${amount}`] }
-        ]
-    })
-    world.sendMessage({
-        rawtext: [
-            { translate: "cw.playermarket.selled.success1" },
-            { translate: `${Util.langChangeItemName(item.typeId)}` },
-            { translate: "cw.playermarket.selled.success2", with: [`${amount}`] }
-        ]
-    })
+
     const amountC = maxamount - amount;
     if (amountC == 0) return;
     const count = Math.floor(amountC / 64);
