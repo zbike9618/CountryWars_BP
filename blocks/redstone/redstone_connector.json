@@ -1,5 +1,5 @@
 {
-    "format_version": "1.26.0",
+    "format_version": "1.21.0",
     "minecraft:block": {
         "description": {
             "identifier": "cw:redstone_connector",
@@ -64,8 +64,10 @@
                 "min_power": 0,
                 "propagates_power": true
             },
-            "cw:interact": {},
-            "cw:redstone_recieve": {}
+            "minecraft:custom_components": [
+                "cw:interact",
+                "cw:redstone_recieve"
+            ]
         }
     }
 }

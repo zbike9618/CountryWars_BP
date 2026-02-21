@@ -1,8 +1,15 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { Dypro } from "./dypro.js";
 import config from "../config/config.js";
+
+// server-netモジュールを安全に読み込む（なければnull）
+let httpModule = null;
+try {
+    httpModule = require("@minecraft/server-net");
+} catch (e) {
+    // 警告はmain.jsで出しているのでここでは静かにする
+}
 
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
@@ -13,45 +20,60 @@ console.warn("CountryWars Script Loading...");
 
 // --- Discordからのメッセージ受信（ポーリング） ---
 system.runInterval(() => {
-    const request = new HttpRequest(GET_URL);
-    request.method = HttpRequestMethod.Get;
+    if (!httpModule) return; // ネットワークモジュールがなければ無視して終了
 
-    http.request(request).then(response => {
-        if (response.status === 200) {
-            const messages = JSON.parse(response.body);
-            for (const msg of messages) {
-                world.sendMessage(`§b[Discord] §r${msg.author}: ${msg.content}`);
+    try {
+        const { http, HttpRequestMethod, HttpRequest } = httpModule;
+        const request = new HttpRequest(GET_URL);
+        request.method = HttpRequestMethod.Get;
+
+        http.request(request).then(response => {
+            if (response.status === 200) {
+                try {
+                    const messages = JSON.parse(response.body);
+                    for (const msg of messages) {
+                        world.sendMessage(`§b[Discord] §r${msg.author}: ${msg.content}`);
+                    }
+                } catch (e) { }
             }
-        }
-    }).catch(() => { });
+        }).catch(() => { });
+    } catch (e) { }
 }, 20);
 
 /**
  * 汎用的な送信関数（通常のチャット用）
  */
 function sendToDiscord(text) {
-    const request = new HttpRequest(SERVER_URL);
-    request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
-    request.body = JSON.stringify({ message: text });
-    http.request(request).catch(e => { });
+    if (!httpModule) return;
+    try {
+        const { http, HttpRequestMethod, HttpHeader, HttpRequest } = httpModule;
+        const request = new HttpRequest(SERVER_URL);
+        request.method = HttpRequestMethod.Post;
+        request.headers = [new HttpHeader("Content-Type", "application/json")];
+        request.body = JSON.stringify({ message: text });
+        http.request(request).catch(() => { });
+    } catch (e) { }
 }
 
 /**
  * 翻訳通知用の送信関数（重複を削除して一本化）
  */
 function sendTranslatedToDiscord(key, args = []) {
-    const request = new HttpRequest(SERVER_URL);
-    request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    if (!httpModule) return;
+    try {
+        const { http, HttpRequestMethod, HttpHeader, HttpRequest } = httpModule;
+        const request = new HttpRequest(SERVER_URL);
+        request.method = HttpRequestMethod.Post;
+        request.headers = [new HttpHeader("Content-Type", "application/json")];
 
-    // Node.js側の .lang 翻訳機能を利用するために key と args を分離して送信
-    request.body = JSON.stringify({
-        key: key,
-        args: args
-    });
+        // Node.js側の .lang 翻訳機能を利用するために key と args を分離して送信
+        request.body = JSON.stringify({
+            key: key,
+            args: args
+        });
 
-    http.request(request).catch(e => console.error("[Discord Relay] Error:", e));
+        http.request(request).catch(() => { });
+    } catch (e) { }
 }
 
 // 📌 外部リレー用オブジェクトの公開

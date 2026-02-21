@@ -1,5 +1,5 @@
 {
-    "format_version": "1.26.0",
+    "format_version": "1.21.0",
     "minecraft:block": {
         "description": {
             "identifier": "cw:redstone_antenna",
@@ -73,7 +73,9 @@
                 "seconds_to_destroy": 10
             },
             "minecraft:light_emission": 0,
-            "cw:interact": {}
+            "minecraft:custom_components": [
+                "cw:interact"
+            ]
         },
         "permutations": [
             {
