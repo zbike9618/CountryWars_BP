@@ -1016,7 +1016,7 @@ class Diplomacy {
         const reqIdx = countryData.diplomacy.requests.indexOf(requesterCountry.id);
         if (reqIdx !== -1) countryData.diplomacy.requests.splice(reqIdx, 1);
 
-        if (res.selection === 1) { // Accept
+        if (res.selection === 0) { // Accept
             // 自分側: 各リストから削除して ally に追加
             ["friend", "neutral", "enemy"].forEach(rel => {
                 const idx = countryData.diplomacy[rel].indexOf(requesterCountry.id);

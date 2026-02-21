@@ -35,6 +35,7 @@ export class Chunk {
      */
     static async buy(player, countryData) {
         const playerData = playerDatas.get(player.id)
+        world.sendMessage(`${player.dimension.id}`)
         if (player.dimension.id !== "overworld") {
             player.sendMessage({ translate: "cw.chunk.buy.overworld" })
             return;
