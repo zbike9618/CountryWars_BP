@@ -1,6 +1,7 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui"
+import { DiscordRelay } from "./chat.js";
 import { ChestFormData } from "./chest_shop/chest-ui";
 import { Util } from "./util";
 import { Dypro } from "./dypro";
@@ -103,6 +104,8 @@ export class Country {
         // tellrawを使うことでWebSocketがイベントとして検知できるようになります
         const countryName_2 = countryData.name;
         world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.mcform.createMessage","with":["${countryName_2}"]}]}`);
+        DiscordRelay.sendTranslate("cw.mcform.createMessage", [countryName_2]);
+
     }
     static delete(countryData) {
         const players = countryData.players;
@@ -157,6 +160,7 @@ export class Country {
         // tellrawを使うことでWebSocketがイベントとして検知できるようになります
         const countryName_3 = countryData.name;
         world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.scform.deleteMessage","with":["${countryName_3}"]}]}`);
+        DiscordRelay.sendTranslate("cw.scform.deleteMessage", [countryName_3]);
     }
     static join(player, countryData) {
         const playerData = playerDatas.get(player.id);

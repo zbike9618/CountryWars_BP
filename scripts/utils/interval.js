@@ -8,6 +8,7 @@ import { sendDataForPlayers } from "./sendData";
 import { Country } from "./country";
 import { Util } from "./util";
 import { Stock } from "./stock";
+import { DiscordRelay } from "./chat.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 world.afterEvents.worldLoad.subscribe(() => {
@@ -46,12 +47,15 @@ world.afterEvents.worldLoad.subscribe(() => {
         if (hour == 20) {
             if (minute == 0 && second == 0) {
                 world.sendMessage({ translate: "cw.tax.timenear", with: ["1時間"] })
+                DiscordRelay.sendTranslate("cw.tax.timenear", ["1時間"]);
             }
             if (minute == 30 && second == 0) {
                 world.sendMessage({ translate: "cw.tax.timenear", with: ["30分"] })
+                DiscordRelay.sendTranslate("cw.tax.timenear", ["30分"]);
             }
             if (minute == 50 && second == 0) {
                 world.sendMessage({ translate: "cw.tax.timenear", with: ["10分"] })
+                DiscordRelay.sendTranslate("cw.tax.timenear", ["10分"]);
             }
         }
 
@@ -64,6 +68,7 @@ world.afterEvents.worldLoad.subscribe(() => {
                 const pay = config.maintenance * countryData.chunkAmount
                 if (pay > countryData.money) {
                     world.sendMessage({ translate: "cw.tax.maintenance.fail", with: [countryData.name] })
+                    DiscordRelay.sendTranslate("cw.tax.maintenance.fail", [countryData.name]);
                     Country.delete(countryData)
                     continue;
                 }
