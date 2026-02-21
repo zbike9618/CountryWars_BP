@@ -64,10 +64,8 @@
                 "min_power": 0,
                 "propagates_power": true
             },
-            "minecraft:custom_components": [
-                "cw:interact",
-                "cw:redstone_recieve"
-            ]
+            "cw:interact": {},
+            "cw:redstone_recieve": {}
         }
     }
 }

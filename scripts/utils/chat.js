@@ -25,7 +25,7 @@ system.runInterval(() => {
     try {
         const { http, HttpRequestMethod, HttpRequest } = httpModule;
         const request = new HttpRequest(GET_URL);
-        request.method = HttpRequestMethod.Get;
+        request.method = HttpRequestMethod.GET;
 
         http.request(request).then(response => {
             if (response.status === 200) {
@@ -48,7 +48,7 @@ function sendToDiscord(text) {
     try {
         const { http, HttpRequestMethod, HttpHeader, HttpRequest } = httpModule;
         const request = new HttpRequest(SERVER_URL);
-        request.method = HttpRequestMethod.Post;
+        request.method = HttpRequestMethod.POST;
         request.headers = [new HttpHeader("Content-Type", "application/json")];
         request.body = JSON.stringify({ message: text });
         http.request(request).catch(() => { });
@@ -63,7 +63,7 @@ function sendTranslatedToDiscord(key, args = []) {
     try {
         const { http, HttpRequestMethod, HttpHeader, HttpRequest } = httpModule;
         const request = new HttpRequest(SERVER_URL);
-        request.method = HttpRequestMethod.Post;
+        request.method = HttpRequestMethod.POST;
         request.headers = [new HttpHeader("Content-Type", "application/json")];
 
         // Node.js側の .lang 翻訳機能を利用するために key と args を分離して送信

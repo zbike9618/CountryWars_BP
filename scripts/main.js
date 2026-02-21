@@ -31,7 +31,7 @@ system.run(() => {
     try {
         const { http, HttpRequestMethod, HttpHeader, HttpRequest } = httpModule;
         const request = new HttpRequest(SERVER_URL);
-        request.method = HttpRequestMethod.Post;
+        request.method = HttpRequestMethod.POST;
         request.headers = [new HttpHeader("Content-Type", "application/json")];
         request.body = JSON.stringify({ type: "start" }); // 起動通知を送る
 
@@ -46,7 +46,7 @@ system.runInterval(() => {
     try {
         const { http, HttpRequestMethod, HttpRequest } = httpModule;
         const request = new HttpRequest(GET_URL);
-        request.method = HttpRequestMethod.Get;
+        request.method = HttpRequestMethod.GET;
 
         http.request(request).then(response => {
             // 通信に成功すればNode.js側の lastPing が更新される

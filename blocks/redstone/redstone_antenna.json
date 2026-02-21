@@ -73,9 +73,7 @@
                 "seconds_to_destroy": 10
             },
             "minecraft:light_emission": 0,
-            "minecraft:custom_components": [
-                "cw:interact"
-            ]
+            "cw:interact": {}
         },
         "permutations": [
             {
