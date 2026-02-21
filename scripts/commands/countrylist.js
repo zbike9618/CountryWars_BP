@@ -3,6 +3,9 @@ import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/serve
 const { world, system } = server;
 import { Country } from "../utils/country";
 import { Dypro } from "../utils/dypro";
+import { War } from "../utils/war";
+import { Util } from "../utils/util";
+import config from "../../config/config";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 
@@ -79,7 +82,8 @@ async function information(player, countryData) {
             `${countryData.tax.consumption}`,
             `${countryData.tax.income}`,
             `${countryData.tax.country}`,
-            `${countryData.tax.customs}`
+            `${countryData.tax.customs}`,
+            War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし"
         ]
     })
     form.button({ translate: "cw.form.redo" })

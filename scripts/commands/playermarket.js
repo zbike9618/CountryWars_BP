@@ -115,6 +115,9 @@ async function buyForm(player, { slot, page }) {
             itemDetails += `\n §7- ${enchant.id} (Lv.${enchant.level})`;
         }
     }
+    if (data.durability) {
+        itemDetails += `\n§f耐久値の消耗: §c${data.durability}`;
+    }
     if (data.lore) {
         itemDetails += `\n§fアイテムのロア:\n §7${data.lore.replace(/\n/g, "\n ")}`;
     }
@@ -236,7 +239,10 @@ async function sellFormS(player, item, maxamount) {
             enchants.push({ id: enchantment.type.id, level: enchantment.level })
         }
     }
-    playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2] })
+    const durComp = item.getComponent("minecraft:durability");
+    const durability = durComp ? durComp.damage : 0;
+
+    playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2], durability })
     const comp = player.getComponent("minecraft:inventory");
     const inv = comp.container;
     for (let i = 0; i < inv.size; i++) {
@@ -314,6 +320,10 @@ async function editForm2(player, { page, slot }) {
                         comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
                 }
+                if (marketData.durability) {
+                    const durComp = item.getComponent("minecraft:durability");
+                    if (durComp) durComp.damage = marketData.durability;
+                }
                 inv.addItem(item)
             }
             const result = amount - (count * 64)
@@ -329,6 +339,10 @@ async function editForm2(player, { page, slot }) {
                     for (const enchantment of enchantments) {
                         comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
+                }
+                if (marketData.durability) {
+                    const durComp = item.getComponent("minecraft:durability");
+                    if (durComp) durComp.damage = marketData.durability;
                 }
                 inv.addItem(item)
             }

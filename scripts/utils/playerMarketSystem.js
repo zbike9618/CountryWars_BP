@@ -30,7 +30,8 @@ export class playerMarketSystem {
             lore: itemData.lore,
             price: [itemData.price],
             description: itemData.description,
-            enchants: itemData.enchants
+            enchants: itemData.enchants,
+            durability: itemData.durability
         })
         marketDatas.set(`${page}`, marketData);
 
@@ -111,6 +112,10 @@ export class playerMarketSystem {
                         comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
                 }
+                if (itemData.durability) {
+                    const durComp = item.getComponent("minecraft:durability");
+                    if (durComp) durComp.damage = itemData.durability;
+                }
                 inv.addItem(item)
             }
             const result = amount - (count * 64)
@@ -127,6 +132,10 @@ export class playerMarketSystem {
                     for (const enchantment of enchantments) {
                         comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
+                }
+                if (itemData.durability) {
+                    const durComp = item.getComponent("minecraft:durability");
+                    if (durComp) durComp.damage = itemData.durability;
                 }
                 inv.addItem(item)
             }
@@ -212,6 +221,9 @@ export class playerMarketSystem {
                     lore.push({ translate: Data.enchantsLang[enchantment.id] })
                     lore.push({ translate: `enchantment.level.${enchantment.level}` })
                 }
+            }
+            if (itemData.durability) {
+                lore.push({ text: `\n§cDurability: ${itemData.durability} damage§r` })
             }
             if (itemData.lore) lore.push({ text: `\nLore: ${itemData.lore}` })
             lore.push({ text: `\n${itemData.description}` })
