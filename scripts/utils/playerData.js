@@ -32,11 +32,11 @@ world.afterEvents.playerSpawn.subscribe(ev => {
     if (initialSpawn) {
         const playerData = playerDatas.get(player.id)
         const countryData = countryDatas.get(playerData.country)
-        if (countryData && countryData.warcountry.length == 0) {
-            player.removeTag("cw:duringwar")
+        if (countryData && countryData.warcountry.length == 0 && countryData.wardeath != 0) {
+            player.addTag("cw:duringwar")
         }
         else {
-            player.addTag("cw:duringwar")
+            player.removeTag("cw:duringwar")
         }
     }
 })
