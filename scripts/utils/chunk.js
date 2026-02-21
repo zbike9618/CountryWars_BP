@@ -28,8 +28,17 @@ export class Chunk {
         }
         return chunkData ? chunkData.country : "wasteland";
     }
+    /**
+     * 
+     * @param {server.Player} player 
+     * @param {Object} countryData 
+     */
     static async buy(player, countryData) {
         const playerData = playerDatas.get(player.id)
+        if (player.dimension.id !== "overworld") {
+            player.sendMessage({ translate: "cw.chunk.buy.overworld" })
+            return;
+        }
         if (!playerData.country) {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
