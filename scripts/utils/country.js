@@ -72,7 +72,6 @@ export class Country {
             lastDefeated: 0,
             robbedChunkAmount: [],//国ごとに保存
             wardeath: 0,//戦争中に死んでいい回数
-            //同盟国などはあとで
             warcountry: [],//戦争中
             peaceProposals: {},//講和提案
             stock: [{ price: 10, date: Date.now() }],//株

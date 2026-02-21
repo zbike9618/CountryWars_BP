@@ -140,32 +140,33 @@ export class War {
         const enemyplayers = Util.GetCountryPlayer(enemyData);
 
         // バランスが取れている時のみ宣戦布告可能
-        //if (this.isBalanced(myplayers.length, enemyplayers.length)) {
-        mineData.warcountry.push(enemyData.id);
-        enemyData.warcountry.push(mineData.id);
-        if (mineData.isPeace) {
-            mineData.wardeath += myplayers.length * 5;
+        if (this.isBalanced(myplayers.length, enemyplayers.length)) {
+            mineData.warcountry.push(enemyData.id);
+            enemyData.warcountry.push(mineData.id);
+            if (mineData.isPeace) {
+                mineData.wardeath += myplayers.length * 5;
+            }
+            else {
+                mineData.wardeath += myplayers.length * 15;
+            }
+            if (enemyData.isPeace) {
+                enemyData.wardeath += enemyplayers.length * 5;
+            }
+            else {
+                enemyData.wardeath += enemyplayers.length * 15;
+            }
+            for (const player of myplayers) {
+                player.addTag("cw:duringwar")
+            }
+            for (const player of enemyplayers) {
+                player.addTag("cw:duringwar")
+            }
+            countryDatas.set(mineData.id, mineData);
+            countryDatas.set(enemyData.id, enemyData);
         }
-        else {
-            mineData.wardeath += myplayers.length * 15;
-        }
-        if (enemyData.isPeace) {
-            enemyData.wardeath += enemyplayers.length * 5;
-        }
-        else {
-            enemyData.wardeath += enemyplayers.length * 15;
-        }
-        for (const player of myplayers) {
-            player.addTag("cw:duringwar")
-        }
-        for (const player of enemyplayers) {
-            player.addTag("cw:duringwar")
-        }
-        countryDatas.set(mineData.id, mineData);
-        countryDatas.set(enemyData.id, enemyData);
-        //}
         return true;
     }
+
     /**
      * 戦闘を終了する
      * @param {Object} winnerData 勝利者の国
