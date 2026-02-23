@@ -124,6 +124,7 @@ export class War {
             const command = `tellraw @a {"rawtext":[{"translate":"cw.war.invade","with":["${player.name}", "${enemyCountryData.name}", "${Math.floor(player.location.x)}", "${Math.floor(player.location.z)}"]}]}`;
             world.getDimension("overworld").runCommand(command);
             DiscordRelay.sendTranslate("cw.war.invade", [player.name, enemyCountryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`]);
+            DiscordRelay.send(`<@&1474940218191777872>`);
         });
     }
     /**
