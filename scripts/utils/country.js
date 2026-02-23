@@ -49,8 +49,8 @@ export class Country {
      * 
      */
     static make(player, { countryName, isPeace }) {
-        const { idList } = countryDatas
-        const id = Number(idList[idList.length - 1] || "0") + 1;
+        const ids = countryDatas.idList.map(id => Number(id));
+        const id = (ids.length > 0 ? Math.max(...ids) : 0) + 1;
         const countryData =
         {
             id,
@@ -131,11 +131,12 @@ export class Country {
             }
         }
         //同盟関係も消す
+        const deletedCountryId = countryData.id;
         for (const countryId of countryDatas.idList) {
-            const countryData = countryDatas.get(countryId);
-            if (countryData && countryData.diplomacy && countryData.diplomacy.ally && countryData.diplomacy.ally.includes(countryData.id)) {
-                countryData.diplomacy.ally.splice(countryData.diplomacy.ally.indexOf(countryData.id), 1);
-                countryDatas.set(countryId, countryData);
+            const currentCountryData = countryDatas.get(countryId);
+            if (currentCountryData && currentCountryData.diplomacy && currentCountryData.diplomacy.ally && currentCountryData.diplomacy.ally.includes(deletedCountryId)) {
+                currentCountryData.diplomacy.ally.splice(currentCountryData.diplomacy.ally.indexOf(deletedCountryId), 1);
+                countryDatas.set(countryId, currentCountryData);
             }
         }
         //国庫の50%を国王に、残りの50%を国民に分配する
