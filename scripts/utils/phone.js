@@ -117,8 +117,7 @@ function show_form(player) {
                 player.runCommand("mb");
                 break;
             case 3:
-                player.runCommand("execute in overworld run tp @s 0.49 65.00 0.50");
-                player.sendMessage({ translate: "cw.phone.went.lobby" })
+                player.runCommand("lobby");
                 break;
             case 4:
                 player.runCommand("jobs");

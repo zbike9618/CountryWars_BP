@@ -118,15 +118,18 @@ async function addsecondname(player) {
         const position = response.formValues[1];
         const newSecondName = response.formValues[2];
         const selectedPlayer = allPlayers[selectedIndex];
+        const targetData = playerDatas.get(selectedPlayer.id);
+        if (!targetData) return;
+
         const playerData = playerDatas.get(selectedPlayer.id);
 
         if (position === 0) {
-            playerData.secondname.before.push(response.formValues[2])
-            playerDatas.set(selectedPlayer.id, playerData)
+            targetData.secondname.before.push(newSecondName)
+            playerDatas.set(selectedPlayer.id, targetData)
             player.sendMessage({ translate: "cw.menu.secondname.add.before.success", with: [`${selectedPlayer.name}`, `${newSecondName}`] });
         } else if (position === 1) {
-            playerData.secondname.after.push(response.formValues[2])
-            playerDatas.set(selectedPlayer.id, playerData)
+            targetData.secondname.after.push(newSecondName)
+            playerDatas.set(selectedPlayer.id, targetData)
             player.sendMessage({ translate: "cw.menu.secondname.add.after.success", with: [`${selectedPlayer.name}`, `${newSecondName}`] });
         }
     })

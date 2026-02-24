@@ -44,4 +44,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             comp.resetToMaxValue();
         })
     }
+    if (ev.id == "cw:allreset") {
+        world.clearDynamicProperties();
+
+    }
 })
