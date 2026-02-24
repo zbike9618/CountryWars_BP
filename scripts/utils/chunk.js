@@ -254,6 +254,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
 })
 world.beforeEvents.explosion.subscribe((ev) => {
     if (ev.source && explosionMap.has(ev.source.id)) {
+        if (ev.source.id == "minecraft:windcharge_projectile") return;
         const locations = explosionMap.get(ev.source.id);
         const dimension = ev.dimension;
         const blocksToDestroy = [];
@@ -261,6 +262,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
         for (const loc of locations) {
             const block = dimension.getBlock(loc);
             if (block) {
+                if (block.typeId === "minecraft:bedrock") continue;
                 blocksToDestroy.push(block);
             }
         }
