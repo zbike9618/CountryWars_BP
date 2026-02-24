@@ -15,7 +15,7 @@ world.afterEvents.worldLoad.subscribe(() => {
 
     system.runInterval(() => {
         for (const player of world.getAllPlayers()) {
-            const chunkId = Chunk.positionToChunkId(player.location);
+            const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
             const chunk = Chunk.checkChunk(chunkId)
             const playerData = new ShortPlayerData(player.id)
 

@@ -31,4 +31,4 @@ system.runInterval(() => {
             }
         }
     }
-});
+}, 2);

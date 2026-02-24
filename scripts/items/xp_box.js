@@ -74,7 +74,7 @@ system.runInterval(() => {
     Lore.setLore(player, mainhandSlot, "XP", storedXp.toString());
     updateXpBoxDisplay(player, mainhandSlot);
   }
-}, 1);
+}, 5);
 
 /**
  * Loreの表示を整える (Loreクラスはデータを保持するだけなので、見た目を別途設定)

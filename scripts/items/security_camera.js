@@ -153,7 +153,8 @@ function startCameraView(player, loc) {
 
     activeCameraView.set(player.id, {
         loc,
-        active: false
+        active: false,
+        playerInstance: player
     });
 
     player.camera.fade({
@@ -274,8 +275,8 @@ world.afterEvents.itemUse.subscribe((event) => {
 ========================================================= */
 system.runInterval(() => {
     for (const [playerId, data] of activeCameraView) {
-        const player = world.getAllPlayers().find(p => p.id === playerId);
-        if (!player || !data.active) continue;
+        const player = data.playerInstance;
+        if (!player || !player.isValid() || !data.active) continue;
         const loc = data.loc;
 
 

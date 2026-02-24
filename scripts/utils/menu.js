@@ -104,7 +104,6 @@ async function SecondName(player) {
 async function addsecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
-    const playerData = playerDatas.get(player.id);
     const form = new ui.ModalFormData();
     form.title("cw.menu.secondname.addtitle");
     form.dropdown({ translate: "cw.menu.secondname.player" }, playerNames);
@@ -122,6 +121,8 @@ async function addsecondname(player) {
         const targetData = playerDatas.get(selectedPlayer.id);
         if (!targetData) return;
 
+        const playerData = playerDatas.get(selectedPlayer.id);
+
         if (position === 0) {
             targetData.secondname.before.push(newSecondName)
             playerDatas.set(selectedPlayer.id, targetData)
@@ -136,7 +137,7 @@ async function addsecondname(player) {
 async function AdminChunk(player) {
     const form = new ui.ActionFormData();
     form.title("cw.menu.adminchunk");
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     const countryId = Chunk.checkChunk(chunkId);
 
     let status = countryId === "admin" ? "§cAdmin" : countryId === "wasteland" ? "§7Wasteland" : `§6${countryDatas.get(countryId)?.name || countryId}`;
@@ -167,13 +168,13 @@ async function AdminChunk(player) {
     })
 }
 async function addAdminChunk(player) {
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     Chunk.setAdmin(chunkId);
     player.sendMessage({ translate: "cw.menu.adminchunk.set.success", with: [chunkId] });
     AdminChunk(player);
 }
 async function removeAdminChunk(player) {
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     Chunk.removeAdmin(chunkId);
     player.sendMessage({ translate: "cw.menu.adminchunk.remove.success", with: [chunkId] });
     AdminChunk(player);

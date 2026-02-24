@@ -87,7 +87,8 @@ async function Sethome(player) {
                 x: Math.floor(player.location.x),
                 y: Math.floor(player.location.y),
                 z: Math.floor(player.location.z)
-            }
+            },
+            dimension: player.dimension.id
         });
         saveHomes(player, homes);
         player.sendMessage({
@@ -117,6 +118,7 @@ async function Sethome(player) {
             y: Math.floor(player.location.y),
             z: Math.floor(player.location.z)
         };
+        selectedHome.dimension = player.dimension.id;
 
         saveHomes(player, homes);
         player.sendMessage({
@@ -161,6 +163,7 @@ async function home(player) {
     if (res.canceled) return;
 
     const selected = homes[res.formValues[0]];
+    const targetDimension = selected.dimension ? world.getDimension(selected.dimension) : player.dimension;
     player.sendMessage({ translate: "cw.home.tp.success", with: [selected.name] });
-    player.teleport(selected.pos);
+    player.teleport(selected.pos, { dimension: targetDimension });
 }

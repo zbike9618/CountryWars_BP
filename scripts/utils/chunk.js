@@ -14,10 +14,13 @@ const explosionMap = new Map();
 
 
 export class Chunk {
-    static positionToChunkId(position) {//xを少数切り捨て
+    static positionToChunkId(position, dimensionId = "minecraft:overworld") {//xを少数切り捨て
         const x = Math.floor(position.x / 16)
         const z = Math.floor(position.z / 16)
-        return `${x}_${z}`
+        if (dimensionId === "minecraft:overworld") {
+            return `${x}_${z}`
+        }
+        return `${dimensionId}_${x}_${z}`
     }
     static checkChunk(chunkId) {
         const chunkData = chunkDatas.get(chunkId);
@@ -55,7 +58,7 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.maxchunk", with: [`${config.maxchunk}`] })
             return;
         }
-        const cc = this.checkChunk(this.positionToChunkId(player.location))
+        const cc = this.checkChunk(this.positionToChunkId(player.location, player.dimension.id))
         if (cc !== "wasteland") {
             player.sendMessage({ translate: "cw.chunk.buy.already", with: [countryDatas.get(cc)?.name || "Unknown"] })
             return;
@@ -77,7 +80,7 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.success" })
             countryData.money -= config.chunkprice;
             countryDatas.set(countryData.id, countryData)
-            this.setChunk(this.positionToChunkId(player.location), countryData)
+            this.setChunk(this.positionToChunkId(player.location, player.dimension.id), countryData)
 
         }
     }
@@ -194,7 +197,7 @@ export class Chunk {
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player
     const loc = ev.block.location
-    const chunkId = Chunk.positionToChunkId(loc)
+    const chunkId = Chunk.positionToChunkId(loc, ev.block.dimension.id)
 
     const check = Chunk.checkPermission(player, chunkId, "break_block");
     if (!check.allowed) {
@@ -205,7 +208,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
 world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
     const player = ev.player
     const loc = ev.block.location
-    const chunkId = Chunk.positionToChunkId(loc)
+    const chunkId = Chunk.positionToChunkId(loc, ev.block.dimension.id)
 
     const check = Chunk.checkPermission(player, chunkId, "place_block");
     if (!check.allowed) {
@@ -215,7 +218,7 @@ world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
 })
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const player = ev.player
-    const chunkId = Chunk.positionToChunkId(ev.block.location)
+    const chunkId = Chunk.positionToChunkId(ev.block.location, ev.block.dimension.id)
     const blockId = ev.block.typeId
 
     const inventory = ev.block.getComponent("minecraft:inventory");
@@ -238,7 +241,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     if (!attacker || attacker.typeId !== "minecraft:player") return;
 
     const loc = entity.location
-    const chunkId = Chunk.positionToChunkId(loc)
+    const chunkId = Chunk.positionToChunkId(loc, entity.dimension.id)
 
     const permType = entity.typeId === "minecraft:player" ? "attack_player" : "attack_entity";
     const check = Chunk.checkPermission(attacker, chunkId, permType);
@@ -280,7 +283,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
         const destroyBlockLocations = [];
 
         for (const block of blocks) {
-            const chunkId = Chunk.positionToChunkId(block.location);
+            const chunkId = Chunk.positionToChunkId(block.location, ev.dimension.id);
             const countryDataId = Chunk.checkChunk(chunkId);
 
             if (countryDataId && (countryDataId == "admin" || (countryDataId !== "wasteland" && countryDatas.get(countryDataId).warcountry.length == 0))) {
