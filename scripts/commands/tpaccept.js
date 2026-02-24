@@ -128,13 +128,15 @@ async function tpaRecieve(player) {
     // tpa（相手が自分のところにTPする）リストを追加
     for (const playerId of tpaArray) {
         const targetData = playerDatas.get(playerId)
-        form.button({ rawtext: [{ text: `§a[Accept] §r${targetData.name}` }] })
+        const targetName = targetData?.name || "Unknown"
+        form.button({ rawtext: [{ text: `§a[Accept] §r${targetName}` }] })
     }
 
     // tpaRequest（自分が相手のところにTPする）リストを追加
     for (const playerId of tpaRequestArray) {
         const targetData = playerDatas.get(playerId)
-        form.button({ rawtext: [{ text: `§b[Request] §r${targetData.name}` }] })
+        const targetName = targetData?.name || "Unknown"
+        form.button({ rawtext: [{ text: `§b[Request] §r${targetName}` }] })
     }
 
     const res = await form.show(player)
@@ -159,9 +161,9 @@ async function tpaRecieve(player) {
     mform.title({ translate: "cw.tpaform.recieve", with: [`${totalRequests}`] })
 
     if (isRequest) {
-        mform.body({ translate: "cw.tpaformReq.recieve", with: [target.name, player.name] })
+        mform.body({ translate: "cw.tpaformReq.recieve", with: [target?.name || "Unknown", player.name] })
     } else {
-        mform.body({ translate: "cw.tpaformR.body", with: [target.name, player.name] })
+        mform.body({ translate: "cw.tpaformR.body", with: [target?.name || "Unknown", player.name] })
     }
 
     mform.button2({ translate: "cw.form.deny" })
@@ -173,12 +175,12 @@ async function tpaRecieve(player) {
         const targetEntity = world.getEntity(playerId)
         if (isRequest) {
             // 自分が相手のところにTPする
-            player.teleport(targetEntity.location)
+            player.teleport(targetEntity.location, { dimension: targetEntity.dimension })
             const newArray = tpaRequestArray.filter((_, i) => i !== (res.selection - tpaArray.length))
             playerData.set("tpaRequest", newArray)
         } else {
             // 相手が自分のところにTPする
-            targetEntity.teleport(player.location)
+            targetEntity.teleport(player.location, { dimension: player.dimension })
             const newArray = tpaArray.filter((_, i) => i !== res.selection)
             playerData.set("tpa", newArray)
         }
@@ -207,7 +209,7 @@ async function tpaRequest(player) {
     }
     for (const playerId of AllPlayerIds) {
         const playerData = playerDatas.get(playerId)
-        form.button(playerData.name)
+        form.button(playerData?.name || "Unknown")
     }
     const res = await form.show(player)
     if (res.canceled) return;
@@ -215,7 +217,7 @@ async function tpaRequest(player) {
     const target = playerDatas.get(playerId);
     const mform = new MessageFormData()
     mform.title({ translate: "cw.tpaform.request" })
-    mform.body({ translate: "cw.tpaformReq.body", with: [target.name, player.name] })
+    mform.body({ translate: "cw.tpaformReq.body", with: [target?.name || "Unknown", player.name] })
     mform.button2({ translate: "cw.form.no" })
     mform.button1({ translate: "cw.form.yes" })
     const respone = await mform.show(player)
@@ -244,7 +246,7 @@ async function tpaSendForm(player) {
     }
     for (const playerId of AllPlayerIds) {
         const playerData = playerDatas.get(playerId)
-        form.button(playerData.name)
+        form.button(playerData?.name || "Unknown")
     }
     const res = await form.show(player)
     if (res.canceled) return;
@@ -252,7 +254,7 @@ async function tpaSendForm(player) {
     const target = playerDatas.get(playerId);
     const mform = new MessageFormData()
     mform.title({ translate: "cw.tpaform.accept" })
-    mform.body({ translate: "cw.tpaformS.body", with: [player.name, target.name] })
+    mform.body({ translate: "cw.tpaformS.body", with: [player.name, target?.name || "Unknown"] })
     mform.button2({ translate: "cw.form.no" })
     mform.button1({ translate: "cw.form.yes" })
     const respone = await mform.show(player)
@@ -267,25 +269,25 @@ function tpaSend(player, target, type) {
         const tpa = playerData.get("tpa") || [];
         if (tpa.includes(player.id)) {
 
-            player.sendMessage({ translate: "cw.tpa.secondsend", with: [target.name] })
-            target.sendMessage({ translate: "cw.tpa.secondnotice", with: [player.name] })
+            player.sendMessage({ translate: "cw.tpa.secondsend", with: [target?.name || "Unknown"] })
+            if (target) target.sendMessage({ translate: "cw.tpa.secondnotice", with: [player.name] })
             return;
         }
         tpa.push(player.id)
         playerData.set("tpa", tpa)
-        player.sendMessage({ translate: "cw.tpa.send", with: [target.name] })
-        target.sendMessage({ translate: "cw.tpa.notice", with: [player.name] })
+        player.sendMessage({ translate: "cw.tpa.send", with: [target?.name || "Unknown"] })
+        if (target) target.sendMessage({ translate: "cw.tpa.notice", with: [player.name] })
     } else if (type == "request") {
         const playerData = new ShortPlayerData(target.id)
         const tpaReq = playerData.get("tpaRequest") || [];
         if (tpaReq.includes(player.id)) {
-            player.sendMessage({ translate: "cw.tpa.secondrequest", with: [target.name] })
-            target.sendMessage({ translate: "cw.tpa.secondrequestnotice", with: [player.name] })
+            player.sendMessage({ translate: "cw.tpa.secondrequest", with: [target?.name || "Unknown"] })
+            if (target) target.sendMessage({ translate: "cw.tpa.secondrequestnotice", with: [player.name] })
             return;
         }
         tpaReq.push(player.id)
         playerData.set("tpaRequest", tpaReq)
-        player.sendMessage({ translate: "cw.tpa.request", with: [target.name] })
-        target.sendMessage({ translate: "cw.tpa.requestnotice", with: [player.name] })
+        player.sendMessage({ translate: "cw.tpa.request", with: [target?.name || "Unknown"] })
+        if (target) target.sendMessage({ translate: "cw.tpa.requestnotice", with: [player.name] })
     }
 }

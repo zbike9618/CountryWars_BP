@@ -74,7 +74,7 @@ export class War {
     }
 
     static CanInvade(player, countryData) {
-        const chunkId = Chunk.positionToChunkId(player.location)
+        const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id)
         const chunk = Chunk.checkChunk(chunkId);
         const dimension = player.dimension;
         if (chunk == "wasteland" || chunk == "admin") return false;
@@ -100,7 +100,7 @@ export class War {
 
         const entities = dimension.getEntities({ location: player.location, maxDistance: 60 }).filter(e => e.typeId == "cw:core");
         for (const e of entities) {
-            const coreChunkId = Chunk.positionToChunkId(e.location)
+            const coreChunkId = Chunk.positionToChunkId(e.location, e.dimension.id)
             if (coreChunkId == chunkId) {
                 return false;
             }
@@ -115,11 +115,11 @@ export class War {
      * @param {Object} countryData 
      */
     static invade(player, countryData) {
-        const enemyCountryData = countryDatas.get(Chunk.checkChunk(Chunk.positionToChunkId(player.location)));
+        const enemyCountryData = countryDatas.get(Chunk.checkChunk(Chunk.positionToChunkId(player.location, player.dimension.id)));
         const dimension = player.dimension;
         const core = dimension.spawnEntity("cw:core", player.location)
         core.nameTag = `Core : ${enemyCountryData.name}`
-        core.setDynamicProperty("core", `${Chunk.positionToChunkId(player.location)}`)
+        core.setDynamicProperty("core", `${Chunk.positionToChunkId(player.location, player.dimension.id)}`)
         system.run(() => {
             const command = `tellraw @a {"rawtext":[{"translate":"cw.war.invade","with":["${player.name}", "${enemyCountryData.name}", "${Math.floor(player.location.x)}", "${Math.floor(player.location.z)}"]}]}`;
             world.getDimension("overworld").runCommand(command);
@@ -551,7 +551,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     if (!hitEntity || hitEntity.typeId !== "cw:core") return
     if (player.isValid) {
 
-        const chunkId = Chunk.positionToChunkId(hitEntity.location)
+        const chunkId = Chunk.positionToChunkId(hitEntity.location, hitEntity.dimension.id)
         const countryData = countryDatas.get(Chunk.checkChunk(chunkId))
         if (countryData.players.includes(player.id)) {
             Util.heal(hitEntity, ev.damage)

@@ -115,14 +115,17 @@ async function recieve(player) {
     const form = new ActionFormData()
     form.title({ translate: "cw.messagebox.recieve", with: [`${totalRequests}`] })
     for (const tpa of tpaArray) {
-        form.button({ translate: "cw.messagebox.recieve.tpa", with: [world.getEntity(tpa)] })
+        const name = playerDatas.get(tpa)?.name || "Unknown"
+        form.button({ translate: "cw.messagebox.recieve.tpa", with: [name] })
     }
     for (const tpaRequest of tpaRequestArray) {
-        form.button({ translate: "cw.messagebox.recieve.tpaRequest", with: [world.getEntity(tpaRequest)] })
+        const name = playerDatas.get(tpaRequest)?.name || "Unknown"
+        form.button({ translate: "cw.messagebox.recieve.tpaRequest", with: [name] })
     }
     for (const invitecountry of invitecountryArray) {
         const countryData = countryDatas.get(invitecountry)
-        form.button({ translate: "cw.messagebox.recieve.invitecountry", with: [countryData.name] })
+        const name = countryData?.name || "Unknown"
+        form.button({ translate: "cw.messagebox.recieve.invitecountry", with: [name] })
     }
     for (const message of messageArray) {
         const senderName = playerDatas.get(message.player)?.name || "Unknown"
@@ -145,7 +148,7 @@ async function recieve(player) {
 
 async function send(player) {
     const players = Util.getAllPlayerIdsSorted()//.filter(p => p != player.id)
-    const playersname = players.map(player => playerDatas.get(player).name)
+    const playersname = players.map(player => playerDatas.get(player)?.name || "Unknown")
     if (players.length == 0) {
         const form = new MessageFormData()
         form.title({ translate: "cw.messagebox.send" })
@@ -184,14 +187,17 @@ async function readMessage(player, selection, type) {
     const form = new MessageFormData()
     form.title({ translate: "cw.messagebox.recieve", with: ["0"] })
     if (type == "tpa") {
-        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [world.getEntity(selection).name] })
+        const name = playerDatas.get(selection)?.name || "Unknown"
+        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [name] })
     }
     if (type == "tpaRequest") {
-        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [world.getEntity(selection).name] })
+        const name = playerDatas.get(selection)?.name || "Unknown"
+        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [name] })
     }
     if (type == "invitecountry") {
         const countryData = countryDatas.get(selection)
-        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [countryData.name] })
+        const name = countryData?.name || "Unknown"
+        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [name] })
 
     }
     if (type == "message") {

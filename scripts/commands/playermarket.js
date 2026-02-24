@@ -210,7 +210,8 @@ async function sellFormS(player, item, maxamount) {
     form.textField({ translate: "cw.playermarket.sell.description" }, "Press Description")
     const res = await form.show(player)
     if (res.canceled) return;
-    if (!Number.isInteger(Number(res.formValues[0])) || Number < 0) {
+    const price = Number(res.formValues[0]);
+    if (!Number.isInteger(price) || price < 0) {
         const mform = new MessageFormData()
         mform.title({ translate: "cw.playermarket.sell" })
         mform.body({ translate: "cw.form.error.int" })
@@ -332,7 +333,8 @@ async function editForm2(player, { page, slot }) {
         playerMarketSystem.delete({ slot, page })
         return;
     }
-    if (!Number.isInteger(Number(res.formValues[1])) || Number < 0) {
+    const price = Number(res.formValues[1]);
+    if (!Number.isInteger(price) || price < 0) {
         const mform = new MessageFormData()
         mform.title({ translate: "cw.playermarket.sell" })
         mform.body({ translate: "cw.playermarket.sell.priceerror" })

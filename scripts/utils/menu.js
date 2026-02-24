@@ -104,7 +104,6 @@ async function SecondName(player) {
 async function addsecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
-    const playerData = playerDatas.get(player.id);
     const form = new ui.ModalFormData();
     form.title("cw.menu.secondname.addtitle");
     form.dropdown({ translate: "cw.menu.secondname.player" }, playerNames);
@@ -119,6 +118,8 @@ async function addsecondname(player) {
         const position = response.formValues[1];
         const newSecondName = response.formValues[2];
         const selectedPlayer = allPlayers[selectedIndex];
+        const playerData = playerDatas.get(selectedPlayer.id);
+
         if (position === 0) {
             playerData.secondname.before.push(response.formValues[2])
             playerDatas.set(selectedPlayer.id, playerData)
@@ -133,7 +134,7 @@ async function addsecondname(player) {
 async function AdminChunk(player) {
     const form = new ui.ActionFormData();
     form.title("cw.menu.adminchunk");
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     const countryId = Chunk.checkChunk(chunkId);
 
     let status = countryId === "admin" ? "§cAdmin" : countryId === "wasteland" ? "§7Wasteland" : `§6${countryDatas.get(countryId)?.name || countryId}`;
@@ -164,13 +165,13 @@ async function AdminChunk(player) {
     })
 }
 async function addAdminChunk(player) {
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     Chunk.setAdmin(chunkId);
     player.sendMessage({ translate: "cw.menu.adminchunk.set.success", with: [chunkId] });
     AdminChunk(player);
 }
 async function removeAdminChunk(player) {
-    const chunkId = Chunk.positionToChunkId(player.location);
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     Chunk.removeAdmin(chunkId);
     player.sendMessage({ translate: "cw.menu.adminchunk.remove.success", with: [chunkId] });
     AdminChunk(player);

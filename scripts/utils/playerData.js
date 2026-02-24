@@ -32,12 +32,14 @@ world.afterEvents.playerSpawn.subscribe(ev => {
     if (initialSpawn) {
         const playerData = playerDatas.get(player.id)
         const countryData = countryDatas.get(playerData.country)
-        if (countryData && countryData.warcountry.length == 0 && countryData.wardeath != 0) {
-            player.addTag("cw:duringwar")
-        }
-        else {
+        if (countryData && countryData.warcountry.length == 0) {
             player.removeTag("cw:duringwar")
         }
+        else {
+            player.addTag("cw:duringwar")
+        }
+
+
     }
 })
 
@@ -84,3 +86,21 @@ export class ShortPlayerData {
         shortPlayerDypro.delete(this.id);
     }
 }
+
+// 常に全プレイヤーに体力増強（体力上限40）エフェクトを付与し続ける処理
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        const effect = player.getEffect("health_boost");
+        // エフェクトが存在しないか、残り時間が少ないか、レベルが足りない場合に掛け直す
+        if (!effect || effect.duration < 200 || effect.amplifier < 4) {
+            player.addEffect("health_boost", 20000000, { amplifier: 4, showParticles: false });
+            // エフェクト付与の直後に最大体力が反映されるため、少し遅らせて全回復させる
+            system.runTimeout(() => {
+                const health = player.getComponent("minecraft:health");
+                if (health) {
+                    health.resetToMaxValue();
+                }
+            }, 2);
+        }
+    }
+}, 20); // 5秒に1回チェック

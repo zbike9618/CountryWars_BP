@@ -612,8 +612,8 @@ class Money {
         form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
         const res = await form.show(player)
         if (res.canceled) return;
-        const money = Number(res.formValues[0])
-        if (isNaN(money) || money <= 0) return;
+        const money = Math.floor(Number(res.formValues[0]));
+        if (isNaN(money) || money <= 0 || !Number.isFinite(money)) return;
 
         const isEnough = await this.enoughmoney(player, money, "deposit")
         if (isEnough === true) {
@@ -635,8 +635,8 @@ class Money {
         form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
         const res = await form.show(player)
         if (res.canceled) return;
-        const money = Number(res.formValues[0])
-        if (isNaN(money) || money <= 0) return;
+        const money = Math.floor(Number(res.formValues[0]));
+        if (isNaN(money) || money <= 0 || !Number.isFinite(money)) return;
 
         const isEnough = await this.enoughmoney(player, money, "withdraw")
         if (isEnough === true) {

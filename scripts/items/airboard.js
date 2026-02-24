@@ -18,10 +18,10 @@ system.beforeEvents.startup.subscribe((e) => {
     onUse(e) {
       const id = e.source.id;
       const now = system.currentTick;
-      
+
       // 前回の使用から時間を記録
       lastUse.set(id, now);
-      
+
       // 20tick後にチェック（長押しされなかったら短押し）
       system.runTimeout(() => {
         const current = lastUse.get(id);
@@ -30,19 +30,19 @@ system.beforeEvents.startup.subscribe((e) => {
           const ab = findAirboard(e.source);
           if (!ab) return e.source.sendMessage("§cエアボードに乗っていません");
           if (stopped.has(ab.id)) return e.source.sendMessage("§c停止モード中");
-          
+
           boosted.set(ab.id, system.currentTick + 60);
           e.source.sendMessage("§e§lブースト！");
           e.source.playSound("mob.irongolem.throw", { pitch: 2.0 });
         }
       }, 20);
     },
-    
+
     onCompleteUse(e) {
       const id = e.source.id;
       // 長押し完了したので使用時刻をクリア
       lastUse.delete(id);
-      
+
       const ab = findAirboard(e.source);
       if (!ab) return e.source.sendMessage("§cエアボードに乗っていません");
 
@@ -106,4 +106,4 @@ system.runInterval(() => {
       d.spawnParticle("cw:airboard", ab.location);
     }
   }
-}, 1);
+}, 3);

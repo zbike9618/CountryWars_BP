@@ -270,7 +270,7 @@ system.runInterval(() => {
             }
         }
     }
-}, 1)
+}, 2)
 world.afterEvents.playerSwingStart.subscribe((ev) => {
     const player = ev.player;
     if (ev.swingSource == "Build") return;

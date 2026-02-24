@@ -18,7 +18,7 @@ system.runInterval(() => {
             })
         }
     }
-}, 1)
+}, 3)
 
 export const changeMainItem = {
     call: (run) => {

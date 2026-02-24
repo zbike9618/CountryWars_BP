@@ -49,7 +49,7 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        const chunkId = Chunk.positionToChunkId(player.location);
+        const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
         const countryId = Chunk.checkChunk(chunkId);
 
         if (countryId === "wasteland") {
