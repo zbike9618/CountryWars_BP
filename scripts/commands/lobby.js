@@ -33,7 +33,7 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        player.teleport({ x: 0, y: 65, z: 0 })
+        player.teleport({ x: 0, y: 65, z: 0, dimension: "overworld" })
         player.sendMessage({ translate: "cw.phone.went.lobby" })
     })
 
