@@ -98,6 +98,41 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+    form.setButton(10, {
+        iconPath: "textures/ui/message",
+        name: "cw.wchatform.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(11, {
+        iconPath: "textures/ui/message",
+        name: "cw.lchatform.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(12, {
+        iconPath: "textures/ui/message",
+        name: "cw.cchatform.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(13, {
+        iconPath: "textures/ui/friendsbutton/navbar-friends-icon",
+        name: "cw.playermarket.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(14, {
+        iconPath: "textures/ui/store_home_icon",
+        name: "cw.shop.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.setButton(26, {
         iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
@@ -136,6 +171,21 @@ function show_form(player) {
                 break;
             case 9:
                 player.runCommand("sc")
+                break;
+            case 10:
+                player.runCommand("wchat")
+                break;
+            case 11:
+                player.runCommand("lchat")
+                break;
+            case 12:
+                player.runCommand("cchat")
+                break;
+            case 13:
+                player.runCommand("pm")
+                break;
+            case 14:
+                player.runCommand("shop")
                 break;
             case 26:
                 Help.mainForm(player);

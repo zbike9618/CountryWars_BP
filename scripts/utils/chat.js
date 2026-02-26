@@ -115,7 +115,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
             }
             break;
         case "local":
-            for (const pc of world.getPlayers({ location: player.location, maxDistance: config.localChatDistance })) {
+            for (const pc of player.dimension.getPlayers({ location: player.location, maxDistance: config.localChatDistance })) {
                 pc.sendMessage(send);
             }
             break;

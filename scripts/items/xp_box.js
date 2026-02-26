@@ -30,7 +30,6 @@ world.afterEvents.itemUse.subscribe((event) => {
   player.sendMessage(`§a経験値を${totalXp}ポイント収納しました (合計: ${newStoredXp})`);
 });
 
-// 1ティックごとに実行される処理
 system.runInterval(() => {
   for (const player of world.getAllPlayers()) {
     if (!player.isSneaking) continue;
@@ -38,25 +37,23 @@ system.runInterval(() => {
     const equippable = player.getComponent(EntityComponentTypes.Equippable);
     if (!equippable) continue;
 
-    const mainhandSlot = player.selectedSlotIndex;
+    let item = null;
+    let slotType = null;
+
     const mainhandItem = equippable.getEquipment(EquipmentSlot.Mainhand);
     const offhandItem = equippable.getEquipment(EquipmentSlot.Offhand);
 
-    let storedXp = 0;
-    let isOffhand = false;
-
     if (mainhandItem && mainhandItem.typeId === "cw:xp_box") {
-      storedXp = Number(Lore.getLore(player, mainhandSlot, "XP") || "0");
-      isOffhand = false;
+      item = mainhandItem;
+      slotType = EquipmentSlot.Mainhand;
     } else if (offhandItem && offhandItem.typeId === "cw:xp_box") {
-      // オフハンドのスロット番号を取得する必要があるが、Loreクラスがインベントリコンポーネントのみを想定している場合
-      // player.getComponent("inventory") はオフハンドを含まない
-      // Loreクラスをオフハンド対応にするか、ここでは直接処理するか。
-      // ユーザーはLoreクラスへの置き換えを求めているので、オフハンドは一旦スキップか、直接処理。
-      // ひとまずメインハンド優先。
-      continue;
+      item = offhandItem;
+      slotType = EquipmentSlot.Offhand;
     }
 
+    if (!item) continue;
+
+    let storedXp = Number(item.getLore()?.find(l => l.startsWith("XP:"))?.split(":")[1] || 0);
     if (storedXp <= 0) continue;
 
     if (storedXp >= 9) {
@@ -71,8 +68,19 @@ system.runInterval(() => {
       );
     }
 
-    Lore.setLore(player, mainhandSlot, "XP", storedXp.toString());
-    updateXpBoxDisplay(player, mainhandSlot);
+    // Lore更新
+    let lore = item.getLore() ?? [];
+    const index = lore.findIndex(l => l.startsWith("XP:"));
+    if (index !== -1) {
+      lore[index] = `XP:${storedXp}`;
+    } else {
+      lore.push(`XP:${storedXp}`);
+    }
+
+    item.setLore(lore);
+
+    // 装備スロットに書き戻す（←ここが超重要）
+    equippable.setEquipment(slotType, item);
   }
 }, 5);
 
