@@ -138,12 +138,11 @@ export class Bank {
         const sliderForm = new ModalFormData()
             .title(`${selected.label}を引き出す`)
             .slider(
-                `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
-                1,
-                maxAmount,
-                1,
-                1
-            );
+    `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
+    1,
+    maxAmount,
+    { valueStep: 1, defaultValue: 1 }  // ← 4つ目にオブジェクトでまとめる
+)
 
         sliderForm.show(player).then((sliderRes) => {
             if (sliderRes.canceled) return;
