@@ -66,6 +66,7 @@ export default [
         icon: `minecraft:carrot`,
         items: [
             { id: `minecraft:apple`, price: 150 },
+            { id: "minecraft:wheat_seeds", price: 30 },
             { id: `minecraft:potato`, price: 50 },
             { id: `minecraft:carrot`, price: 50 },
             { id: `minecraft:beetroot_seeds`, price: 40 },

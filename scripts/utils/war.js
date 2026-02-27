@@ -178,20 +178,20 @@ export class War {
         let number = 0;
         if (type == "killall") {//国は滅ぼさない
             const savePlayer = winnerData.wardeath || 0;
-            number = Math.min(savePlayer * 30000 || 0, config.maxWarMoney);
+            number = Math.min(savePlayer * 3000 || 0, config.maxWarMoney);
             world.sendMessage({ translate: "cw.war.finish.killall", with: [winnerData.name, loserData.name] })
 
         }
         if (type == "invade") {//国は滅ぼさない
             const chunkAmount = winnerData.robbedChunkAmount || 0;
-            number = Math.min(chunkAmount[loserData.id] * 20000 || 0, config.maxWarMoney);
+            number = Math.min(chunkAmount[loserData.id] * 2000 || 0, config.maxWarMoney);
 
             world.sendMessage({ translate: "cw.war.finish.invade", with: [winnerData.name, loserData.name] })
         }
         if (type == "force") {//国は滅ぼさない
             const chunkAmount = winnerData.robbedChunkAmount || 0;
             const savePlayer = winnerData.wardeath || 0;
-            number = Math.min(chunkAmount[loserData.id] * 20000 || 0 + savePlayer * 30000 || 0, config.maxWarMoney);
+            number = Math.min(chunkAmount[loserData.id] * 2000 || 0 + savePlayer * 3000 || 0, config.maxWarMoney);
             world.sendMessage({ translate: "cw.war.finish.force", with: [loserData.name, winnerData.name] })
         }
         if (winnerData.isPeace) {
