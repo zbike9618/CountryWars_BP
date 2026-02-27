@@ -15,6 +15,9 @@ export class JOB_CONFIG {
     static miner = {
         blockRewards: {
             "minecraft:stone": 0.2,
+            "minecraft:andesite": 0.3,
+            "minecraft:granite": 0.3,
+            "minecraft:diorite": 0.3,
             "minecraft:coal_ore": 0.7,
             "minecraft:iron_ore": 0.7,
             "minecraft:gold_ore": 0.7,

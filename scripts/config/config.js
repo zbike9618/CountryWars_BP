@@ -18,7 +18,7 @@ export default {
     //最大戦争勝利金
     maxWarMoney: 500000,
     //株売却時の国に必ず残るお金
-    stockMaxSell: 100000,
+    stockMaxSell: 5000,
     // タンクのアタッチメント最大数
     tankMaxSlots: 5,
     // 戦争保護期間 (日) - デフォルト7日間
