@@ -1,6 +1,6 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+//import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { Dypro } from "./dypro.js";
 import config from "../config/config.js";
 
