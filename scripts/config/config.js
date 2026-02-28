@@ -8,11 +8,11 @@ export default {
     //建国するのに必要な金額
     countryprice: 1000,
     //1チャンクごとにおける土地の維持費
-    maintenance: 1000,
+    maintenance: 100,
     //チャンク購入の金額
     chunkprice: 1000,
     //一国が保有できる最大チャンク数
-    maxchunk: 32,
+    maxchunk: 128,
     //設定できるhomeの数
     maxhome: 3,
     //最大戦争勝利金
