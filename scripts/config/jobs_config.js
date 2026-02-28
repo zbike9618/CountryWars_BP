@@ -94,7 +94,8 @@ export class JOB_CONFIG {
             "stone": 0.1,
             "brick": 0.2,
             "planks": 0.1,
-            "glass": 0.1
+            "glass": 0.1,
+            "redstone": 0.1,
         }
     }
 };
