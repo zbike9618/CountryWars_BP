@@ -55,6 +55,7 @@
         }
     ],
     "capabilities": [
-        "script_eval"
+        "script_eval",
+        "net"
     ]
 }
