@@ -101,54 +101,75 @@ export class Bank {
     }
 
     static withdrawForm(player) {
-        const currentBalance = Util.getMoney(player);
+    const currentBalance = Util.getMoney(player);
 
-        const denoms = [
-            { label: "1円", value: 1, id: "cw:coin_1" },
-            { label: "10円", value: 10, id: "cw:coin_10" },
-            { label: "50円", value: 50, id: "cw:coin_50" },
-            { label: "100円", value: 100, id: "cw:coin_100" },
-            { label: "500円", value: 500, id: "cw:coin_500" },
-            { label: "1000円", value: 1000, id: "cw:bill_1000" },
-            { label: "5000円", value: 5000, id: "cw:bill_5000" },
-            { label: "10000円", value: 10000, id: "cw:bill_10000" }
-        ];
+    const denoms = [
+        { label: "1円", value: 1, id: "cw:coin_1" },
+        { label: "10円", value: 10, id: "cw:coin_10" },
+        { label: "50円", value: 50, id: "cw:coin_50" },
+        { label: "100円", value: 100, id: "cw:coin_100" },
+        { label: "500円", value: 500, id: "cw:coin_500" },
+        { label: "1000円", value: 1000, id: "cw:bill_1000" },
+        { label: "5000円", value: 5000, id: "cw:bill_5000" },
+        { label: "10000円", value: 10000, id: "cw:bill_10000" }
+    ];
 
-        const form = new ActionFormData()
-            .title("銀行：引き出し")
-            .body(`現在の銀行残高: §a${currentBalance}円\n§r引き出す種類を選んでください。`);
+    const form = new ActionFormData()
+        .title("銀行：引き出し")
+        .body(`現在の銀行残高: §a${currentBalance}円\n種類を選択してください。`);
 
-        for (const d of denoms) {
-            // 残高が足りないボタンをグレーアウト（表示のみ）させる工夫も可能
-            const prefix = currentBalance >= d.value ? "§2" : "§c";
-            form.button(`${prefix}${d.label}下ろす`);
+    for (const d of denoms) {
+        form.button(`${d.label}`);
+    }
+
+    form.show(player).then((res) => {
+        if (res.canceled) return;
+
+        const selected = denoms[res.selection];
+
+        const balance = Util.getMoney(player);
+        const maxAmount = Math.floor(balance / selected.value);
+
+        if (maxAmount <= 0) {
+            player.sendMessage("§c残高が不足しています。");
+            return;
         }
 
-        form.show(player).then((res) => {
-            if (res.canceled) return;
+        const sliderForm = new ModalFormData()
+            .title(`${selected.label}を引き出す`)
+            .slider(
+    `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
+    1,
+    maxAmount,
+    { valueStep: 1, defaultValue: 1 }  // ← 4つ目にオブジェクトでまとめる
+)
 
-            const selected = denoms[res.selection];
+        sliderForm.show(player).then((sliderRes) => {
+            if (sliderRes.canceled) return;
 
-            // 最新の残高でチェック
-            if (Util.getMoney(player) < selected.value) {
+            const amount = sliderRes.formValues[0];
+            const totalCost = amount * selected.value;
+
+            if (Util.getMoney(player) < totalCost) {
                 player.sendMessage("§c残高が不足しています。");
-                this.withdrawForm(player);
                 return;
             }
 
-            // インベントリの空き確認
             const inventory = player.getComponent("minecraft:inventory").container;
             if (inventory.emptySlotsCount === 0) {
-                player.sendMessage("§cインベントリがいっぱいで受け取れません！");
+                player.sendMessage("§cインベントリがいっぱいです。");
                 return;
             }
 
-            // お金を減らしてアイテムを付与
-            Util.addMoney(player, -selected.value);
-            player.runCommand(`give @s ${selected.id} 1`);
+            Util.addMoney(player, -totalCost);
+            player.runCommand(`give @s ${selected.id} ${amount}`);
 
-            player.sendMessage(`§a${selected.label}を引き出しました。（残り: ${Util.getMoney(player)}円）`);
+            player.sendMessage(
+                `§a${selected.label}を${amount}枚引き出しました。（残高: ${Util.getMoney(player)}円）`
+            );
+
             this.withdrawForm(player);
         });
-    }
+    });
+}
 }

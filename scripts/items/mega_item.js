@@ -2,7 +2,6 @@ import { world, system, EquipmentSlot, EntityComponentTypes, ItemStack } from "@
 import { ActionFormData } from "@minecraft/server-ui";
 import { Lore } from "../utils/Lore.js";
 
-// コンフィグ: カテゴリ別アイテムリスト
 const ITEM_CATEGORIES = {
   "原木・木材系": {
     icon: "textures/blocks/log_oak_top",
@@ -68,11 +67,18 @@ const ITEM_CATEGORIES = {
   }
 };
 
-// 全アイテムのフラットリスト(逆引き用)
 const ALL_ITEMS = Object.values(ITEM_CATEGORIES).flatMap(category => category.items);
 
-const MAX_STACKS = 9; // 最大9スタック
-const STACK_SIZE = 64; // 1スタックのサイズ
+const MAX_STACKS = 9;
+const STACK_SIZE = 64;
+
+// アイテムIDのエンコード/デコード (":"をLoreのキー区切りと衝突しないよう変換)
+function encodeItemId(id) {
+  return id.replace(":", "__");
+}
+function decodeItemId(encoded) {
+  return encoded.replace("__", ":");
+}
 
 // 右クリックイベント
 world.afterEvents.itemUse.subscribe((event) => {
@@ -86,16 +92,12 @@ world.afterEvents.itemUse.subscribe((event) => {
   const storedData = getStoredData(player, slot);
 
   if (isSneaking) {
-    // スニーク + 右クリック
     if (storedData.count === 0) {
-      // 収納アイテムが0の時: カテゴリ選択UI表示
       showCategorySelectionUI(player, itemStack);
     } else {
-      // 収納アイテムがある時: 全て取り出す
       withdrawAllItems(player, itemStack, storedData);
     }
   } else {
-    // 通常右クリック: インベントリのセレクトアイテムを全て収納
     if (!storedData.selectedItem) {
       player.sendMessage("§cセレクトアイテムが選択されていません");
       return;
@@ -107,13 +109,8 @@ world.afterEvents.itemUse.subscribe((event) => {
 // 左クリックイベント
 world.afterEvents.playerSwingStart.subscribe((event) => {
   const player = event.player;
-  const itemStack = event.heldItemStack;
-
-  // アイテムを持っていないか、mega_itemでない場合はスキップ
   const slot = player.selectedSlotIndex;
-  if (!itemStack || itemStack.typeId !== "cw:mega_item") return;
 
-  // 実際に手持ちにあるか確認(ドロップ時の誤動作を防ぐ)
   const equippable = player.getComponent(EntityComponentTypes.Equippable);
   if (!equippable) return;
 
@@ -125,10 +122,8 @@ world.afterEvents.playerSwingStart.subscribe((event) => {
 
   if (storedData.count > 0) {
     if (isSneaking) {
-      // Shift + 左クリック: 1個だけ出す
       withdrawSingleItem(player, mainhandItem, storedData);
     } else {
-      // 左クリック: 64個出す
       withdrawItems(player, mainhandItem, storedData);
     }
   }
@@ -185,9 +180,10 @@ async function showItemSelectionUI(player, itemStack, categoryName) {
     }
 
     const selectedItem = items[response.selection];
-
     const slot = player.selectedSlotIndex;
-    Lore.setLore(player, slot, "item", selectedItem.id);
+
+    // ":" を "__" に変換して保存
+    Lore.setLore(player, slot, "item", encodeItemId(selectedItem.id));
     Lore.setLore(player, slot, "count", "0");
     updateMegaItem(player, slot, {
       selectedItem: selectedItem.id,
@@ -212,7 +208,6 @@ function storeAllItems(player, itemStack, storedData) {
   const maxCapacity = MAX_STACKS * STACK_SIZE;
   let totalStored = 0;
 
-  // インベントリをスキャンしてセレクトアイテムを収集
   for (let i = 0; i < inventory.container.size; i++) {
     const slot = inventory.container.getItem(i);
     if (!slot || slot.typeId !== storedData.selectedItem) continue;
@@ -223,7 +218,6 @@ function storeAllItems(player, itemStack, storedData) {
     const storeAmount = Math.min(slot.amount, canStore - totalStored);
     totalStored += storeAmount;
 
-    // アイテムを削除または減らす
     if (storeAmount >= slot.amount) {
       inventory.container.setItem(i, undefined);
     } else {
@@ -256,22 +250,16 @@ function withdrawAllItems(player, itemStack, storedData) {
   let totalWithdrawn = 0;
   let droppedItems = 0;
 
-  // 64個ずつスタックを作成してインベントリに追加
   while (remainingItems > 0) {
     const withdrawAmount = Math.min(64, remainingItems);
     const newItem = new ItemStack(storedData.selectedItem, withdrawAmount);
-
     const remainingItem = inventory.container.addItem(newItem);
 
     if (remainingItem) {
-      // インベントリが満杯の場合、残りをドロップ
       const actualAdded = withdrawAmount - remainingItem.amount;
       totalWithdrawn += actualAdded;
-
-      // 残ったアイテムをプレイヤーの位置にドロップ
       player.dimension.spawnItem(remainingItem, player.location);
       droppedItems += remainingItem.amount;
-
       remainingItems -= withdrawAmount;
     } else {
       totalWithdrawn += withdrawAmount;
@@ -279,7 +267,7 @@ function withdrawAllItems(player, itemStack, storedData) {
     }
   }
 
-  storedData.count = 0; // 全て取り出したので0にする
+  storedData.count = 0;
   const slot = player.selectedSlotIndex;
   Lore.setLore(player, slot, "count", "0");
   updateMegaItem(player, slot, storedData);
@@ -300,15 +288,10 @@ function withdrawItems(player, itemStack, storedData) {
   if (!inventory || !inventory.container) return;
 
   const withdrawAmount = Math.min(64, storedData.count);
-
-  // 新しいアイテムスタックを作成
   const newItem = new ItemStack(storedData.selectedItem, withdrawAmount);
-
-  // インベントリに追加を試みる
   const remainingItem = inventory.container.addItem(newItem);
 
   if (remainingItem) {
-    // インベントリが満杯の場合
     const actualWithdrawn = withdrawAmount - remainingItem.amount;
     if (actualWithdrawn > 0) {
       storedData.count -= actualWithdrawn;
@@ -336,10 +319,7 @@ function withdrawSingleItem(player, itemStack, storedData) {
   const inventory = player.getComponent(EntityComponentTypes.Inventory);
   if (!inventory || !inventory.container) return;
 
-  // 1個のアイテムスタックを作成
   const newItem = new ItemStack(storedData.selectedItem, 1);
-
-  // インベントリに追加を試みる
   const remainingItem = inventory.container.addItem(newItem);
 
   if (!remainingItem) {
@@ -362,12 +342,14 @@ function getStoredData(player, slot) {
     selectedName: null,
     count: 0
   };
+
   const itemData = Lore.getLore(player, slot, "item");
   const countData = Lore.getLore(player, slot, "count");
 
   if (itemData) {
-    data.selectedItem = itemData;
-    const configItem = ALL_ITEMS.find(item => item.id === itemData);
+    // "__" を ":" に戻してIDを復元
+    data.selectedItem = decodeItemId(itemData);
+    const configItem = ALL_ITEMS.find(item => item.id === data.selectedItem);
     if (configItem) {
       data.selectedName = configItem.name;
     }
@@ -388,11 +370,10 @@ function updateMegaItem(player, slot, storedData) {
   const item = container.getItem(slot);
   if (!item) return;
 
-  // Loreを更新
   const loreLines = item.getLore();
 
-  // 以前の表示用Loreを削除 (データ用以外のもの)
-  const filteredLore = loreLines.filter(l => l.includes(":")); // キー付きのものは残す
+  // § で始まらない行のみ残す (データ行は § を含まない)
+  const dataLore = loreLines.filter(l => !l.startsWith("§"));
 
   const displayLore = [];
   if (storedData.selectedItem) {
@@ -406,15 +387,6 @@ function updateMegaItem(player, slot, storedData) {
     displayLore.push(`§7Shift+右クリックでアイテムを選択`);
   }
 
-  // データ用Loreとマージ
-  const finalLore = [...filteredLore, ...displayLore];
-
-  // 重複を避けるために一意にするか、単にセットする
-  // 今回は filteredLore にはデータが入っているはず。
-
-  // 実際には Lore.setLore が内部で getLore して更新するので、
-  // ここでは表示用の行を整えるだけでよい。
-
-  item.setLore(finalLore);
+  item.setLore([...dataLore, ...displayLore]);
   container.setItem(slot, item);
 }

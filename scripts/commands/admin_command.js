@@ -46,6 +46,14 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
     }
     if (ev.id == "cw:allreset") {
         world.clearDynamicProperties();
+        for (const player of world.getAllPlayers()) {
+            player.clearDynamicProperties();
+            player.runCommand("kick @s 初期化のため\nもう一度入りなおしてください")
 
+        }
+    }
+    if (ev.id == "cw:initial") {
+        ev.sourceEntity?.clearDynamicProperties();
+        ev.sourceEntity?.runCommand("kick @s 初期化のため\nもう一度入りなおしてください")
     }
 })
