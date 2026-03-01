@@ -111,7 +111,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     // --- AI質問の検知 ---
     if (message.startsWith("!ai ")) {
         sendChatToDiscord(message, player.name);
-        // AIへの質問時は通常のチャットリレーは行わず終了
+        return;
     }
 
     ev.cancel = true;

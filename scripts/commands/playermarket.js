@@ -72,6 +72,7 @@ async function showPlayerMarket(player) {
     form.button({ translate: "cw.playermarket.see" })
     form.button({ translate: "cw.playermarket.sell" })
     form.button({ translate: "cw.playermarket.edit" })
+    form.button({ translate: "cw.playermarket.history" })
     const res = await form.show(player)
     if (res.canceled) return;
     if (res.selection === 0) {
@@ -85,7 +86,9 @@ async function showPlayerMarket(player) {
     if (res.selection === 2) {
         editForm(player)
     }
-
+    if (res.selection === 3) {
+        showHistoryForm(player)
+    }
 }
 async function buyForm(player, { slot, page }) {
     const data = marketDatas.get(`${page}`)[slot];
@@ -350,4 +353,21 @@ async function editForm2(player, { page, slot }) {
     marketData.price.push(Number(res.formValues[1]))
     marketData.description = res.formValues[2]
     playerMarketSystem.edit(marketData, { page, slot })
+}
+async function showHistoryForm(player) {
+    const pmlogDatas = new Dypro("pmlog");
+    const logs = pmlogDatas.get(player.id) || [];
+
+    const form = new ActionFormData();
+    form.title({ translate: "cw.playermarket.history.title" });
+
+    if (logs.length === 0) {
+        form.body({ translate: "cw.playermarket.history.empty" });
+    } else {
+        form.body(logs.join("\n"));
+        pmlogDatas.delete(player.id);
+    }
+
+    form.button({ translate: "cw.playermarket.history.close" });
+    await form.show(player);
 }
