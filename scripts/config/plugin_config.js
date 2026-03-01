@@ -8,5 +8,6 @@ export const turnedOnPlugins = {
         blackList: [
             "test"
         ]
-    }
+    },
+    "block_logger": {}
 }

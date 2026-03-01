@@ -47,6 +47,24 @@ system.runInterval(() => {
 /**
  * 通常チャット・AI質問用
  */
+function sendChatToDiscord(text, playerName = "Server") {
+    // メンション防止: 半角の「@」を全角の「＠」に変更します。
+    // replace(/@/g, "＠") というのは、文章の中にあるすべての「@」を探して「＠」に変えるという命令です。
+    const safeText = text.replace(/@/g, "＠");
+
+    const request = new HttpRequest(SERVER_URL);
+    request.method = HttpRequestMethod.Post;
+    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.body = JSON.stringify({
+        message: safeText,
+        sender: playerName
+    });
+    http.request(request).catch(() => { });
+}
+
+/**
+ * サーバー通知・管理者呼び出し用
+ */
 function sendToDiscord(text, playerName = "Server") {
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
@@ -88,7 +106,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
 
     // --- AI質問の検知 ---
     if (message.startsWith("!ai ")) {
-        sendToDiscord(message, player.name);
+        sendChatToDiscord(message, player.name);
         // AIへの質問時は通常のチャットリレーは行わず終了
     }
 
@@ -107,7 +125,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     switch (playerData.chattype) {
         case "world":
             world.sendMessage(send);
-            if (!message.startsWith("!ai ")) sendToDiscord(send, player.name);
+            if (!message.startsWith("!ai ")) sendChatToDiscord(send, player.name);
             break;
         case "country":
             for (const pc of world.getAllPlayers().filter(p => playerDatas.get(p.id).country == playerData.country)) {
