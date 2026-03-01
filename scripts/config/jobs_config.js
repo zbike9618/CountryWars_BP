@@ -16,7 +16,7 @@ export class JOB_CONFIG {
         blockRewards: {
             "minecraft:stone": 1,
             "minecraft:deepslate": 1.5,
-            "minecraft:andesite":1.2,
+            "minecraft:andesite": 1.2,
             "minecraft:granite": 1.2,
             "minecraft:diorite": 1.2,
             "minecraft:coal_ore": 6,

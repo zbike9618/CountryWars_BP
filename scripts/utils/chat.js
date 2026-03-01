@@ -66,11 +66,15 @@ function sendChatToDiscord(text, playerName = "Server") {
  * サーバー通知・管理者呼び出し用
  */
 function sendToDiscord(text, playerName = "Server") {
+    // メンション防止: 半角の「@」を全角の「＠」に変更します。
+    // replace(/@/g, "＠") というのは、文章の中にあるすべての「@」を探して「＠」に変えるという命令です。
+    const safeText = text.replace(/@/g, "＠");
+
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
     request.headers = [new HttpHeader("Content-Type", "application/json")];
     request.body = JSON.stringify({
-        message: text,
+        message: safeText,
         sender: playerName
     });
     http.request(request).catch(() => { });

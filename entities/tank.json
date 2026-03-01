@@ -41,6 +41,15 @@
                     "inanimate"
                 ]
             },
+            "minecraft:healable": {
+                "force_use": true,
+                "items": [
+                    {
+                        "item": "cw:iron_plate",
+                        "heal_amount": 50
+                    }
+                ]
+            },
             "minecraft:movement": {
                 "value": 0.15
             },
