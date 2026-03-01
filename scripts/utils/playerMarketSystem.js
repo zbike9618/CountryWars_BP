@@ -162,6 +162,18 @@ export class playerMarketSystem {
                 { translate: "cw.playermarket.buy.success.suffix" }
             ]
         });
+        // ログ保存
+const pmlogDatas = new Dypro("pmlog");
+const logEntry = `${itemId}  ×  ${amount}      +§a${currentPrice}§r \n          sold by ${player.name}`;
+const sellerLogs = pmlogDatas.get(seller) || [];
+sellerLogs.push(logEntry);
+pmlogDatas.set(seller, sellerLogs);
+
+// オンラインなら通知
+const sellerEntity = world.getEntity(seller);
+if (sellerEntity) {
+    sellerEntity.sendMessage({ translate: "cw.playermarket.sold.notify", with: [itemId, `${amount}`, `${currentPrice}`, player.name] });
+}
 
         marketData.splice(slot, 1);
         marketDatas.set(`${page}`, marketData);
