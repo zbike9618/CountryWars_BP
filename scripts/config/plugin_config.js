@@ -9,5 +9,6 @@ export const turnedOnPlugins = {
             "test"
         ]
     },
-    "block_logger": {}
+    "block_logger": {},
+    "report_system": {}
 }
