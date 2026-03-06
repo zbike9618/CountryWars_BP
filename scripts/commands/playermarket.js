@@ -162,6 +162,11 @@ async function buyForm(player, { slot, page }) {
     }
 
     if (res.selection === 0) {
+        const inv = player.getComponent("minecraft:inventory").container;
+        if (inv.emptySlotsCount === 0) {
+            player.sendMessage({ translate: "cw.playermarket.invfull" })
+            return;
+        }
         playerMarketSystem.buy(player, { slot, page })
     } else {
         const loc = await playerMarketSystem.show(player, page)

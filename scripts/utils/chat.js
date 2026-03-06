@@ -107,6 +107,8 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     // --- AI質問の検知 ---
     if (message.startsWith("!ai ")) {
         sendChatToDiscord(message, player.name);
+        ev.cancel = true;
+        world.sendMessage(`[!ai] <${player.name}> ${message}`);
         return;
     }
 
