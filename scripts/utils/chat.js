@@ -18,7 +18,10 @@ console.warn("CountryWars Script Loading...");
 system.run(() => {
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({ type: "start" });
     http.request(request).catch(() => { });
 });
@@ -29,6 +32,7 @@ system.run(() => {
 system.runInterval(() => {
     const request = new HttpRequest(GET_URL);
     request.method = HttpRequestMethod.Get;
+    request.headers = [new HttpHeader("Authorization", "Bearer " + config.apiToken)];
 
     http.request(request).then(response => {
         if (response.status === 200) {
@@ -54,7 +58,10 @@ function sendChatToDiscord(text, playerName = "Server") {
 
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({
         message: safeText,
         sender: playerName

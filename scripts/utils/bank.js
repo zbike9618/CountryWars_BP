@@ -101,75 +101,92 @@ export class Bank {
     }
 
     static withdrawForm(player) {
-    const currentBalance = Util.getMoney(player);
+        const currentBalance = Util.getMoney(player);
 
-    const denoms = [
-        { label: "1円", value: 1, id: "cw:coin_1" },
-        { label: "10円", value: 10, id: "cw:coin_10" },
-        { label: "50円", value: 50, id: "cw:coin_50" },
-        { label: "100円", value: 100, id: "cw:coin_100" },
-        { label: "500円", value: 500, id: "cw:coin_500" },
-        { label: "1000円", value: 1000, id: "cw:bill_1000" },
-        { label: "5000円", value: 5000, id: "cw:bill_5000" },
-        { label: "10000円", value: 10000, id: "cw:bill_10000" }
-    ];
+        const denoms = [
+            { label: "1円", value: 1, id: "cw:coin_1" },
+            { label: "10円", value: 10, id: "cw:coin_10" },
+            { label: "50円", value: 50, id: "cw:coin_50" },
+            { label: "100円", value: 100, id: "cw:coin_100" },
+            { label: "500円", value: 500, id: "cw:coin_500" },
+            { label: "1000円", value: 1000, id: "cw:bill_1000" },
+            { label: "5000円", value: 5000, id: "cw:bill_5000" },
+            { label: "10000円", value: 10000, id: "cw:bill_10000" }
+        ];
 
-    const form = new ActionFormData()
-        .title("銀行：引き出し")
-        .body(`現在の銀行残高: §a${currentBalance}円\n種類を選択してください。`);
+        const form = new ActionFormData()
+            .title("銀行：引き出し")
+            .body(`現在の銀行残高: §a${currentBalance}円\n種類を選択してください。`);
 
-    for (const d of denoms) {
-        form.button(`${d.label}`);
-    }
-
-    form.show(player).then((res) => {
-        if (res.canceled) return;
-
-        const selected = denoms[res.selection];
-
-        const balance = Util.getMoney(player);
-        const maxAmount = Math.floor(balance / selected.value);
-
-        if (maxAmount <= 0) {
-            player.sendMessage("§c残高が不足しています。");
-            return;
+        for (const d of denoms) {
+            form.button(`${d.label}`);
         }
 
-        const sliderForm = new ModalFormData()
-            .title(`${selected.label}を引き出す`)
-            .slider(
-    `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
-    1,
-    maxAmount,
-    { valueStep: 1, defaultValue: 1 }  // ← 4つ目にオブジェクトでまとめる
-)
+        form.show(player).then((res) => {
+            if (res.canceled) return;
 
-        sliderForm.show(player).then((sliderRes) => {
-            if (sliderRes.canceled) return;
+            const selected = denoms[res.selection];
 
-            const amount = sliderRes.formValues[0];
-            const totalCost = amount * selected.value;
+            const balance = Util.getMoney(player);
+            const maxAmount = Math.floor(balance / selected.value);
 
-            if (Util.getMoney(player) < totalCost) {
+            if (maxAmount <= 0) {
                 player.sendMessage("§c残高が不足しています。");
                 return;
             }
 
-            const inventory = player.getComponent("minecraft:inventory").container;
-            if (inventory.emptySlotsCount === 0) {
-                player.sendMessage("§cインベントリがいっぱいです。");
-                return;
-            }
+            const sliderForm = new ModalFormData()
+                .title(`${selected.label}を引き出す`)
+                .slider(
+                    `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
+                    1,
+                    Math.min(maxAmount, 1000), // マイクラのgiveコマンド上限や負荷対策で最大1000枚まで
+                    { valueStep: 1, defaultValue: 1 }  // ← 4つ目にオブジェクトでまとめる
+                )
 
-            Util.addMoney(player, -totalCost);
-            player.runCommand(`give @s ${selected.id} ${amount}`);
+            sliderForm.show(player).then((sliderRes) => {
+                if (sliderRes.canceled) return;
 
-            player.sendMessage(
-                `§a${selected.label}を${amount}枚引き出しました。（残高: ${Util.getMoney(player)}円）`
-            );
+                const amount = sliderRes.formValues[0];
+                const totalCost = amount * selected.value;
 
-            this.withdrawForm(player);
+                if (Util.getMoney(player) < totalCost) {
+                    player.sendMessage("§c残高が不足しています。");
+                    return;
+                }
+
+                const inventory = player.getComponent("minecraft:inventory").container;
+
+                // 64個で1スタックとして、必要なスタック数を計算
+                const requiredSlots = Math.ceil(amount / 64);
+                if (inventory.emptySlotsCount < requiredSlots) {
+                    player.sendMessage(`§cインベントリの空きが足りません。（必要な空き枠: ${requiredSlots}）`);
+                    return;
+                }
+
+                Util.addMoney(player, -totalCost);
+
+                // 【修正: 大量に引き出す場合のバグを防ぐため、give処理を安全に行う】
+                try {
+                    let remainingAmount = amount;
+                    while (remainingAmount > 0) {
+                        const giveAmount = Math.min(remainingAmount, 32767); // giveの1回の最大値
+                        player.runCommand(`give @s ${selected.id} ${giveAmount}`);
+                        remainingAmount -= giveAmount;
+                    }
+                } catch (e) {
+                    // 万が一giveコマンドが失敗した場合は返金する
+                    Util.addMoney(player, totalCost);
+                    player.sendMessage("§cアイテムの付与に失敗したため、返金しました。");
+                    return;
+                }
+
+                player.sendMessage(
+                    `§a${selected.label}を${amount}枚引き出しました。（残高: ${Util.getMoney(player)}円）`
+                );
+
+                this.withdrawForm(player);
+            });
         });
-    });
-}
+    }
 }

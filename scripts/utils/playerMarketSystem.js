@@ -97,6 +97,16 @@ export class playerMarketSystem {
 
         const comp = player.getComponent("minecraft:inventory");
         const inv = comp.container;
+
+        // 【修正: 事前インベントリ空き枠のチェック（アイテムロスト対策）】
+        if (amount != 0) {
+            const requiredSlots = Math.ceil(amount / 64);
+            if (inv.emptySlotsCount < requiredSlots) {
+                player.sendMessage({ translate: "cw.playermarket.invfull" });
+                return;
+            }
+        }
+
         if (amount != 0) {
             const count = Math.floor(amount / 64);
             for (let i = 0; i < count; i++) {

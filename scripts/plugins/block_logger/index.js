@@ -1,5 +1,6 @@
 import { world } from "@minecraft/server";
 import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+import config from "../../config/config.js";
 
 const LOGGER_URL = "http://localhost:3001/block-log";
 
@@ -7,7 +8,10 @@ const LOGGER_URL = "http://localhost:3001/block-log";
 function sendLog(action, player, block, blockType) {
     const request = new HttpRequest(LOGGER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
 
     request.body = JSON.stringify({
         action: action, // "Break" もしくは "Place"

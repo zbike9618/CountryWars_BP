@@ -2,6 +2,7 @@ import * as server from "@minecraft/server"
 const { world, system } = server;
 import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
+import config from "../../config/config.js";
 
 const VIEWER_URL = "http://localhost:3001/block-log-viewer";
 
@@ -75,7 +76,10 @@ async function executeBlockLog(player, radius, days) {
 
     const request = new HttpRequest(VIEWER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify(requestBody);
 
     try {

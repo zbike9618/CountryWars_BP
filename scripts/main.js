@@ -1,6 +1,7 @@
 import { world } from "@minecraft/server"
 import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { system } from "@minecraft/server";
+import config from "./config/config.js";
 import "./commands/command"
 import "./utils/playerData"
 import "./utils/interval"
@@ -19,7 +20,10 @@ const GET_URL = "http://localhost:3000/get-messages";
 system.run(() => {
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({ type: "start" }); // 起動通知を送る
 
     http.request(request).catch(e => { });
@@ -33,6 +37,7 @@ const COMMANDS_URL = "http://localhost:3000/get-commands";
 system.runInterval(() => {
     const request = new HttpRequest(COMMANDS_URL);
     request.method = HttpRequestMethod.Get;
+    request.headers = [new HttpHeader("Authorization", "Bearer " + config.apiToken)];
 
     http.request(request).then(async response => {
         if (response.status === 200) {
@@ -42,7 +47,10 @@ system.runInterval(() => {
                     try {
                         const resReq = new HttpRequest(SERVER_URL);
                         resReq.method = HttpRequestMethod.Post;
-                        resReq.headers = [new HttpHeader("Content-Type", "application/json")];
+                        resReq.headers = [
+                            new HttpHeader("Content-Type", "application/json"),
+                            new HttpHeader("Authorization", "Bearer " + config.apiToken)
+                        ];
                         resReq.body = JSON.stringify({
                             type: "tps_result",
                             interactionId: cmd.interactionId,

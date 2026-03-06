@@ -23,4 +23,6 @@ export default {
     tankMaxSlots: 5,
     // 戦争保護期間 (日) - デフォルト7日間
     warProtectionPeriod: 7,
+    // 外部通信用APIトークン
+    apiToken: "SECRET_MINECRAFT_TOKEN_CW",
 };
