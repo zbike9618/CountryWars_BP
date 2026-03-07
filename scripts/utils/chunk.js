@@ -55,7 +55,7 @@ export class Chunk {
             return;
         }
         if (countryData.chunkAmount >= config.maxchunk) {
-            player.sendMessage({ translate: "cw.chunk.buy.maxchunk", with: [`${config.maxchunk}`] })
+            player.sendMessage({ translate: "cw.chunk.buy.maxchunk", with: [String(config.maxchunk)] })
             return;
         }
         const cc = this.checkChunk(this.positionToChunkId(player.location, player.dimension.id))
@@ -65,7 +65,7 @@ export class Chunk {
         }
         const form = new MessageFormData()
         form.title({ translate: "cw.chunk.buy.title" })
-        form.body({ translate: "cw.chunk.buy.body", with: [`${config.chunkprice}`, `${countryData.money}`] })
+        form.body({ translate: "cw.chunk.buy.body", with: [String(config.chunkprice), String(countryData.money)] })
         form.button1({ translate: "cw.form.buy" })
         form.button2({ translate: "cw.form.cancel" })
         const res = await form.show(player)
@@ -106,14 +106,14 @@ export class Chunk {
         }
         const form = new MessageFormData()
         form.title({ translate: "cw.chunk.sell.title" })
-        form.body({ translate: "cw.chunk.sell.check", with: [`${config.chunkprice / 2}`] })
+        form.body({ translate: "cw.chunk.sell.check", with: [String(config.chunkprice / 2)] })
         form.button1({ translate: "cw.form.sell" })
         form.button2({ translate: "cw.form.cancel" })
         const res = await form.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
 
-            player.sendMessage({ translate: "cw.chunk.sell.success", with: [`${countryData.money}`, `${countryData.money + config.chunkprice / 2}`] })
+            player.sendMessage({ translate: "cw.chunk.sell.success", with: [String(countryData.money), String(countryData.money + config.chunkprice / 2)] })
             countryData.money += config.chunkprice / 2;
             countryData.chunkAmount -= 1;
             countryDatas.set(countryData.id, countryData)

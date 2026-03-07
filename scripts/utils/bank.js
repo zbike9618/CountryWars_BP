@@ -39,9 +39,9 @@ export class Bank {
     static bankForm(player) {
         const money = getTotalMoney(player)
         const form = new ActionFormData()
-        form.title("銀行")
-        form.button("お金を預ける");
-        form.button("お金を引き出す");
+        form.title({ translate: "cw.bankform.title" })
+        form.button({ translate: "cw.bankform.tobank" });
+        form.button({ translate: "cw.bankform.frombank" });
         form.show(player).then((res) => {
             if (res.canceled) return;
             switch (res.selection) {
@@ -59,14 +59,17 @@ export class Bank {
         const money = getTotalMoney(player);
 
         const form = new MessageFormData()
-            .title("お金を預ける")
-            .body(`持っているすべての現金が預けられます\n現在持っている現金の金額：§a${money}円`)
-            .button1("はい")
-            .button2("いいえ");
+            .title({ translate: "cw.bankform.tobank" })
+            .body({ translate: "cw.scform.money.title", with: [String(money), "???"] /* ※実際の国庫金額は別フォーム用だが仮当てするか、UI用キーを後で調整 */ })
+            // TODO: 専用キーが無い場合は既存の近いキーを使用するか、とりあえず RawMessage形式の文字列にします。
+            // "持っているすべての現金が預けられます\n現在持っている現金の金額：§a${money}円"
+            .body({ rawtext: [{ text: "持っているすべての現金が預けられます\n現在持っている現金の金額：§a" }, { text: String(money) }, { text: "円" }] })
+            .button1({ translate: "cw.form.yes" })
+            .button2({ translate: "cw.form.no" });
 
         form.show(player).then((result) => {
             if (result.canceled || result.selection === 1) {
-                player.sendMessage("§c預け入れを中断しました");
+                player.sendMessage({ translate: "cw.form.cancel" }); // 代用キー
                 this.bankForm(player);
                 return;
             }
@@ -86,15 +89,15 @@ export class Bank {
                             container.setItem(i, undefined);
                         }
                     }
-                    player.sendMessage(`§a${amount}円を預けました！`);
+                    player.sendMessage({ rawtext: [{ text: "§a" }, { text: String(amount) }, { text: "円を預けました！" }] }); // 専用キーがないためRawText化
                     this.bankForm(player);
                 } catch (e) {
-                    player.sendMessage("§cエラーが発生したため、預け入れを中断しました。");
+                    player.sendMessage({ translate: "cw.form.cancel" }); // エラー中断
                     console.warn(`Deposit Error: ${e}`);
                     this.bankForm(player);
                 }
             } else {
-                player.sendMessage("§c預けるための現金を持っていません。");
+                player.sendMessage({ translate: "cw.scform.money.deposit.noenough" }); // 手持ちなし
                 this.bankForm(player);
             }
         });
@@ -115,8 +118,8 @@ export class Bank {
         ];
 
         const form = new ActionFormData()
-            .title("銀行：引き出し")
-            .body(`現在の銀行残高: §a${currentBalance}円\n種類を選択してください。`);
+            .title({ translate: "cw.bankform.frombank" })
+            .body({ rawtext: [{ text: "現在の銀行残高: §a" }, { text: String(currentBalance) }, { text: "円\n種類を選択してください。" }] });
 
         for (const d of denoms) {
             form.button(`${d.label}`);
@@ -131,12 +134,12 @@ export class Bank {
             const maxAmount = Math.floor(balance / selected.value);
 
             if (maxAmount <= 0) {
-                player.sendMessage("§c残高が不足しています。");
+                player.sendMessage({ translate: "cw.pay.nomoney" });
                 return;
             }
 
             const sliderForm = new ModalFormData()
-                .title(`${selected.label}を引き出す`)
+                .title({ rawtext: [{ text: selected.label + "を引き出す" }] })
                 .slider(
                     `何枚引き出しますか？\n1枚 = ${selected.value}円\n現在残高: ${balance}円`,
                     1,
@@ -151,7 +154,7 @@ export class Bank {
                 const totalCost = amount * selected.value;
 
                 if (Util.getMoney(player) < totalCost) {
-                    player.sendMessage("§c残高が不足しています。");
+                    player.sendMessage({ translate: "cw.pay.nomoney" });
                     return;
                 }
 
@@ -160,7 +163,7 @@ export class Bank {
                 // 64個で1スタックとして、必要なスタック数を計算
                 const requiredSlots = Math.ceil(amount / 64);
                 if (inventory.emptySlotsCount < requiredSlots) {
-                    player.sendMessage(`§cインベントリの空きが足りません。（必要な空き枠: ${requiredSlots}）`);
+                    player.sendMessage({ translate: "cw.playermarket.invfull" });
                     return;
                 }
 
@@ -177,13 +180,11 @@ export class Bank {
                 } catch (e) {
                     // 万が一giveコマンドが失敗した場合は返金する
                     Util.addMoney(player, totalCost);
-                    player.sendMessage("§cアイテムの付与に失敗したため、返金しました。");
+                    player.sendMessage({ translate: "cw.form.cancel" }); // 代替
                     return;
                 }
 
-                player.sendMessage(
-                    `§a${selected.label}を${amount}枚引き出しました。（残高: ${Util.getMoney(player)}円）`
-                );
+                player.sendMessage({ rawtext: [{ text: `§a${selected.label}を${amount}枚引き出しました。（残高: ` }, { text: String(Util.getMoney(player)) }, { text: "円）" }] });
 
                 this.withdrawForm(player);
             });

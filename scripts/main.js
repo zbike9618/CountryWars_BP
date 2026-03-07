@@ -60,7 +60,10 @@ system.runInterval(() => {
                     } catch (e) {
                         const resReq = new HttpRequest(SERVER_URL);
                         resReq.method = HttpRequestMethod.Post;
-                        resReq.headers = [new HttpHeader("Content-Type", "application/json")];
+                        resReq.headers = [
+                            new HttpHeader("Content-Type", "application/json"),
+                            new HttpHeader("Authorization", "Bearer " + config.apiToken)
+                        ];
                         resReq.body = JSON.stringify({
                             type: "tps_result",
                             interactionId: cmd.interactionId,
@@ -80,7 +83,10 @@ system.runInterval(() => {
 
     const request = new HttpRequest(SERVER_URL); // SERVER_URLへPOST
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({
         type: "ping",
         players: currentPlayers // ここで名前リストを送る

@@ -61,10 +61,10 @@ function openSelectForm(sender, message) {
     sortedNames.length > 0 ? sortedNames : ["オンラインプレイヤーなし"];
 
 const form = new ModalFormData()
-  .title("送信先を選択")
-  .toggle("直近の送信先を使う", { defaultValue: false })
-  .dropdown("直近の送信先", recentOptions, { defaultValueIndex: 0 })
-  .dropdown("オンラインプレイヤー", onlineOptions, { defaultValueIndex: 0 });
+  .title({ translate: "cw.sendmsg.title" })
+  .toggle({ translate: "cw.sendmsg.toggle.recent" }, { defaultValue: false })
+  .dropdown({ translate: "cw.sendmsg.dropdown.recent" }, recentOptions, { defaultValueIndex: 0 })
+  .dropdown({ translate: "cw.sendmsg.dropdown.online" }, onlineOptions, { defaultValueIndex: 0 });
 
   form.show(sender).then(res => {
     if (res.canceled) return;
@@ -86,14 +86,14 @@ const form = new ModalFormData()
 
     const target = world.getPlayers().find(p => p.name === targetName);
     if (!target) {
-      sender.sendMessage(`§c${targetName} は現在オンラインではありません`);
+      sender.sendMessage({ translate: "cw.sendmsg.offline", with: [targetName] });
       return;
     }
 
-    target.sendMessage(`>>>§b${senderName}§rからのメッセージです：${message}`);
+    target.sendMessage({ translate: "cw.sendmsg.receive", with: [senderName, message] });
 
     // 送った側への確認メッセージ
-    sender.sendMessage(`<<<§b${targetName}§rに送りました：${message}`);
+    sender.sendMessage({ translate: "cw.sendmsg.sent", with: [targetName, message] });
 
     updateRecent(senderName, targetName);
   });

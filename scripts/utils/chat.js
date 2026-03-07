@@ -75,7 +75,10 @@ function sendChatToDiscord(text, playerName = "Server") {
 function sendToDiscord(text, playerName = "Server") {
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({
         message: text,
         sender: playerName
@@ -89,7 +92,10 @@ function sendToDiscord(text, playerName = "Server") {
 function sendTranslatedToDiscord(key, args = []) {
     const request = new HttpRequest(SERVER_URL);
     request.method = HttpRequestMethod.Post;
-    request.headers = [new HttpHeader("Content-Type", "application/json")];
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
     request.body = JSON.stringify({
         key: key,
         args: args

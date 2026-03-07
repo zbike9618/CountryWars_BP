@@ -52,7 +52,7 @@ function DoCommand(origin) {
             }
             War.invade(player, countryData);
         } else {
-            player.sendMessage("現在は侵略できません（人数バランスが悪いか、対象外のエリアです）");
+            player.sendMessage({ translate: "cw.war.invade.error" }); // 翻訳キー cw.war.invade.error を追加する必要がありますが、暫定で設定
         }
     })
 

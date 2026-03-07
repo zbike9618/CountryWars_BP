@@ -24,7 +24,7 @@ export class Country {
 
         // 建国費用のチェック
         if (playerData.money < config.countryprice) {
-            player.sendMessage(`§c建国には§e${config.countryprice}§c必要です。現在の手持ち: §e${playerData.money}`);
+            player.sendMessage({ translate: "cw.mcform.notEnoughMoney", with: [String(config.countryprice), String(playerData.money)] });
             return;
         }
 
@@ -296,7 +296,7 @@ class Information {
                 `${countryData.tax.income}`,
                 `${countryData.tax.country}`,
                 `${countryData.tax.customs}`,
-                War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし"
+                War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし" // TODO: "なし" の翻訳キーが指定されていないため、一旦ハードコード残し
             ]
         })
         form.button({ translate: "cw.form.redo" })
@@ -397,7 +397,7 @@ class Permission {
         const permissions = Object.keys(countryData.permissions).filter(permissionName => permissionName != "国王")
         aform.title({ translate: "cw.scform.permission.edit" })
         for (const data of permissions) {
-            aform.button({ text: `${data}` })
+            aform.button(data)
         }
         const resp = await aform.show(player)
         if (resp.canceled) return;
@@ -792,7 +792,7 @@ class Diplomacy {
             } else {
                 names = "None"; // 翻訳キーがあれば変更
             }
-            bodyText += `§l${this.relationJP[rel]}§r: ${names}\n`;
+            bodyText += `§l${this.relationJP[rel]}§r: ${names}\n`; // RawText化を簡略化するためそのまま、または UI なら rawtext 使用可能ですが、後で調整します。
         }
 
         form.body(bodyText);
@@ -880,7 +880,7 @@ class Diplomacy {
      */
     static requestAlly(player, countryData, targetCountry) {
         if (!targetCountry.diplomacy) {
-            player.sendMessage({ rawtext: [{ text: "§cThe target country does not support diplomacy yet. (Old Data)" }] });
+            player.sendMessage({ rawtext: [{ text: "§cThe target country does not support diplomacy yet. (Old Data)" }] }); // システムエラーのためそのまま
             return;
         }
         // 既に同盟なら中止
@@ -1054,10 +1054,10 @@ class Diplomacy {
     static async permissionMenu(player, countryData) {
         const form = new ActionFormData();
         form.title({ translate: "cw.scform.diplomacy.permission_settings" });
-        form.button(`${this.relationJP["ally"]} 権限`);
-        form.button(`${this.relationJP["friend"]} 権限`);
-        form.button(`${this.relationJP["neutral"]} 権限`);
-        form.button(`${this.relationJP["enemy"]} 権限`);
+        form.button({ rawtext: [{ translate: "cw.scform.diplomacy.req_ally" }, { text: " 権限" }] }); // Ally
+        form.button({ rawtext: [{ translate: "cw.scform.diplomacy.set_friend" }, { text: " 権限" }] }); // Friend
+        form.button({ rawtext: [{ translate: "cw.scform.diplomacy.set_neutral" }, { text: " 権限" }] }); // Neutral
+        form.button({ rawtext: [{ translate: "cw.scform.diplomacy.set_enemy" }, { text: " 権限" }] }); // Enemy
 
         const res = await form.show(player);
         if (res.canceled) return;

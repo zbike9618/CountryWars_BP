@@ -12,7 +12,7 @@ const chunkDatas = new Dypro("chunk");
 export class Menu {
     static async showForm(player) {
         const form = new ui.ActionFormData();
-        form.title("cw.menu.title");
+        form.title({ translate: "cw.menu.title" });
         form.button({ translate: "cw.menu.movemoney" });
         form.button({ translate: "cw.menu.secondname" });
         form.button({ translate: "cw.menu.adminchunk" });
@@ -36,7 +36,7 @@ export class Menu {
 }
 async function movemoney(player) {
     const form = new ui.ModalFormData();
-    form.title("cw.menu.movemoney");
+    form.title({ translate: "cw.menu.movemoney" });
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
     form.dropdown({ translate: "cw.menu.movemoney.operation" }, [{ translate: "cw.menu.movemoney.action.add" }, { translate: "cw.menu.movemoney.action.remove" }, { translate: "cw.menu.movemoney.action.set" }]);
@@ -85,9 +85,9 @@ async function movemoney(player) {
 
 async function SecondName(player) {
     const form = new ui.ActionFormData();
-    form.title("cw.menu.secondname");
-    form.button("cw.menu.secondname.addtitle");
-    form.button("cw.menu.secondname.removetitle");
+    form.title({ translate: "cw.menu.secondname" });
+    form.button({ translate: "cw.menu.secondname.addtitle" });
+    form.button({ translate: "cw.menu.secondname.removetitle" });
     form.show(player).then((response) => {
         if (response.canceled) {
             Menu.showForm(player);
@@ -105,9 +105,9 @@ async function addsecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
     const form = new ui.ModalFormData();
-    form.title("cw.menu.secondname.addtitle");
+    form.title({ translate: "cw.menu.secondname.addtitle" });
     form.dropdown({ translate: "cw.menu.secondname.player" }, playerNames);
-    form.dropdown({ translate: "cw.menu.secondname.position" }, ["cw.menu.secondname.position.before", "cw.menu.secondname.position.after"]);
+    form.dropdown({ translate: "cw.menu.secondname.position" }, [{ translate: "cw.menu.secondname.position.before" }, { translate: "cw.menu.secondname.position.after" }]);
     form.textField({ translate: "cw.menu.secondname.add.secondname" }, { translate: "cw.menu.secondname.add.secondname.example" });
     form.show(player).then((response) => {
         if (response.canceled) {
@@ -136,12 +136,12 @@ async function addsecondname(player) {
 }
 async function AdminChunk(player) {
     const form = new ui.ActionFormData();
-    form.title("cw.menu.adminchunk");
+    form.title({ translate: "cw.menu.adminchunk" });
     const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
     const countryId = Chunk.checkChunk(chunkId);
 
     let status = countryId === "admin" ? "§cAdmin" : countryId === "wasteland" ? "§7Wasteland" : `§6${countryDatas.get(countryId)?.name || countryId}`;
-    form.body(`Chunk ID: ${chunkId}\nStatus: ${status}`);
+    form.body({ translate: "cw.menu.adminchunk.status", with: [chunkId, status] });
     if (countryId === "admin") {
         form.button({ translate: "cw.menu.adminchunk.remove" });
         form.button({ translate: "cw.menu.adminchunk.setting" });
@@ -181,7 +181,7 @@ async function removeAdminChunk(player) {
 }
 async function AdminChunkSetting(player, chunkId) {
     const form = new ui.ModalFormData();
-    form.title("cw.menu.adminchunk.setting");
+    form.title({ translate: "cw.menu.adminchunk.setting" });
     form.toggle({ translate: "cw.menu.adminchunk.setting.place" });
     form.toggle({ translate: "cw.menu.adminchunk.setting.break" });
     form.toggle({ translate: "cw.menu.adminchunk.setting.interact" });
@@ -207,7 +207,7 @@ async function removesecondname(player) {
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
     const form = new ui.ModalFormData();
-    form.title("cw.menu.secondname.removetitle");
+    form.title({ translate: "cw.menu.secondname.removetitle" });
     form.dropdown({ translate: "cw.menu.secondname.player" }, playerNames);
     form.show(player).then((response) => {
         if (response.canceled) {
@@ -226,7 +226,7 @@ async function removesecondnameSelect(player, selectedPlayer) {
     let before = [...playerData.secondname.before, "-"]
     let after = [...playerData.secondname.after, "-"]
     // player.sendMessage(`${before}><${after}`);//debug
-    form.title("cw.menu.secondname.removetitle");
+    form.title({ translate: "cw.menu.secondname.removetitle" });
     form.dropdown({ translate: "cw.menu.secondname.remove.before" }, before, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
     form.dropdown({ translate: "cw.menu.secondname.remove.after" }, after, { tooltip: { translate: "cw.menu.secondname.remove.tooltip" } })
     form.show(player).then((response) => {
@@ -294,7 +294,7 @@ async function PlayerDataReset(player) {
     const form = new ui.ModalFormData();
     const allPlayers = world.getAllPlayers();
     const playerNames = allPlayers.map(p => p.name);
-    form.title("cw.menu.playerdatareset.title");
+    form.title({ translate: "cw.menu.playerdatareset.title" });
     form.dropdown({ translate: "cw.menu.playerdatareset.player" }, playerNames);
     form.toggle({ translate: "cw.menu.playerdatareset.reset" }, { tooltip: { translate: "cw.menu.playerdatareset.tooltip" } });
     form.show(player).then((response) => {
@@ -319,7 +319,7 @@ async function DeleteCountry(player) {
         .map(id => countryDatas.get(id))
         .filter(country => country?.name);
     const form = new ui.ActionFormData();
-    form.title("cw.menu.deletecountry");
+    form.title({ translate: "cw.menu.deletecountry" });
     for (const country of countries) {
         form.button(country.name);
     }

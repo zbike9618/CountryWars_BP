@@ -17,12 +17,12 @@ server.system.beforeEvents.startup.subscribe(ev => {
             let player = origin.sourceEntity;
             system.run(async () => {  // 1tick後に安全に実行
                 const form = new ModalFormData();
-                form.title("管理者呼び出し");
-                form.textField("§c§l管理者呼び出しフォームを開きます\n§e§l意味なく呼び出すと処罰が課されます\n\n理由を入力してください", "§c§l理由を入力してください");
+                form.title({ translate: "cw.admincall.title" });
+                form.textField({ translate: "cw.admincall.reason.label" }, { translate: "cw.admincall.reason.placeholder" });
                 const res = await form.show(player)
                 if (res.canceled) return;
-                DiscordRelay.send(`<@&1401578585650892971> §e${player.name}§cが§e§l管理者呼び出し§cを行いました\n§e§l理由: ${res.formValues[0]}`);
-                player.sendMessage("§c§l管理者呼び出しをしました");
+                DiscordRelay.send(`<@&1401578585650892971> §e${player.name}§cが§e§l管理者呼び出し§cを行いました\n§e§l理由: ${res.formValues[0]}`); // Discord用なので翻訳キー不要
+                player.sendMessage({ translate: "cw.admincall.success" });
             });
         }
     });

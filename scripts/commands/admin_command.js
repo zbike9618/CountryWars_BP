@@ -10,7 +10,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         let args = ev.message.split(" ");
         if (ev.sourceType == "Entity") {
             Util.setMoney(ev.sourceEntity, Number(args[0]));
-            ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lの所持金を§r§a§l${args[0]}§r§a§lに設定しました`);
+            ev.sourceEntity.sendMessage({ translate: "cw.admin.setmoney", with: [ev.sourceEntity.name, args[0]] });
         }
     }
 })
@@ -19,7 +19,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         let args = ev.message.split(" ");
         if (ev.sourceType == "Entity") {
             Util.addMoney(ev.sourceEntity, Number(args[0]));
-            ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lの所持金を§r§a§l${args[0]}§r§a§l追加しました`);
+            ev.sourceEntity.sendMessage({ translate: "cw.admin.addmoney", with: [ev.sourceEntity.name, args[0]] });
         }
     }
 })
@@ -33,7 +33,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             ev.sourceEntity.removeTag("job:3");
             ev.sourceEntity.removeTag("job:4");
             ev.sourceEntity.removeTag("job:5");
-            ev.sourceEntity.sendMessage(`§a§l${ev.sourceEntity.name}§r§a§lのタグを§r§a§lリセットしました`);
+            ev.sourceEntity.sendMessage({ translate: "cw.admin.resetjob", with: [ev.sourceEntity.name] });
         }
     }
     if (ev.id == "cw:test") {
@@ -48,12 +48,12 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         world.clearDynamicProperties();
         for (const player of world.getAllPlayers()) {
             player.clearDynamicProperties();
-            player.runCommand("kick @s 初期化のため\nもう一度入りなおしてください")
+            player.runCommand(`kick @s ${Data.kickMessages.allreset || "初期化のため\nもう一度入りなおしてください"}`);
 
         }
     }
     if (ev.id == "cw:initial") {
         ev.sourceEntity?.clearDynamicProperties();
-        ev.sourceEntity?.runCommand("kick @s 初期化のため\nもう一度入りなおしてください")
+        ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
     }
 })
