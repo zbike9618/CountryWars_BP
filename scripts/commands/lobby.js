@@ -1,6 +1,6 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
-import config from "../config/config"
+import config from "../config/config.js"
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -34,7 +34,7 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        player.runCommand(`execute in overworld run tp @s ${config.lobby}`)
+        player.teleport(config.lobby, { dimension: world.getDimension("overworld") })
         player.sendMessage({ translate: "cw.phone.went.lobby" })
     })
 
