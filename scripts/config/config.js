@@ -25,4 +25,6 @@ export default {
     warProtectionPeriod: 7,
     // 外部通信用APIトークン
     apiToken: "SECRET_MINECRAFT_TOKEN_CW",
+    //ロビーの座標
+    lobby: { x: 9.01, y: 64.50, z: 8.95 },
 };
