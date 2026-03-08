@@ -164,8 +164,9 @@ export class War {
             }
             countryDatas.set(mineData.id, mineData);
             countryDatas.set(enemyData.id, enemyData);
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
