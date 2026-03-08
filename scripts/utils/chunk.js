@@ -147,7 +147,8 @@ export class Chunk {
                 break: false,
                 interact: false,
                 hurtEntity: false,
-                hurtPlayer: false
+                hurtPlayer: false,
+                allowedPlayers: []
             }
         });
     }
@@ -163,6 +164,7 @@ export class Chunk {
         if (countryId === "admin") {
             const chunkData = chunkDatas.get(chunkId);
             if (!chunkData || !chunkData.setting) return { allowed: false, countryName: "Admin" };
+            if (chunkData.setting.allowedPlayers && chunkData.setting.allowedPlayers.includes(player.name)) return { allowed: true };
             let allowed = false;
             if (permType === "place_block") allowed = chunkData.setting.place;
             else if (permType === "break_block") allowed = chunkData.setting.break;

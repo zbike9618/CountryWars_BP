@@ -180,24 +180,29 @@ async function removeAdminChunk(player) {
     AdminChunk(player);
 }
 async function AdminChunkSetting(player, chunkId) {
+    const chunkData = chunkDatas.get(chunkId)
+    if (!chunkData.setting) chunkData.setting = { place: false, break: false, interact: false, hurtEntity: false, hurtPlayer: false, allowedPlayers: [] };
+
     const form = new ui.ModalFormData();
     form.title({ translate: "cw.menu.adminchunk.setting" });
-    form.toggle({ translate: "cw.menu.adminchunk.setting.place" });
-    form.toggle({ translate: "cw.menu.adminchunk.setting.break" });
-    form.toggle({ translate: "cw.menu.adminchunk.setting.interact" });
-    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtEntity" });
-    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtPlayer" });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.place" }, { defaultValue: chunkData.setting.place });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.break" }, { defaultValue: chunkData.setting.break });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.interact" }, { defaultValue: chunkData.setting.interact });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtEntity" }, { defaultValue: chunkData.setting.hurtEntity });
+    form.toggle({ translate: "cw.menu.adminchunk.setting.hurtPlayer" }, { defaultValue: chunkData.setting.hurtPlayer });
+    form.textField({ translate: "cw.menu.adminchunk.setting.allowedPlayers" }, { translate: "cw.menu.adminchunk.setting.allowedPlayers.example" }, { defaultValue: chunkData.setting.allowedPlayers?.join(",") || "" });
+
     form.show(player).then((res) => {
         if (res.canceled) {
             AdminChunk(player);
             return;
         };
-        const chunkData = chunkDatas.get(chunkId)
         chunkData.setting.place = res.formValues[0]
         chunkData.setting.break = res.formValues[1]
         chunkData.setting.interact = res.formValues[2]
         chunkData.setting.hurtEntity = res.formValues[3]
         chunkData.setting.hurtPlayer = res.formValues[4]
+        chunkData.setting.allowedPlayers = res.formValues[5].split(",").map(name => name.trim()).filter(name => name !== "");
         chunkDatas.set(chunkId, chunkData)
         player.sendMessage({ translate: "cw.menu.adminchunk.setting.success", with: [chunkId] });
         AdminChunk(player);
