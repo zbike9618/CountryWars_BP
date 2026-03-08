@@ -184,6 +184,8 @@ export class Data {
         "minecraft:chiseled_bookshelf",
         "minecraft:decorated_pot",
         "minecraft:pink_petals",
-        "minecraft:big_dripleaf"
+        "minecraft:big_dripleaf",
+        "minecraft:water",
+        "minecraft:lava"
     ]
 }
