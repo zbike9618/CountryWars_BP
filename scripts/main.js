@@ -1,5 +1,5 @@
 import { world } from "@minecraft/server"
-import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+//import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { system } from "@minecraft/server";
 import "./commands/command"
 import "./utils/playerData"
