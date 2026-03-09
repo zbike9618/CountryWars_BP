@@ -8,7 +8,7 @@ world.afterEvents.entityDie.subscribe((ev) => {
         const attachments = getAttachment(entity);
         const explosion = attachments.explosion || 0
         if (explosion) {
-            dimension.createExplosion(entity.location, 5 + 3 * explosion);
+            dimension.createExplosion(entity.location, 5 + 5 * explosion);
         }
     }
 })
