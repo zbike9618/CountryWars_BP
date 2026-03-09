@@ -159,6 +159,7 @@ export class Chunk {
         }
     }
     static checkPermission(player, chunkId, permType) {
+        if (player.hasTag("cw:chunkEditer")) return { allowed: true };
         const countryId = this.checkChunk(chunkId);
         if (countryId === "wasteland") return { allowed: true };
         if (countryId === "admin") {
