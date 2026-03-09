@@ -1,1 +1,7 @@
-*.js merge=binary
+# Discord関連のファイルなど、必ず自分で確認したいファイルを指定
+manifest.json merge=force-manual
+main.js merge=force-manual
+chat.js merge=force-manual
+
+# もしフォルダの中にある場合はパスを詳しく書きます
+# scripts/chat.js merge=force-manual
