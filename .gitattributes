@@ -1,6 +1,3 @@
-# Discord関連のファイルなど、必ず自分で確認したいファイルを指定
-*.json merge=manual
-*.js merge=manual
-
-# もしフォルダの中にある場合はパスを詳しく書きます
-# scripts/chat.js merge=force-manual
+# 拡張子すべての JS と JSON に、私たちが作った "force-manual" ルールを適用する
+*.js merge=force-manual
+*.json merge=force-manual
