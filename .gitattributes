@@ -1,6 +1,6 @@
 # Discord関連のファイルなど、必ず自分で確認したいファイルを指定
-*.json merge=force-manual
-*.js merge=force-manual
+*.json merge=manual
+*.js merge=manual
 
 # もしフォルダの中にある場合はパスを詳しく書きます
 # scripts/chat.js merge=force-manual
