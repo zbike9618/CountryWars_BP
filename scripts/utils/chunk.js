@@ -158,6 +158,13 @@ export class Chunk {
             chunkDatas.delete(chunkId);
         }
     }
+    /**
+     * 
+     * @param {server.Player} player 
+     * @param {*} chunkId 
+     * @param {*} permType 
+     * @returns 
+     */
     static checkPermission(player, chunkId, permType) {
         if (player.hasTag("cw:chunkEditer")) return { allowed: true };
         const countryId = this.checkChunk(chunkId);

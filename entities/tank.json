@@ -67,8 +67,8 @@
             "minecraft:movement.basic": {},
             "minecraft:jump.static": {},
             "minecraft:health": {
-                "value": 100,
-                "max": 100
+                "value": 200,
+                "max": 200
             },
             "minecraft:collision_box": {
                 "width": 0.98,
@@ -92,6 +92,12 @@
                 "family_types": [
                     "player"
                 ]
+            },
+            "minecraft:damage_sensor": {
+                "triggers": {
+                    "cause": "explosion",
+                    "damage_multiplier": 0.5
+                }
             },
             "minecraft:input_ground_controlled": {},
             "minecraft:physics": {},
@@ -239,22 +245,22 @@
         "component_groups": {
             "cw:health_0": {
                 "minecraft:health": {
-                    "max": 100
+                    "max": 200
                 }
             },
             "cw:health_1": {
                 "minecraft:health": {
-                    "max": 200
+                    "max": 300
                 }
             },
             "cw:health_2": {
                 "minecraft:health": {
-                    "max": 300
+                    "max": 400
                 }
             },
             "cw:health_3": {
                 "minecraft:health": {
-                    "max": 400
+                    "max": 500
                 }
             },
             "cw:fast_0": {
