@@ -1,5 +1,5 @@
 import { world } from "@minecraft/server"
-import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+//import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { system } from "@minecraft/server";
 import config from "./config/config.js";
 import "./commands/command"
@@ -9,7 +9,9 @@ import "./items/items"
 import "./utils/chat"
 import "./utils/bank"
 import "./plugin_controller"
-world.afterEvents.worldLoad.subscribe(() => {
+
+
+/*world.afterEvents.worldLoad.subscribe(() => {
     for (const player of world.getAllPlayers()) {
         player.inputPermissions.setPermissionCategory(6, true)
     }
