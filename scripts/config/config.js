@@ -14,7 +14,7 @@ export default {
     //一国が保有できる最大チャンク数
     maxchunk: 128,
     //設定できるhomeの数
-    maxhome: 3,
+    maxhome: 5,
     //最大戦争勝利金
     maxWarMoney: 500000,
     //株売却時の国に必ず残るお金

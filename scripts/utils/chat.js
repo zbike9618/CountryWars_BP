@@ -51,9 +51,8 @@ system.runInterval(() => {
 /**
  * 通常チャット・AI質問用
  */
-function sendChatToDiscord(text, playerName = "Server") {
+function sendChatToDiscord(text, playerName = "Server", chatType = "world") {
     // メンション防止: 半角の「@」を全角の「＠」に変更します。
-    // replace(/@/g, "＠") というのは、文章の中にあるすべての「@」を探して「＠」に変えるという命令です。
     const safeText = text.replace(/@/g, "＠");
 
     const request = new HttpRequest(SERVER_URL);
@@ -64,7 +63,8 @@ function sendChatToDiscord(text, playerName = "Server") {
     ];
     request.body = JSON.stringify({
         message: safeText,
-        sender: playerName
+        sender: playerName,
+        chatType: chatType
     });
     http.request(request).catch(() => { });
 }
@@ -140,17 +140,19 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     switch (playerData.chattype) {
         case "world":
             world.sendMessage(send);
-            if (!message.startsWith("!ai ")) sendChatToDiscord(send, player.name);
+            if (!message.startsWith("!ai ")) sendChatToDiscord(send, player.name, "world");
             break;
         case "country":
             for (const pc of world.getAllPlayers().filter(p => playerDatas.get(p.id).country == playerData.country)) {
                 pc.sendMessage(send);
             }
+            sendChatToDiscord(send, player.name, "country");
             break;
         case "local":
             for (const pc of player.dimension.getPlayers({ location: player.location, maxDistance: config.localChatDistance })) {
                 pc.sendMessage(send);
             }
+            sendChatToDiscord(send, player.name, "local");
             break;
     }
 });

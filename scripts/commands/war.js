@@ -7,6 +7,7 @@ const playerDatas = new Dypro("player")
 import { Util } from "../utils/util.js";
 import { ActionFormData, MessageFormData, ModalFormData } from "@minecraft/server-ui";
 import { hasPermission } from "../utils/country.js";
+import { DiscordRelay } from "../utils/chat.js";
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -122,6 +123,9 @@ async function declareForm(player, countryData) {
         if (War.declareTo(countryData, enemyData)) {
             //宣戦布告を送信
             world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
+            DiscordRelay.sendTranslate({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
+            DiscordRelay.send(`<@&1474940218191777872>`);
+
             for (const player of world.getAllPlayers()) {
                 player.playSound("mob.enderdragon.growl")
             }
