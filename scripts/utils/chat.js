@@ -1,6 +1,6 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+//import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { Dypro } from "./dypro.js";
 import config from "../config/config.js";
 
@@ -28,9 +28,9 @@ system.run(() => {
 
 /**
  * Discordからのメッセージ受信 & 死活監視(Ping)
- */
+ *  */
 system.runInterval(() => {
-    const request = new HttpRequest(GET_URL);
+    //const request = new HttpRequest(GET_URL);
     request.method = HttpRequestMethod.Get;
     request.headers = [new HttpHeader("Authorization", "Bearer " + config.apiToken)];
 
@@ -48,12 +48,12 @@ system.runInterval(() => {
     });
 }, 20);
 
+
 /**
  * 通常チャット・AI質問用
  */
-function sendChatToDiscord(text, playerName = "Server") {
+function sendChatToDiscord(text, playerName = "Server", chatType = "world") {
     // メンション防止: 半角の「@」を全角の「＠」に変更します。
-    // replace(/@/g, "＠") というのは、文章の中にあるすべての「@」を探して「＠」に変えるという命令です。
     const safeText = text.replace(/@/g, "＠");
 
     const request = new HttpRequest(SERVER_URL);
@@ -64,7 +64,8 @@ function sendChatToDiscord(text, playerName = "Server") {
     ];
     request.body = JSON.stringify({
         message: safeText,
-        sender: playerName
+        sender: playerName,
+        chatType: chatType
     });
     http.request(request).catch(() => { });
 }
@@ -128,11 +129,13 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     ev.cancel = true;
 
     let chatTypeSymbol = "";
-    switch (playerData.chattype) {
-        case "world": chatTypeSymbol = "§aW"; break;
-        case "country": chatTypeSymbol = "§eC"; break;
-        case "local": chatTypeSymbol = "§cL"; break;
-    }
+switch (playerData.chattype) {
+    case "world": chatTypeSymbol = "§aW"; break;
+    case "country": chatTypeSymbol = "§eC"; break;
+    case "local": chatTypeSymbol = "§cL"; break;
+    case "ally": chatTypeSymbol = "§dA"; break;
+}
+
 
     const secondname = playerData.secondname;
     const send = `[${chatTypeSymbol}§r][${secondname.before[secondname.now[0]]}§r${secondname.after[secondname.now[1]]}§r/${countryname}§r] <${player.name}> ${message}`;
@@ -140,20 +143,37 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     switch (playerData.chattype) {
         case "world":
             world.sendMessage(send);
-            if (!message.startsWith("!ai ")) sendChatToDiscord(send, player.name);
+            if (!message.startsWith("!ai ")) sendChatToDiscord(send, player.name, "world");
             break;
         case "country":
             for (const pc of world.getAllPlayers().filter(p => playerDatas.get(p.id).country == playerData.country)) {
                 pc.sendMessage(send);
             }
+            sendChatToDiscord(send, player.name, "country");
             break;
         case "local":
             for (const pc of player.dimension.getPlayers({ location: player.location, maxDistance: config.localChatDistance })) {
                 pc.sendMessage(send);
             }
+            sendChatToDiscord(send, player.name, "local");
             break;
+        case "ally": { // ← 追加
+            const myCountryData = countryDatas.get(playerData.country);
+            if (!myCountryData) {
+                player.sendMessage("§c国に所属していないため同盟チャットは使用できません。");
+                break;
+            }
+            const allyIds = myCountryData.diplomacy?.ally ?? [];
+            const allowedCountries = new Set([playerData.country, ...allyIds]);
+            for (const pc of world.getAllPlayers().filter(p => allowedCountries.has(playerDatas.get(p.id).country))) {
+                pc.sendMessage(send);
+            }
+                break;
     }
-});
+}
+
+    }
+);
 
 /**
  * その他（参加退出・タイプ変更）

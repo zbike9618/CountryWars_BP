@@ -72,6 +72,22 @@ system.beforeEvents.startup.subscribe(ev => {
         optionalParameters: [
         ],
     }
+    const ally = { 
+        name: "cw:allychat", 
+        description: "チャットタイプを同盟にする", 
+        permissionLevel: server.CommandPermissionLevel.Any, 
+        mandatoryParameters: [
+        ],
+        optionalParameters: [
+        ] }
+    const allyS = { 
+        name: "cw:achat", 
+        description: "チャットタイプを同盟にする", 
+        permissionLevel: server.CommandPermissionLevel.Any, 
+        mandatoryParameters: [
+        ], 
+        optionalParameters: [
+        ] }
 
     ev.customCommandRegistry.registerCommand(world, worldChat);
     ev.customCommandRegistry.registerCommand(worldS, worldChat);
@@ -79,6 +95,9 @@ system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand(countryS, countryChat);
     ev.customCommandRegistry.registerCommand(local, localChat);
     ev.customCommandRegistry.registerCommand(localS, localChat);
+    ev.customCommandRegistry.registerCommand(ally, allyChat);
+    ev.customCommandRegistry.registerCommand(allyS, allyChat);
+
 });
 
 function worldChat(origin) {
@@ -148,3 +167,13 @@ function localChat(origin) {
     }
 }
 
+
+// 新しく追加した関数
+function allyChat(origin) {
+    if (origin.sourceEntity?.typeId !== "minecraft:player") {
+        return { status: server.CustomCommandStatus.Failure, message: "実行者はプレイヤーである必要があります" }
+    }
+    const player = origin.sourceEntity;
+    system.run(() => { ChangeChatType(player, "ally"); })
+    return { status: server.CustomCommandStatus.Success, message: undefined }
+}

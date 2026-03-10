@@ -119,8 +119,12 @@ async function executeBlockLog(player, radius, days) {
 
         logs.forEach(log => {
             const actionColor = log.action === "Place" ? "§a" : "§c";
-            const timeStr = log.timestamp.substring(11, 16);
-            resultForm.button(`${actionColor}[${timeStr}] ${log.playerName}\n§7${log.blockName}§r`);
+            // log.timestamp ("YYYY-MM-DD HH:MM:SS") から 月/日 と 時:分 を抽出
+            const dateStr = log.timestamp.substring(5, 10).replace('-', '/'); // "MM/DD"
+            const timeStr = log.timestamp.substring(11, 16); // "HH:MM"
+            const displayTime = `${dateStr} ${timeStr}`;
+
+            resultForm.button(`${actionColor}[${displayTime}] ${log.playerName}\n§7${log.blockName}§r`);
         });
 
         const response = await forceShow(player, resultForm);
