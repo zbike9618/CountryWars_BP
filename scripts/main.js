@@ -11,7 +11,7 @@ import "./utils/bank"
 import "./plugin_controller"
 
 
-/*world.afterEvents.worldLoad.subscribe(() => {
+world.afterEvents.worldLoad.subscribe(() => {
     for (const player of world.getAllPlayers()) {
         player.inputPermissions.setPermissionCategory(6, true)
     }

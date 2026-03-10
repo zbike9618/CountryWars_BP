@@ -28,6 +28,7 @@ system.run(() => {
 
 /**
  * Discordからのメッセージ受信 & 死活監視(Ping)
+ *  */
 system.runInterval(() => {
     //const request = new HttpRequest(GET_URL);
     request.method = HttpRequestMethod.Get;
@@ -46,7 +47,7 @@ system.runInterval(() => {
         // 接続失敗時はエラーを出さず無視（Node側が落ちている場合など）
     });
 }, 20);
- */
+
 
 /**
  * 通常チャット・AI質問用
