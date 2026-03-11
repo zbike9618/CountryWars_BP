@@ -7,6 +7,12 @@ export const turnedOnPlugins = {
     "admin": {
         blackList: [
             "test"
+        ],
+        opWhiteList: [
+            "choki2094"
+        ],
+        creativeWhiteList: [
+            "choki2094"
         ]
     }
 }
