@@ -133,7 +133,7 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
-    form.setButton(14, {
+    form.setButton(15, {
         iconPath: "textures/ui/store_home_icon",
         name: "Tips（お役立ち情報）の受け取り設定",
         stackAmount: 1,
