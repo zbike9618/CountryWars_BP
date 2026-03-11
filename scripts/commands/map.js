@@ -62,7 +62,7 @@ function showMap(origin) {
                 let color = "f"; // 未領土（白）
 
                 if (i === 0 && j === 0) {
-                    color = "4"; // 自分の位置（赤）
+                    color = "1"; // 自分の位置（黄）
                 } else if (ownerCountryId) {
                     color = "e"; // 他国（黄）
                     if (ownerCountryId === myCountryId && myCountryId) {
@@ -83,7 +83,7 @@ function showMap(origin) {
 
         // 凡例
         const legend = [
-            "§4■§r 自分の位置",
+            "§1■§r 自分の位置",
             "§a■§r 自国",
             "§b■§r 同盟国",
             "§d■§r 友好国",
