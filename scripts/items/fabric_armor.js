@@ -8,9 +8,9 @@ system.runInterval(() => {
     if (equip.getEquipment("Chest")?.typeId === "cw:fabric_chestplate") { power++ };
     if (equip.getEquipment("Legs")?.typeId === "cw:fabric_leg") { power++ };
     if (equip.getEquipment("Feet")?.typeId === "cw:fabric_boots") { power++ };
-    if (equip.getEquipment("Head")?.typeId === "cw:fabric_helmet") { power += 20 };
+    if (equip.getEquipment("Head")?.typeId === "cw:fabric_helmet") { power ++ };
     if (power > 0) {
-      const speed = (power - 1) * 3;
+      const speed = (power - 1) * 5;
       player.addEffect("speed", 20, { amplifier: speed, showParticles: false });
     }
   }
