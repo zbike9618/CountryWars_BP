@@ -7,6 +7,12 @@ export const turnedOnPlugins = {
     "admin": {
         blackList: [
             "test"
+        ],
+        opWhiteList: [
+            "test"
+        ],
+        creativeWhiteList: [
+            "test"
         ]
     },
     "block_logger": {},
