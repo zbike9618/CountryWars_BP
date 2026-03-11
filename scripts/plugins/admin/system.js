@@ -3,8 +3,12 @@ import { DiscordRelay } from "../../utils/chat.js";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
+<<<<<<< HEAD
 import { blacklist, opWhiteList } from "./import.js";
 import { Ban } from "./ban.js";
+=======
+import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
+>>>>>>> b928e11 (a)
 
 world.afterEvents.playerSpawn.subscribe(ev => {
     if (!ev.initialSpawn) return;
@@ -54,6 +58,7 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
+<<<<<<< HEAD
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         // ゲームモードのチェック
@@ -67,9 +72,26 @@ system.runInterval(() => {
         if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
                 Ban.setBan(player, "不正な権限", "day", 365);
+=======
+
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        if (player.getGameMode() === server.GameMode.Creative) {
+            if (!creativeWhiteList.includes(player.name)) {
+                //player.setGamemode(server.GameMode.Survival);
+                player.runCommand("kick @s 不正なゲームモードの変更");
+            }
+        }
+        if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
+            if (!opWhiteList.includes(player.name)) {
+>>>>>>> b928e11 (a)
                 player.runCommand("kick @s 不正な権限");
             }
         }
     }
+<<<<<<< HEAD
 }, 1);
 
+=======
+}, 20);
+>>>>>>> b928e11 (a)
