@@ -124,7 +124,7 @@ async function declareForm(player, countryData) {
             //宣戦布告を送信
             world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })
             DiscordRelay.sendTranslate(`cw.warform.declare.message`, [countryData.name, enemyData.name])
-            DiscordRelay.send(`<@&1474940218191777872>`);
+            DiscordRelay.send(`<@&1480588916863275038>`);
 
             for (const player of world.getAllPlayers()) {
                 player.playSound("mob.enderdragon.growl")
