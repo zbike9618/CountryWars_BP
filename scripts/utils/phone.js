@@ -133,6 +133,13 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+    form.setButton(14, {
+        iconPath: "textures/ui/store_home_icon",
+        name: "Tips（お役立ち情報）の受け取り設定",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.setButton(26, {
         iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
@@ -186,6 +193,9 @@ function show_form(player) {
                 break;
             case 14:
                 player.runCommand("shop")
+                break;
+            case 15:
+                player.runCommand("sv:tips")
                 break;
             case 26:
                 Help.mainForm(player);
