@@ -47,7 +47,7 @@ function show_form(player) {
     })
 
     form.setButton(3, {
-        iconPath: "textures/items/compass",
+        iconPath: "textures/items/compass_item",
         name: "cw.phone.goto.lobby",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -85,7 +85,7 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(8, {
-        iconPath: "textures/items/gold_block",
+        iconPath: "textures/blocks/gold_block",
         name: "cw.bankform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -99,7 +99,7 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(10, {
-        iconPath: "textures/ui/sidebar_icons/chat",
+        iconPath: "textures/ui/message",
         name: "cw.wchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -127,21 +127,21 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(14, {
-        iconPath: "textures/ui/cart_icon",
+        iconPath: "textures/ui/store_home_icon",
         name: "cw.shop.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(15, {
-        iconPath: "textures/items/book",
+        iconPath: "textures/items/book_normal",
         name: "Tips（お役立ち情報）の受け取り設定",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(26, {
-        iconPath: "textures/ui/help_icon",
+        iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
         stackAmount: 1,
         lore: ["comming soon..."],
