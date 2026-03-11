@@ -68,6 +68,8 @@ system.runInterval(() => {
             if (!opWhiteList.includes(player.name)) {
                 Ban.setBan(player, "不正な権限", "day", 365);
                 player.runCommand("kick @s 不正な権限");
+                world.sendMessage("kick")
+
             }
         }
     }
