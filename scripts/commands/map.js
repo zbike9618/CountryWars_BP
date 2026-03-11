@@ -1,5 +1,6 @@
 import * as server from "@minecraft/server";
 const { system } = server;
+import { ActionFormData } from "@minecraft/server-ui";
 import { Dypro } from "../utils/dypro.js";
 import { Chunk } from "../utils/chunk.js";
 
@@ -44,11 +45,11 @@ function showMap(origin) {
         const currentX = Math.floor(rawX / 16);
         const currentZ = Math.floor(rawZ / 16);
 
-        // 21×21 のマップを生成
+        // 19×19 のマップを生成
         const rows = [];
-        for (let i = -10; i <= 10; i++) {
+        for (let i = -9; i <= 9; i++) {
             const cells = [];
-            for (let j = -10; j <= 10; j++) {
+            for (let j = -9; j <= 9; j++) {
                 const chunkX = currentX + j;
                 const chunkZ = currentZ + i;
                 const chunkId = Chunk.positionToChunkId(
@@ -78,7 +79,7 @@ function showMap(origin) {
 
                 cells.push(`§${color}■`);
             }
-            rows.push(cells.join(""));
+            rows.push("  " + cells.join(""));
         }
 
         // 凡例
@@ -92,12 +93,19 @@ function showMap(origin) {
             "§f■§r 未領土",
         ].join("  ");
 
-        const separator = "§8" + "─".repeat(21);
-        player.sendMessage(
-            `${separator}\n${rows.join("\n")}\n${separator}\n${legend}`
-        );
+        const separator = "  §8" + "─".repeat(19);
+        const mapText = `${separator}\n${rows.join("\n")}\n${separator}`;
 
-        player.teleport(player.location, { rotation: { x: 0, y: player.getRotation().y } });
+        const form = new ActionFormData();
+        form.title("§l周辺マップ");
+        form.body(`${mapText}\n\n${legend}`);
+        form.button("閉じる");
+
+        system.run(() => {
+            form.show(player);
+        });
+
+        player.teleport(player.location, { rotation: { x: 0, y: 180 } });
     });
 
     return {
