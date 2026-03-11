@@ -2,7 +2,7 @@ import { Dypro } from "../../utils/dypro";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-import { blacklist } from "./import.js";
+import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
 
 world.afterEvents.playerSpawn.subscribe(ev => {
     if (!ev.initialSpawn) return;
@@ -52,3 +52,19 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
+
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        if (player.getGameMode() === server.GameMode.Creative) {
+            if (!creativeWhiteList.includes(player.name)) {
+                //player.setGamemode(server.GameMode.Survival);
+                player.runCommand("kick @s 不正なゲームモードの変更");
+            }
+        }
+        if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
+            if (!opWhiteList.includes(player.name)) {
+                player.runCommand("kick @s 不正な権限");
+            }
+        }
+    }
+}, 20);
