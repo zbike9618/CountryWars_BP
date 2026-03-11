@@ -80,12 +80,15 @@ system.runInterval(() => {
             if (!creativeWhiteList.includes(player.name)) {
                 //player.setGamemode(server.GameMode.Survival);
                 player.runCommand("kick @s 不正なゲームモードの変更");
+                world.sendMessage("kick")
             }
         }
         if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
 >>>>>>> b928e11 (a)
                 player.runCommand("kick @s 不正な権限");
+                world.sendMessage("kick")
+
             }
         }
     }
