@@ -144,18 +144,23 @@ export class War {
         if (this.isBalanced(myplayers.length, enemyplayers.length)) {
             mineData.warcountry.push(enemyData.id);
             enemyData.warcountry.push(mineData.id);
-            if (mineData.isPeace) {
-                mineData.wardeath += myplayers.length * 5;
+
+            // 自分の国の wardeath 設定
+            const myNewLives = myplayers.length * (mineData.isPeace ? 15 : 5);
+            if (mineData.warcountry.length === 1 || !mineData.wardeath || mineData.wardeath <= 0) {
+                mineData.wardeath = myNewLives;
+            } else {
+                mineData.wardeath += myNewLives;
             }
-            else {
-                mineData.wardeath += myplayers.length * 15;
+
+            // 相手の国の wardeath 設定
+            const enemyNewLives = enemyplayers.length * (enemyData.isPeace ? 15 : 5);
+            if (enemyData.warcountry.length === 1 || !enemyData.wardeath || enemyData.wardeath <= 0) {
+                enemyData.wardeath = enemyNewLives;
+            } else {
+                enemyData.wardeath += enemyNewLives;
             }
-            if (enemyData.isPeace) {
-                enemyData.wardeath += enemyplayers.length * 5;
-            }
-            else {
-                enemyData.wardeath += enemyplayers.length * 15;
-            }
+
             for (const player of myplayers) {
                 player.addTag("cw:duringwar")
             }
@@ -210,6 +215,10 @@ export class War {
         // 敗北時の保護期間再設定
         loserData.buildtime = Date.now();
         loserData.lastDefeated = Date.now();
+
+        // 戦争が一つもなくなった場合、wardeathを0にリセット
+        if (winnerData.warcountry.length === 0) winnerData.wardeath = 0;
+        if (loserData.warcountry.length === 0) loserData.wardeath = 0;
 
         countryDatas.set(loserData.id, loserData)
         countryDatas.set(winnerData.id, winnerData)

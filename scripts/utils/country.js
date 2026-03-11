@@ -119,7 +119,7 @@ export class Country {
             for (const warcountryId of countryData.warcountry) {
                 const warcountryData = countryDatas.get(warcountryId);
                 if (!warcountryData) continue;
-                War.finish(warcountryData, countryData, "invade");
+                War.finish(warcountryData, countryData, "force");
             }
         }
         //chunkも消す

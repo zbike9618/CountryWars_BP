@@ -7,6 +7,20 @@ export const turnedOnPlugins = {
     "admin": {
         blackList: [
             "test"
+        ],
+        opWhiteList: [
+            "Zbike9618JP",
+            "choki2094",
+            "atutti1270",
+            "tememe003",
+            "Yakiagedori",
+        ],
+        creativeWhiteList: [
+            "Zbike9618JP",
+            "choki2094",
+            "atutti1270",
+            "tememe003",
+            "Yakiagedori",
         ]
     },
     "block_logger": {},
