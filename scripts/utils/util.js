@@ -167,7 +167,14 @@ export class Util {
  * @param {number} amount 減らす耐久値の量 (デフォルトは1)
  * @returns {boolean} アイテムが壊れなかった場合はtrue、壊れた場合はfalseを返す
  */
-    static reduceDurability(player, itemStack, amount = 1) {
+    /**
+ * @param {server.Player} player アイテムを持っているプレイヤー
+ * @param {server.ItemStack} itemStack 耐久値を減らしたいアイテムスタック
+ * @param {number} amount 減らす耐久値の量 (デフォルトは1)
+ * @param {string} slotName 装備スロット名 (Head, Chest, Legs, Feet) - 省略時はメインハンドのアイテム
+ * @returns {boolean} アイテムが壊れなかった場合はtrue、壊れた場合はfalseを返す
+ */
+    static reduceDurability(player, itemStack, amount = 1, slotName = undefined) {
         const durability = itemStack.getComponent(server.ItemComponentTypes.Durability);
         if (!durability) {
             // 耐久コンポーネントがなければ何もしない
@@ -185,19 +192,28 @@ export class Util {
             return true; // 耐久値が減らなかった（壊れてもいない）
         }
 
-        const inventory = player.getComponent(server.EntityComponentTypes.Inventory).container;
-        const slot = player.selectedSlotIndex;
-
         // 耐久ダメージが最大値以上になるかチェック
         if (durability.damage + amount >= durability.maxDurability) {
             // アイテム破壊処理
-            inventory.setItem(slot, undefined);
+            if (slotName) {
+                const equippable = player.getComponent("minecraft:equippable");
+                equippable.setEquipment(slotName, undefined);
+            } else {
+                const inventory = player.getComponent(server.EntityComponentTypes.Inventory).container;
+                inventory.setItem(player.selectedSlotIndex, undefined);
+            }
             player.playSound("random.break");
             return false; // 壊れた
         } else {
             // 耐久値を減らす
             durability.damage += amount;
-            inventory.setItem(slot, itemStack);
+            if (slotName) {
+                const equippable = player.getComponent("minecraft:equippable");
+                equippable.setEquipment(slotName, itemStack);
+            } else {
+                const inventory = player.getComponent(server.EntityComponentTypes.Inventory).container;
+                inventory.setItem(player.selectedSlotIndex, itemStack);
+            }
             return true; // 壊れなかった
         }
     }

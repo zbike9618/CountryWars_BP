@@ -2,6 +2,7 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Ban } from "./ban"
+import { permList } from "./perm"
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * 
@@ -42,6 +43,43 @@ system.beforeEvents.startup.subscribe(ev => {
     }
     ev.customCommandRegistry.registerCommand(banlistCommand, DoBanList);
 });
+system.beforeEvents.startup.subscribe(ev => {
+    /**
+     * 
+     * @type {import("@minecraft/server").CustomCommand}
+     */
+    const command = {
+        name: "cw:nopermission",
+        description: "[サポーター専用] 権限がなくてもコマンドが実行できます",
+        permissionLevel: server.CommandPermissionLevel.Any,
+        mandatoryParameters: [
+        ],
+        optionalParameters: [
+        ],
+    }
+    ev.customCommandRegistry.registerCommand(command, nopermission());
+});
+/**
+ * 
+ * @param {import("@minecraft/server").CustomCommandOrigin} origin 
+ * @returns 
+ */
+function nopermission(origin) {
+    const player = origin.sourceEntity;
+    if (player.typeId != "minecraft:player") {
+        return {
+            status: server.CustomCommandStatus.Failure,
+            message: "実行者はプレイヤーです",
+        }
+    }
+    system.run(() => {
+        permList(player)
+    })
+    return {
+        status: server.CustomCommandStatus.Success,
+        message: message,
+    }
+}
 
 function DoCommand(origin, players, reason, timeEnum, time) {
     if (players.length === 0) {
