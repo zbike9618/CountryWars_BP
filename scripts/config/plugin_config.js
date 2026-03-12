@@ -9,10 +9,18 @@ export const turnedOnPlugins = {
             "test"
         ],
         opWhiteList: [
-            "choki2094"
+            "Zbike9618JP",
+            "choki2094",
+            "atutti0830",
+            "tememe003",
+            "Yakiagedori",
         ],
         creativeWhiteList: [
-            "choki2094"
+            "Zbike9618JP",
+            "choki2094",
+            "atutti0830",
+            "tememe003",
+            "Yakiagedori",
         ]
     },
     "block_logger": {},

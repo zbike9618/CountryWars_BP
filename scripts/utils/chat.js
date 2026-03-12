@@ -1,6 +1,6 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-//import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
+import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { Dypro } from "./dypro.js";
 import config from "../config/config.js";
 
@@ -30,7 +30,7 @@ system.run(() => {
  * Discordからのメッセージ受信 & 死活監視(Ping)
  *  */
 system.runInterval(() => {
-    //const request = new HttpRequest(GET_URL);
+    const request = new HttpRequest(GET_URL);
     request.method = HttpRequestMethod.Get;
     request.headers = [new HttpHeader("Authorization", "Bearer " + config.apiToken)];
 
@@ -129,12 +129,12 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     ev.cancel = true;
 
     let chatTypeSymbol = "";
-switch (playerData.chattype) {
-    case "world": chatTypeSymbol = "§aW"; break;
-    case "country": chatTypeSymbol = "§eC"; break;
-    case "local": chatTypeSymbol = "§cL"; break;
-    case "ally": chatTypeSymbol = "§dA"; break;
-}
+    switch (playerData.chattype) {
+        case "world": chatTypeSymbol = "§aW"; break;
+        case "country": chatTypeSymbol = "§eC"; break;
+        case "local": chatTypeSymbol = "§cL"; break;
+        case "ally": chatTypeSymbol = "§dA"; break;
+    }
 
 
     const secondname = playerData.secondname;
@@ -168,11 +168,11 @@ switch (playerData.chattype) {
             for (const pc of world.getAllPlayers().filter(p => allowedCountries.has(playerDatas.get(p.id).country))) {
                 pc.sendMessage(send);
             }
-                break;
+            break;
+        }
     }
-}
 
-    }
+}
 );
 
 /**

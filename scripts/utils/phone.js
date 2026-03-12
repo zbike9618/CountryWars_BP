@@ -23,7 +23,7 @@ function show_form(player) {
     const money = data.money || 0;
     form.setTitle("ZPhone"),
         form.setButton(0, {
-            iconPath: "textures/items/gold_ingot",
+            iconPath: "textures/items/coin_100",
             name: "cw.phone.check.money",
             stackAmount: 1,
             lore: [`¥${money}`],
@@ -39,7 +39,7 @@ function show_form(player) {
         })
 
     form.setButton(2, {
-        iconPath: "textures/items/later",
+        iconPath: "textures/ui/message",
         name: "cw.phone.message.system",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -47,7 +47,7 @@ function show_form(player) {
     })
 
     form.setButton(3, {
-        iconPath: "textures/items/nether_star",
+        iconPath: "textures/items/compass_item",
         name: "cw.phone.goto.lobby",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -55,7 +55,7 @@ function show_form(player) {
     })
 
     form.setButton(4, {
-        iconPath: "textures/items/wood_axe",
+        iconPath: "textures/items/iron_pickaxe",
         name: "cw.phone.select.job",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -63,7 +63,7 @@ function show_form(player) {
     })
 
     form.setButton(5, {
-        iconPath: "textures/items/diamond",
+        iconPath: "textures/items/bed_red",
         name: "cw.phone.set.home",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -71,28 +71,28 @@ function show_form(player) {
     })
 
     form.setButton(6, {
-        iconPath: "textures/items/diamond",
+        iconPath: "textures/items/bed_red",
         name: "cw.phone.goto.home",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(7, {
-        iconPath: "textures/items/wood_pickaxe",
+        iconPath: "textures/items/name_tag",
         name: "cw.secondnameform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(8, {
-        iconPath: "textures/items/gold_ingot",
+        iconPath: "textures/blocks/gold_block",
         name: "cw.bankform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(9, {
-        iconPath: "textures/ui/automation_glyph_color",
+        iconPath: "textures/items/security_camera",
         name: "cw.scform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -113,14 +113,14 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(12, {
-        iconPath: "textures/ui/message",
+        iconPath: "textures/ui/icon_multiplayer",
         name: "cw.cchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(13, {
-        iconPath: "textures/ui/friendsbutton/navbar-friends-icon",
+        iconPath: "textures/items/emerald",
         name: "cw.playermarket.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
@@ -133,6 +133,13 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+    form.setButton(15, {
+        iconPath: "textures/items/book_normal",
+        name: "Tips（お役立ち情報）の受け取り設定",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
     form.setButton(26, {
         iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
@@ -140,6 +147,7 @@ function show_form(player) {
         lore: ["comming soon..."],
         isGlint: true, editedName: true
     })
+
     form.show(player).then((responce) => {
         switch (responce.selection) {
             case 0:
@@ -186,6 +194,9 @@ function show_form(player) {
                 break;
             case 14:
                 player.runCommand("shop")
+                break;
+            case 15:
+                player.runCommand("sv:tips")
                 break;
             case 26:
                 Help.mainForm(player);

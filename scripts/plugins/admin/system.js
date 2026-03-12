@@ -61,7 +61,7 @@ system.runInterval(() => {
                 player.runCommand("kick @s 不正なゲームモードの変更");
             }
         }
-        if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
+        if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
                 player.runCommand("kick @s 不正な権限");
             }
