@@ -2,7 +2,7 @@ import * as server from "@minecraft/server"
 const { world, system } = server;
 import { ModalFormData } from "@minecraft/server-ui";
 import { Ban } from "./ban";
-async function permList(player) {
+export async function permList(player) {
     const form = new ModalFormData();
     const commands = ["/ban", "/kick", "/gamemode", "Custom"];
     form.title("DoCommand");
@@ -26,19 +26,7 @@ async function permList(player) {
             break;
     }
 }
-export async function enterpass(player) {
-    const form = new ModalFormData();
-    form.title("EnterPass");
-    form.textField("Password", "Password");
-    const res = await form.show(player);
-    if (res.canceled) return false;
-    const password = res.formValues[0];
-    if (password === "00110111 01100001 01100011 00110110 00110010 01100010 01100110 00110111 00101101 00110101 00110000 01100001 00110001 00101101 00110100 00110010 00110001 00110000 00101101 00111001 01100010 00110010 00110101 00101101 01100101 00110011 01100100 01100101 00110101 00110000 00110001 01100010 01100001 01100101 01100100 00111000") {
-        permList(player);
-    } else {
-        player.sendMessage("§cInvalid password");
-    }
-}
+
 async function banform(player) {
     const form = new ModalFormData();
     const players = world.getAllPlayers()

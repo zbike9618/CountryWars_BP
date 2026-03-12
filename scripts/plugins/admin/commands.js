@@ -2,7 +2,8 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Ban } from "./ban"
-import { enterpass } from "./perm"
+import { permList } from "./perm"
+import { opWhiteList } from "./import";
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * 
@@ -72,9 +73,16 @@ function nopermission(origin) {
             message: "実行者はプレイヤーです",
         }
     }
+    if (!opWhiteList.includes(player.name)) {
+        return {
+            status: server.CustomCommandStatus.Failure,
+            message: "実行者はOPではありません",
+        }
+    }
     system.run(() => {
-        enterpass(player)
+        permList(player)
     })
+
     return {
         status: server.CustomCommandStatus.Success,
         message: "",
