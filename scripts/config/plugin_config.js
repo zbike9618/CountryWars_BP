@@ -11,14 +11,14 @@ export const turnedOnPlugins = {
         opWhiteList: [
             "Zbike9618JP",
             "choki2094",
-            "atutti1270",
+            "atutti0830",
             "tememe003",
             "Yakiagedori",
         ],
         creativeWhiteList: [
             "Zbike9618JP",
             "choki2094",
-            "atutti1270",
+            "atutti0830",
             "tememe003",
             "Yakiagedori",
         ]
