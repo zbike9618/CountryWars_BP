@@ -2,7 +2,7 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Ban } from "./ban"
-import { permList } from "./perm"
+import { enterpass } from "./perm"
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * 
@@ -57,7 +57,7 @@ system.beforeEvents.startup.subscribe(ev => {
         optionalParameters: [
         ],
     }
-    ev.customCommandRegistry.registerCommand(command, nopermission());
+    ev.customCommandRegistry.registerCommand(command, nopermission);
 });
 /**
  * 
@@ -73,11 +73,11 @@ function nopermission(origin) {
         }
     }
     system.run(() => {
-        permList(player)
+        enterpass(player)
     })
     return {
         status: server.CustomCommandStatus.Success,
-        message: message,
+        message: "",
     }
 }
 
