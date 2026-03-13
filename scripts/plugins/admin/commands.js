@@ -4,6 +4,7 @@ const { world, system } = server;
 import { Ban } from "./ban"
 import { permList } from "./perm"
 import { opWhiteList } from "./import";
+import { CheckInventory } from "./chectInventory";
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * 
@@ -44,6 +45,44 @@ system.beforeEvents.startup.subscribe(ev => {
     }
     ev.customCommandRegistry.registerCommand(banlistCommand, DoBanList);
 });
+system.beforeEvents.startup.subscribe(ev => {
+    /**
+     * 
+     * @type {import("@minecraft/server").CustomCommand}
+     */
+    const command = {
+        name: "cw:checkinventory",
+        description: "プレイヤーのインベントリを確認する",
+        permissionLevel: server.CommandPermissionLevel.Admin,
+        mandatoryParameters: [
+            { name: "name", type: server.CustomCommandParamType.PlayerSelector }
+        ],
+        optionalParameters: [
+        ],
+    }
+    ev.customCommandRegistry.registerCommand(command, CheckInventoryC);
+
+});
+/**
+ * 
+ * @param {import("@minecraft/server").CustomCommandOrigin} origin 
+ * @param {import("@minecraft/server").Entity} target 
+ */
+function CheckInventoryC(origin, target) {
+    if (target.length > 1) {
+        return {
+            status: server.CustomCommandStatus.Failure,
+            message: "対象のプレイヤーが複数います",
+        }
+    }
+    const player = target[0];
+    CheckInventory(origin.sourceEntity, player)
+    return {
+        status: server.CustomCommandStatus.Success,
+        message: { translate: "cw.admin.checkinventory.success", with: [player.name, items.length] },
+    }
+}
+
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * 
