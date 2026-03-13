@@ -30,7 +30,38 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const dura = itemStack.getComponent("minecraft:durability");
     if (!dura) return;
     const reduce = Math.floor(ev.damage * reduceAmount);
-    if (!Util.reduceDurability(attacker, itemStack, Math.min(reduce, Math.floor(dura.maxDurability / 4)))) {
+    if (!Util.reduceDurability(attacker, itemStack, reduce)) {
         attacker.playSound("item.axe.break");
+    }
+});
+
+world.afterEvents.entityHitEntity.subscribe((ev) => {
+    const damager = ev.damagingEntity;
+    const hurter = ev.hitEntity;
+
+    if (damager.typeId !== "minecraft:player" || hurter.typeId !== "minecraft:player") return;
+
+    const inventory = damager.getComponent("minecraft:inventory");
+    const heldItem = inventory.container.getItem(damager.selectedSlotIndex);
+    if (!heldItem || heldItem.typeId !== "cw:platinum_sword") return;
+    const armorSlot = hurter.getComponent("minecraft:equippable")
+    // 相手の合計防御力を計算
+    const totalDefense = armorSlot.totalArmor + armorSlot.totalToughness
+
+    // 削る耐久値の計算（防御力の5倍）
+    const reduce = Math.max(1, Math.floor(totalDefense * 5));
+
+    const armorSlots = ["Head", "Chest", "Legs", "Feet"];
+    for (const slot of armorSlots) {
+        const armorItem = armorSlot.getEquipment(slot);
+        if (!armorItem) continue;
+
+        const dura = armorItem.getComponent("minecraft:durability");
+        if (!dura) continue;
+
+        if (!Util.reduceDurability(hurter, armorItem, reduce, slot)) {
+            // アイテムが壊れた場合
+            hurter.playSound("item.axe.break");
+        }
     }
 });

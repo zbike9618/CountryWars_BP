@@ -47,6 +47,34 @@ export class Ban {
             }
         });
     }
+    /**
+     * 
+     * @param {server.Player} player 
+     * @param {string} reason 
+     * @param {string} timeEnum 
+     * @param {number} time 
+     */
+    static doBan(player, reason, timeEnum, time) {
+        const playerData = playerDatas.get(player.id);
+        if (!playerData) return;
+
+        const date = new Date();
+        let finishTime;
+        if (timeEnum === "day") {
+            finishTime = date.getTime() + time * 24 * 60 * 60 * 1000;
+        } else if (timeEnum === "hour") {
+            finishTime = date.getTime() + time * 60 * 60 * 1000;
+        } else if (timeEnum === "minute") {
+            finishTime = date.getTime() + time * 60 * 1000;
+        } else if (timeEnum === "second") {
+            finishTime = date.getTime() + time * 1000;
+        }
+        playerData.ban = {
+            reason: reason || "No reason provided",
+            finishtime: finishTime
+        }
+        playerDatas.set(player.id, playerData);
+    }
 
     /**
      * BANされているプレイヤーのリストを取得する
