@@ -284,19 +284,32 @@ class Information {
     static async information(player, countryData) {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
+        const dp = countryData.diplomacy;
+        const allyNames   = (dp?.ally   || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const enemyNames  = (dp?.enemy  || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const warNames    = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const protection  = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
         form.body({
-            translate: "cw.scform.informations", with: [
-                `${countryData.name}`,
-                `${countryData.description}`,
-                `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
-                `${countryData.money}`,
-                `${countryData.chunkAmount}`,
-                `${countryData.tax.consumption}`,
-                `${countryData.tax.income}`,
-                `${countryData.tax.country}`,
-                `${countryData.tax.customs}`,
-                War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし" // TODO: "なし" の翻訳キーが指定されていないため、一旦ハードコード残し
+            rawtext: [
+                { translate: "cw.scform.informations", with: [
+                    `${countryData.name}`,
+                    `${countryData.description}`,
+                    `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+                    `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                    `${countryData.money}`,
+                    `${countryData.chunkAmount}`,
+                    `${countryData.tax.consumption}`,
+                    `${countryData.tax.income}`,
+                    `${countryData.tax.country}`,
+                    `${countryData.tax.customs}`,
+                    protection
+                ]},
+                { text: `\n§l--- 外交関係 ---§r\n` },
+                { text: `§a同盟§f: ${allyNames}\n` },
+                { text: `§b友好§f: ${friendNames}\n` },
+                { text: `§c敵対§f: ${enemyNames}\n` },
+                { text: `§4戦争中§f: ${warNames}` },
             ]
         })
         form.button({ translate: "cw.form.redo" })
