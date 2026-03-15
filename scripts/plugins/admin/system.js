@@ -55,9 +55,9 @@ function formatTime(ms) {
 
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
-        if (player.getGameMode() === server.GameMode.Creative) {
+        if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
             if (!creativeWhiteList.includes(player.name)) {
-                //player.setGamemode(server.GameMode.Survival);
+                player.setGameMode(server.GameMode.Survival);
                 player.runCommand("kick @s 不正なゲームモードの変更");
             }
         }

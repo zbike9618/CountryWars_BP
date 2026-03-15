@@ -113,27 +113,41 @@ function show_form(player) {
         isGlint: true, editedName: true
     })
     form.setButton(12, {
-        iconPath: "textures/ui/icon_multiplayer",
+        iconPath: "textures/ui/message",
         name: "cw.cchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(13, {
-        iconPath: "textures/items/emerald",
-        name: "cw.playermarket.title",
+        iconPath: "textures/ui/message",
+        name: "cw.achatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(14, {
+        iconPath: "textures/ui/navbar-friends-icon",
+        name: "cw.playermarket.title",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(15, {
         iconPath: "textures/ui/store_home_icon",
         name: "cw.shop.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
-    form.setButton(15, {
+    form.setButton(16, {
+        iconPath: "textures/items/map_filled",
+        name: "MAP",
+        stackAmount: 1,
+        lore: ["<<Click here>>"],
+        isGlint: true, editedName: true
+    })
+    form.setButton(17, {
         iconPath: "textures/items/book_normal",
         name: "Tips（お役立ち情報）の受け取り設定",
         stackAmount: 1,
@@ -190,12 +204,18 @@ function show_form(player) {
                 player.runCommand("cchat")
                 break;
             case 13:
-                player.runCommand("pm")
+                player.runCommand("achat")
                 break;
             case 14:
-                player.runCommand("shop")
+                player.runCommand("pm")
                 break;
             case 15:
+                player.runCommand("shop")
+                break;
+            case 16:
+                player.runCommand("map")
+                break;
+            case 17:
                 player.runCommand("sv:tips")
                 break;
             case 26:

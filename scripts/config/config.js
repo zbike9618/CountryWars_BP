@@ -16,7 +16,7 @@ export default {
     //設定できるhomeの数
     maxhome: 5,
     //最大戦争勝利金
-    maxWarMoney: 500000,
+    maxWarMoney: 100000,
     //株売却時の国に必ず残るお金
     stockMaxSell: 5000,
     // タンクのアタッチメント最大数
