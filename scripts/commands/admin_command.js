@@ -53,7 +53,12 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         }
     }
     if (ev.id == "cw:initial") {
-        ev.sourceEntity?.clearDynamicProperties();
-        ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+        const playerData = playerDatas.get(ev.sourceEntity.id);
+        if (!playerData) {
+            ev.sourceEntity?.clearDynamicProperties();
+            ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+        } else {
+            ev.sourceEntity?.sendMessage(`§cプレイヤーデータが破損していないため実行できません。`);
+        }
     }
 })
