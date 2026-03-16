@@ -252,16 +252,23 @@ async function sellFormS(player, item, maxamount) {
         const newItem = inv.getItem(i)
         if (!newItem) continue;
         if (newItem.typeId !== item.typeId) continue;
-        inv.setItem(i)
+        inv.setItem(i, undefined)
     }
 
     const amountC = maxamount - amount;
     if (amountC == 0) return;
     const count = Math.floor(amountC / 64);
     for (let i = 0; i < count; i++) {
-        inv.addItem(new server.ItemStack(`${item.typeId}`, 64))
+        const newItem = item.clone();
+        newItem.amount = 64;
+        inv.addItem(newItem);
     }
-    inv.addItem(new server.ItemStack(`${item.typeId}`, amountC - (count * 64)))
+    const remainder = amountC - (count * 64);
+    if (remainder > 0) {
+        const newItem = item.clone();
+        newItem.amount = remainder;
+        inv.addItem(newItem);
+    }
 
 }
 async function editForm(player) {
@@ -308,7 +315,8 @@ async function editForm2(player, { page, slot }) {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = marketData.enchants
                     for (const enchantment of enchantments) {
-                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                        const type = server.EnchantmentTypes.get(enchantment.id);
+                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
                     }
                 }
                 if (marketData.durability) {
@@ -328,7 +336,8 @@ async function editForm2(player, { page, slot }) {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = marketData.enchants
                     for (const enchantment of enchantments) {
-                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                        const type = server.EnchantmentTypes.get(enchantment.id);
+                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
                     }
                 }
                 if (marketData.durability) {

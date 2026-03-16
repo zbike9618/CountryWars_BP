@@ -119,7 +119,8 @@ export class playerMarketSystem {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = itemData.enchants
                     for (const enchantment of enchantments) {
-                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                        const type = server.EnchantmentTypes.get(enchantment.id);
+                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
                     }
                 }
                 if (itemData.durability) {
@@ -140,7 +141,8 @@ export class playerMarketSystem {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = itemData.enchants
                     for (const enchantment of enchantments) {
-                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
+                        const type = server.EnchantmentTypes.get(enchantment.id);
+                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
                     }
                 }
                 if (itemData.durability) {
