@@ -557,6 +557,11 @@ class Member {
         sendDataForPlayers(data, playerId)
     }
     static async transferOwner(player, countryData) {
+        if (countryData.money < 0) {
+            player.sendMessage({ rawtext: [{ text: "§c国庫が借金を抱えているため国王を譲れません。" }] });
+            return;
+        }
+
         const members = countryData.players.filter(id => id !== player.id);
         if (members.length === 0) {
             player.sendMessage({ translate: "cw.form.noplayers" });
