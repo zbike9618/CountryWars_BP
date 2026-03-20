@@ -5,6 +5,7 @@ import { Util } from "../utils/util";
 world.afterEvents.entityHurt.subscribe((ev) => {
     const player = ev.hurtEntity;
     if (player.typeId != "minecraft:player") return;
+    /** @type {import("@minecraft/server").Player} */
     const attacker = ev.damageSource.damagingEntity;
     if (!attacker || attacker.typeId != "minecraft:player") return;
     const armorSlot = player.getComponent("minecraft:equippable")
@@ -28,9 +29,12 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const itemStack = comp.container?.getItem(attacker.selectedSlotIndex);
     if (!itemStack) return;
     const dura = itemStack.getComponent("minecraft:durability");
-    if (!dura) return;
     const reduce = Math.floor(ev.damage * reduceAmount);
-    world.sendMessage(`reduce: ${reduce}`);
+    if (!dura) {
+        if (itemStack.typeId.includes("trenbankai:")) {
+            attacker.applyDamage(reduce * 0.5, { cause: "thorns", damagingEntity: player })
+        }
+    }
     if (!Util.reduceDurability(attacker, itemStack, reduce)) {
         attacker.playSound("item.axe.break");
     }
