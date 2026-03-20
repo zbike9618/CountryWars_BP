@@ -11,8 +11,8 @@ system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
         name: "cw:servertransfer",
         description: "指定したサーバーにプレイヤーを転送します",
-        // Admin権限を持たせ、一般プレイヤーの悪用を防ぐ（NPCからは実行可能）
-        permissionLevel: server.CommandPermissionLevel.Admin,
+        // NPCからも実行できるようにAnyに変更 (必要に応じてアドオン側でOPのみの制限等を行う)
+        permissionLevel: server.CommandPermissionLevel.Any,
         mandatoryParameters: [
             { name: "ip", type: server.CustomCommandParamType.String },
             { name: "port", type: server.CustomCommandParamType.Integer }
@@ -21,6 +21,15 @@ system.beforeEvents.startup.subscribe(ev => {
             { name: "target", type: server.CustomCommandParamType.PlayerSelector }
         ]
     }, (origin, ip, port, targetSelector) => {
+        // 実行権限のチェック: プレイヤーなら 'cw:host' タグが必要。NPC(コマンドブロック等)なら許可。
+        if (origin.sourceEntity?.typeId === "minecraft:player") {
+            const player = origin.sourceEntity;
+            if (!player.hasTag("cw:host")) {
+                player.sendMessage("§c[ServerTransfer] 実行権限がありません。");
+                return;
+            }
+        }
+
         // 1tick遅延させて非同期処理から抜ける (transferPlayerを安全に呼ぶため)
         system.run(() => {
             let targets = [];
