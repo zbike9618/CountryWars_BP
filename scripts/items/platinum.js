@@ -30,6 +30,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
     const dura = itemStack.getComponent("minecraft:durability");
     if (!dura) return;
     const reduce = Math.floor(ev.damage * reduceAmount);
+    world.sendMessage(`reduce: ${reduce}`);
     if (!Util.reduceDurability(attacker, itemStack, reduce)) {
         attacker.playSound("item.axe.break");
     }
