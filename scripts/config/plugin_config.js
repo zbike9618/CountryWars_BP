@@ -4,6 +4,7 @@
  */
 export const turnedOnPlugins = {
     //"tweakeroo",
+    /*
     "admin": {
         blackList: [
             "test"
@@ -22,7 +23,8 @@ export const turnedOnPlugins = {
             "tememe003",
             "Yakiagedori",
         ]
-    },
-    "block_logger": {},
-    "report_system": {}
+    },*/
+    //"block_logger": {},
+    //"report_system": {},
+    "transfer": {},
 }
