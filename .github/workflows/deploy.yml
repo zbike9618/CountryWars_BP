@@ -1,0 +1,27 @@
+name: Deploy Addon to Debug Server
+
+on:
+  push:
+    branches: [ server ] # serverブランチにpushされたら発動
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: root # または minecraft ユーザー
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            bash /home/minecraft/sh/reboot.sh
