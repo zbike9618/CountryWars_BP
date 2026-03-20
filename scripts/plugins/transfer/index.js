@@ -9,7 +9,7 @@ import { transferPlayer } from "@minecraft/server-admin";
 
 system.beforeEvents.startup.subscribe(ev => {
     ev.customCommandRegistry.registerCommand({
-        name: "cw:transfer",
+        name: "cw:servertransfer",
         description: "指定したサーバーにプレイヤーを転送します",
         // Admin権限を持たせ、一般プレイヤーの悪用を防ぐ（NPCからは実行可能）
         permissionLevel: server.CommandPermissionLevel.Admin,
@@ -28,7 +28,7 @@ system.beforeEvents.startup.subscribe(ev => {
             // ターゲットが指定されている場合 (セレクター)
             if (targetSelector && targetSelector.length > 0) {
                 targets = targetSelector;
-            } 
+            }
             // ターゲットの指定がなく、実行者がプレイヤーである場合は自身を対象とする
             else if (origin.sourceEntity?.typeId === "minecraft:player") {
                 targets = [origin.sourceEntity];
