@@ -137,6 +137,16 @@ export class War {
         if (this.isProtected(mineData) || this.isProtected(enemyData)) {
             return false;
         }
+
+        // 借金チェック
+        if (mineData.money < 0) return false;
+        for (const playerId of mineData.players) {
+            const pd = playerDatas.get(playerId);
+            if (pd && pd.money < 0) {
+                return false;
+            }
+        }
+
         const myplayers = Util.GetCountryPlayer(mineData);
         const enemyplayers = Util.GetCountryPlayer(enemyData);
 
