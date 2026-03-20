@@ -1,44 +1,36 @@
-console.warn("[ServerTransfer] index.js の読み込みを開始します...");
 import { world, system } from "@minecraft/server";
+import { transferPlayer } from "@minecraft/server-admin";
 
-/** @type {any} */
-let transferPlayerFunc;
-
-// サーバー管理者モジュールの動的読み込み試行
-(async () => {
-    try {
-        const { transferPlayer } = await import("@minecraft/server-admin");
-        transferPlayerFunc = transferPlayer;
-        console.warn("[ServerTransfer] @minecraft/server-admin の読み込みに成功しました");
-    } catch (e) {
-        console.error("[ServerTransfer] @minecraft/server-admin の読み込みに失敗しました。BDS環境であるか確認してください。:", e);
-    }
-})();
+/**
+ * サーバー転送プラグイン - メインロジック
+ * /scriptevent servertransfer:go <player/selector> <ip> <port>
+ */
 
 system.afterEvents.scriptEventReceive.subscribe(eventData => {
     if (eventData.id === "servertransfer:go") {
         const message = eventData.message.trim();
-        console.warn(`[ServerTransfer] 受信: "${message}"`);
+        
+        // メッセージの受信ログ
+        console.warn(`[ServerTransfer] 受信しました: "${message}"`);
 
-        if (!message) return;
+        if (!message) {
+            console.warn("[ServerTransfer] 引数が空です");
+            return;
+        }
 
         const args = message.split(/\s+/);
         if (args.length < 3) {
-            console.warn(`[ServerTransfer] 引数が不足しています: ${args.length}個`);
+            console.warn(`[ServerTransfer] 引数が不足しています (3つ必要): ${args.length}個検出`);
             return;
         }
 
         const selector = args[0];
         const hostname = args[1];
-        const port = parseInt(args[2], 10);
+        const portStr = args[2];
+        const port = parseInt(portStr, 10);
 
         if (isNaN(port)) {
-            console.warn(`[ServerTransfer] ポート番号が不正です: ${args[2]}`);
-            return;
-        }
-
-        if (!transferPlayerFunc) {
-            console.error("[ServerTransfer] transferPlayer 関数が利用できません。モジュールの読み込みに失敗している可能性があります。");
+            console.warn(`[ServerTransfer] ポート番号が数字ではありません: ${portStr}`);
             return;
         }
 
@@ -46,40 +38,52 @@ system.afterEvents.scriptEventReceive.subscribe(eventData => {
         const targets = getPlayersBySelector(selector, source);
         
         if (targets.length === 0) {
-            console.warn(`[ServerTransfer] プレイヤーが見つかりません: ${selector}`);
+            console.warn(`[ServerTransfer] 対象プレイヤーが見つかりませんでした: ${selector}`);
+            if (source && source.typeId === "minecraft:player") {
+                source.sendMessage(`§c[ServerTransfer] プレイヤーが見つかりませんでした: ${selector}`);
+            }
             return;
         }
 
         system.run(() => {
             for (const player of targets) {
                 try {
-                    console.warn(`[ServerTransfer] ${player.name} を転送します...`);
-                    transferPlayerFunc(player, { hostname, port });
+                    console.warn(`[ServerTransfer] ${player.name} を ${hostname}:${port} へ転送試行中...`);
+                    transferPlayer(player, { hostname, port });
                 } catch (error) {
-                    console.error(`[ServerTransfer] 転送実行エラー:`, error);
+                    console.error(`[ServerTransfer] ${player.name} の転送エラー:`, error);
+                    player.sendMessage(`§c[ServerTransfer] 転送中にエラーが発生しました。ログを確認してください。`);
                 }
             }
         });
     }
 });
 
+/**
+ * セレクターからプレイヤーを取得する
+ * @param {string} selector 
+ * @param {import("@minecraft/server").Entity} source 
+ */
 function getPlayersBySelector(selector, source) {
     if (selector.startsWith("@")) {
+        // 実行位置（NPCやプレイヤー）のコンテキストを優先
         const commandSource = source || world.getDimension("overworld");
         const tempTag = `st_target_${Math.floor(Math.random() * 1000000)}`;
+        
         try {
+            // 一時的なタグを付与
             commandSource.runCommand(`tag ${selector} add ${tempTag}`);
             const players = world.getAllPlayers().filter(p => p.hasTag(tempTag));
+            // タグを削除
             world.getDimension("overworld").runCommand(`tag @a[tag=${tempTag}] remove ${tempTag}`);
             return players;
         } catch (e) {
-            console.warn(`[ServerTransfer] セレクター解析エラー: ${e}`);
+            console.warn(`[ServerTransfer] セレクター "${selector}" の解析エラー: ${e}`);
             return [];
         }
     } else {
+        // 名前で検索（クォートの除去）
         const cleanName = selector.replace(/['"]/g, "");
         return world.getAllPlayers().filter(p => p.name === cleanName);
     }
 }
-
-console.warn("[ServerTransfer] index.js の読み込みが完了しました");
