@@ -1,9 +1,10 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
+import { transferPlayer } from "@minecraft/server-admin";
 
 /**
  * サーバー転送プラグイン - メインロジック
- * カスタムコマンド: cw:servertransfer <ip> <port> [player]
+ * カスタムコマンド: cw:transfer <ip> <port> [player]
  */
 
 system.beforeEvents.startup.subscribe(ev => {
@@ -20,7 +21,7 @@ system.beforeEvents.startup.subscribe(ev => {
             { name: "target", type: server.CustomCommandParamType.PlayerSelector }
         ]
     }, (origin, ip, port, targetSelector) => {
-        // 1tick遅延させて非同期処理から抜ける
+        // 1tick遅延させて非同期処理から抜ける (transferPlayerを安全に呼ぶため)
         system.run(() => {
             let targets = [];
 
@@ -41,8 +42,7 @@ system.beforeEvents.startup.subscribe(ev => {
             for (const player of targets) {
                 try {
                     console.warn(`[ServerTransfer] ${player.name} を ${ip}:${port} へ転送試行中...`);
-                    // @minecraft/server-admin のインポートエラーを回避するためコマンドから転送を実行
-                    player.runCommand(`transfer ${ip} ${port}`);
+                    transferPlayer(player, { hostname: ip, port: port });
                 } catch (error) {
                     console.error(`[ServerTransfer] ${player.name} の転送エラー:`, error);
                     player.sendMessage(`§c[ServerTransfer] 転送中にエラーが発生しました。`);
