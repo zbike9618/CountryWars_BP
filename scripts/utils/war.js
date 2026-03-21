@@ -30,8 +30,16 @@ export class War {
      * @returns {boolean}
      */
     static isProtected(countryData) {
-        if (!countryData || !countryData.buildtime) return false;
+        if (!countryData) return false;
         const now = Date.now();
+        // 国王が敗北時の強制保護を持っているか確認
+        const ownerData = playerDatas.get(countryData.owner);
+        if (ownerData && ownerData.lastDefeated) {
+            const defeatProtectionEnd = ownerData.lastDefeated + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+            if (now < defeatProtectionEnd) return true;
+        }
+        
+        if (!countryData.buildtime) return false;
         const protectionEnd = countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
         return now < protectionEnd;
     }
@@ -52,7 +60,9 @@ export class War {
         }
 
         const now = Date.now();
-        const defeatCutoff = (countryData.lastDefeated || 0) + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+        const ownerData = playerDatas.get(countryData.owner);
+        const lastDefeated = ownerData?.lastDefeated || countryData.lastDefeated || 0;
+        const defeatCutoff = lastDefeated + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
         if (now < defeatCutoff) {
             const rem = defeatCutoff - now;
             player.sendMessage({ translate: "cw.scform.protection.cancel.defeated", with: [Util.formatTime(rem)] });
@@ -217,12 +227,39 @@ export class War {
             number *= 0.5;
         }
 
+        // --- 連勝処理 ---
+        const newWinnerStreak = (winnerData.winStreak || 0) + 1;
+
+        // 勝利国の連勝によるボーナス倍率（最大1.3倍）
+        const winnerStreakCount = Math.min(newWinnerStreak, config.maxWinStreakBonusCount);
+        const winMultiplier = 1 + ((config.maxWinStreakWinMultiplier - 1) * (winnerStreakCount / config.maxWinStreakBonusCount));
+
+        // 敗北（討伐）した国が連勝していた場合のボーナス倍率（最大5倍）
+        const loserStreakCount = Math.min(loserData.winStreak || 0, config.maxWinStreakBonusCount);
+        const loseMultiplier = 1 + ((config.maxWinStreakLoseMultiplier - 1) * (loserStreakCount / config.maxWinStreakBonusCount));
+
+        // 倍率を適用
+        number = Math.floor(number * winMultiplier * loseMultiplier);
+
+        // データのリセットと更新
+        winnerData.winStreak = newWinnerStreak;
+        loserData.winStreak = 0;
+
         loserData.money -= number
         winnerData.money += number
         winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
         loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
 
-        // 敗北時の保護期間再設定
+        // 敗北時の強制保護期間を全プレイヤーのデータに設定する
+        for (const playerId of loserData.players) {
+            const pd = playerDatas.get(playerId);
+            if (pd) {
+                pd.lastDefeated = Date.now();
+                playerDatas.set(playerId, pd);
+            }
+        }
+
+        // 敗北時の保護期間再設定（互換性のため国データにも残す）
         loserData.buildtime = Date.now();
         loserData.lastDefeated = Date.now();
 

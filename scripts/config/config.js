@@ -27,4 +27,10 @@ export default {
     apiToken: "SECRET_MINECRAFT_TOKEN_CW",
     //ロビーの座標
     lobby: { x: 9.01, y: 64.50, z: 8.95 },
+    // 連勝によって自身が得られる報酬の最大倍率（例: 10連勝で最大1.3倍）
+    maxWinStreakWinMultiplier: 1.3,
+    // 連勝している国を倒した（その国が敗北した）時に適用される最大倍率（例: 10連勝の国を倒すと最大10倍）
+    maxWinStreakLoseMultiplier: 10.0,
+    // 連勝ボーナスがカンストする最大連勝数
+    maxWinStreakBonusCount: 10
 };

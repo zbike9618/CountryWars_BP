@@ -73,6 +73,7 @@ export class Country {
             robbedChunkAmount: [],//国ごとに保存
             wardeath: 0,//戦争中に死んでいい回数
             warcountry: [],//戦争中
+            winStreak: 0,//連勝数
             peaceProposals: {},//講和提案
             stock: [{ price: 10, date: Date.now() }],//株
             diplomacy: {
