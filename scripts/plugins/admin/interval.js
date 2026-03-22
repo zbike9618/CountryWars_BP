@@ -1,5 +1,6 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
+import { Lore } from "../../utils/lore";
 const ids = "qwertyuiopasdfghjklzxcvbnm1234567890"
 function oriId() {
     let ori = "";
@@ -19,18 +20,12 @@ system.runInterval(() => {
             for (let i = 0; i < inv.size; i++) {
                 const item = inv.getItem(i);
                 if (item) {
-                    let key = item.getDynamicProperty("cw:id");
+                    let key = Lore.getLore(item);
 
                     if (key === undefined) {
                         const newId = oriId();
-                        item.setDynamicProperty("cw:id", newId);
-
-                        inv.setItem(i, item);
-
-                        const Haveitem = inv.getItem(i);
-                        key = Haveitem ? Haveitem.getDynamicProperty("cw:id") : newId;
-
-                        world.sendMessage(`発番: ${key}`);
+                        Lore.setLore(player, i, "id:", newId);
+                        key = newId;
                     }
 
                     if (has.includes(key)) {
@@ -42,7 +37,7 @@ system.runInterval(() => {
                 }
             }
         } catch (error) {
-            console.error(error);
+            world.sendMessage(error);
         }
     }
 })
