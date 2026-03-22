@@ -88,13 +88,13 @@ system.runInterval(() => {
             const item = inv.getItem(i);
             if (item) {
                 let key = item.getDynamicProperty("cw:id");
-                
+                world.sendMessage(`${key}`)
                 if (key === undefined) {
                     key = oriId();
                     item.setDynamicProperty("cw:id", key);
                     inv.setItem(i, item); // 更新したアイテムを保存する必要があります
                 }
-                
+
                 if (has.includes(key)) {
                     //player.runCommand("kick @s 不正なアイテムの増殖");
                     inv.setItem(i, undefined);
