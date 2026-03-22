@@ -95,7 +95,7 @@ system.runInterval(() => {
                 }
                 if (has.includes(key)) {
                     //player.runCommand("kick @s 不正なアイテムの増殖")
-                    inv.setItem(i, null);
+                    inv.setItem(i, undefined);
                     continue;
                 }
                 has.push(key)
