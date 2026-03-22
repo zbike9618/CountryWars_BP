@@ -30,8 +30,6 @@ system.runInterval(() => {
 
                     const Haveitem = inv.getItem(i);
                     key = Haveitem ? Haveitem.getDynamicProperty("cw:id") : newId;
-
-                    world.sendMessage(`発番: ${key}`);
                 }
 
                 if (has.includes(key)) {
