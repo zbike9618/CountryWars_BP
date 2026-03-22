@@ -53,7 +53,7 @@ function formatTime(ms) {
     return parts.join(" ");
 }
 const ids = "qwertyuiopasdfghjklzxcvbnm1234567890"
-function oriId(id) {
+function oriId() {
     let ori = "";
     const idArray = ids.split("")
     for (let i = 1; i <= 16; i++) {
@@ -88,9 +88,9 @@ system.runInterval(() => {
             if (item) {
                 const key = item.getDynamicProperty("cw:id")
                 if (!key) {
-                    const oriId = oriId()
-                    world.sendMessage(`${oriId}`)
-                    item.setDynamicProperty("cw:id", oriId(item.typeId));
+                    const oriIds = oriId()
+                    world.sendMessage(`${oriIds}`)
+                    item.setDynamicProperty("cw:id", oriIds);
                 }
                 if (has.includes(key)) {
                     //player.runCommand("kick @s 不正なアイテムの増殖")
