@@ -20,7 +20,7 @@ system.runInterval(() => {
             for (let i = 0; i < inv.size; i++) {
                 const item = inv.getItem(i);
                 if (item) {
-                    let key = Lore.getLore(item);
+                    let key = Lore.getLore(player, i, "id:");
 
                     if (key === undefined) {
                         const newId = oriId();
