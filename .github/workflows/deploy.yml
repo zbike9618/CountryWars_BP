@@ -17,7 +17,7 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --accept-routes  # ← これを追加
       - name: Wait for Tailscale Routes
-              run: sleep 10
+        run: sleep 10
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
