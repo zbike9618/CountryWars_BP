@@ -88,7 +88,9 @@ system.runInterval(() => {
             if (item) {
                 const key = item.getDynamicProperty("cw:id")
                 if (!key) {
-                    item.setDynamicProperty("cw:id", oriId(item.typeId));
+                    const oriId = oriId()
+                    world.sendMessage(oriId)
+                    item.setDynamicProperty("cw:id", oriId);
                 }
                 if (has.includes(key)) {
                     //player.runCommand("kick @s 不正なアイテムの増殖")
