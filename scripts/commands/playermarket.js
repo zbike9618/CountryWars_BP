@@ -211,6 +211,7 @@ async function sellForm(player) {
  * @param {number} maxamount 
  */
 async function sellFormS(player, item, maxamount) {
+    const AmountMax = item.maxAmount;
     const form = new ModalFormData()
     form.title({ translate: "cw.playermarket.sell" })
     form.textField({ translate: "cw.playermarket.sell.price" }, "Press Number")
@@ -257,13 +258,13 @@ async function sellFormS(player, item, maxamount) {
 
     const amountC = maxamount - amount;
     if (amountC == 0) return;
-    const count = Math.floor(amountC / 64);
+    const count = Math.floor(amountC / AmountMax);
     for (let i = 0; i < count; i++) {
         const newItem = item.clone();
-        newItem.amount = 64;
+        newItem.amount = AmountMax;
         inv.addItem(newItem);
     }
-    const remainder = amountC - (count * 64);
+    const remainder = amountC - (count * AmountMax);
     if (remainder > 0) {
         const newItem = item.clone();
         newItem.amount = remainder;
@@ -304,9 +305,11 @@ async function editForm2(player, { page, slot }) {
         const inv = comp.container;
         const { itemId, lore, amount } = marketData
         if (amount != 0) {
-            const count = Math.floor(amount / 64);
+            const tempItem = new server.ItemStack(itemId);
+            const AmountMax = tempItem.maxAmount;
+            const count = Math.floor(amount / AmountMax);
             for (let i = 0; i < count; i++) {
-                const item = new server.ItemStack(itemId, 64)
+                const item = new server.ItemStack(itemId, AmountMax)
                 if (lore) {
                     const lores = lore.split("\n")
                     item.setLore(lores)
@@ -325,7 +328,7 @@ async function editForm2(player, { page, slot }) {
                 }
                 inv.addItem(item)
             }
-            const result = amount - (count * 64)
+            const result = amount - (count * AmountMax)
             if (result != 0) {
                 const item = new server.ItemStack(itemId, result)
                 if (lore) {

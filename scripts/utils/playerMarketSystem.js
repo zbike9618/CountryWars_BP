@@ -100,7 +100,9 @@ export class playerMarketSystem {
 
         // 【修正: 事前インベントリ空き枠のチェック（アイテムロスト対策）】
         if (amount != 0) {
-            const requiredSlots = Math.ceil(amount / 64);
+            const tempItem = new server.ItemStack(itemId);
+            const AmountMax = tempItem.maxAmount;
+            const requiredSlots = Math.ceil(amount / AmountMax);
             if (inv.emptySlotsCount < requiredSlots) {
                 player.sendMessage({ translate: "cw.playermarket.invfull" });
                 return;
@@ -108,9 +110,11 @@ export class playerMarketSystem {
         }
 
         if (amount != 0) {
-            const count = Math.floor(amount / 64);
+            const tempItem = new server.ItemStack(itemId);
+            const AmountMax = tempItem.maxAmount;
+            const count = Math.floor(amount / AmountMax);
             for (let i = 0; i < count; i++) {
-                const item = new server.ItemStack(itemId, 64)
+                const item = new server.ItemStack(itemId, AmountMax)
                 if (itemData.lore) {
                     const lore = itemData.lore.split("\n")
                     item.setLore(lore)
@@ -129,7 +133,7 @@ export class playerMarketSystem {
                 }
                 inv.addItem(item)
             }
-            const result = amount - (count * 64)
+            const result = amount - (count * AmountMax)
             if (result != 0) {
 
                 const item = new server.ItemStack(itemId, result)
@@ -209,9 +213,10 @@ export class playerMarketSystem {
         }
         for (let i = 0; i < marketData.length; i++) {
             const itemData = marketData[i];
-            const number = Math.floor(itemData.amount / 64)
-            const restAmount = itemData.amount - (number * 64)
-            const displayAmount = `${number > 0 ? number.toString() + "st + " + restAmount.toString() : restAmount}`
+            const AmountMax = new server.ItemStack(itemData.itemId).maxAmount;
+            const number = Math.floor(itemData.amount / AmountMax)
+            const restAmount = itemData.amount - (number * AmountMax)
+            const displayAmount = `${number > 0 ? (AmountMax === 1 ? itemData.amount.toString() : number.toString() + "st + " + restAmount.toString()) : restAmount}`
             let offInt = 0;
             let isDiscount = false;
             if (itemData.price.length > 1) {
