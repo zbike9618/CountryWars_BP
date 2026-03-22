@@ -64,6 +64,7 @@ function oriId() {
 }
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
+        if (player.hasTag("cw:op")) continue;
         if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
             if (!creativeWhiteList.includes(player.name)) {
                 player.setGameMode(server.GameMode.Survival);
