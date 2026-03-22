@@ -52,16 +52,6 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
-const ids = "qwertyuiopasdfghjklzxcvbnm1234567890"
-function oriId() {
-    let ori = "";
-    const idArray = ids.split("")
-    for (let i = 1; i <= 16; i++) {
-        const key = Math.floor(Math.random() * idArray.length);
-        ori += idArray[key];
-    }
-    return ori;
-}
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         if (player.hasTag("cw:op")) continue;

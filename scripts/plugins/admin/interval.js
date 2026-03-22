@@ -1,5 +1,15 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
+const ids = "qwertyuiopasdfghjklzxcvbnm1234567890"
+function oriId() {
+    let ori = "";
+    const idArray = ids.split("")
+    for (let i = 1; i <= 16; i++) {
+        const key = Math.floor(Math.random() * idArray.length);
+        ori += idArray[key];
+    }
+    return ori;
+}
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         const comp = player.getComponent("inventory");
