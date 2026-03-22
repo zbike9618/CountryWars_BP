@@ -52,7 +52,16 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
-
+const ids = "qwertyuiopasdfghjklzxcvbnm1234567890!@#$%^&*()_+=-`~[]{}|;':",./<>?"
+function oriId(id) {
+    let ori = "";
+    const idArray = ids.split("")
+    for (let i = 1; i <= 16; i++) {
+        const key = Math.floor(Math.random() * idArray.length);
+        ori += idArray[key];
+    }
+    return ori;
+}
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
@@ -68,3 +77,26 @@ system.runInterval(() => {
         }
     }
 }, 20);
+
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        const comp = player.getComponent("inventory");
+        const inv = comp.container;
+        const has = []
+        for (let i = 0; i < inv.size; i++) {
+            const item = inv.getItem(i);
+            if (item) {
+                const key = item.getDynamicProperty("cw:id")
+                if (!key) {
+                    item.setDynamicProperty("cw:id", oriId(item.typeId));
+                }
+                if (has.includes(key)) {
+                    //player.runCommand("kick @s 不正なアイテムの増殖")
+                    inv.setItem(i, null);
+                    continue;
+                }
+                has.push(key)
+            }
+        }
+    }
+})
