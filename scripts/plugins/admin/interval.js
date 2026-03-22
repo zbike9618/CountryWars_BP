@@ -34,6 +34,7 @@ system.runInterval(() => {
 
                 if (has.includes(key)) {
                     //player.runCommand("kick @s 不正なアイテムの増殖");
+                    world.sendMessage(`${player.name} が不正なアイテムの増殖を試みました`);
                     inv.setItem(i);
                     continue;
                 }
