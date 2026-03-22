@@ -52,7 +52,7 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
-const ids = "qwertyuiopasdfghjklzxcvbnm1234567890!@#$%^&*()_+=-`~[]{}|;':",./<>?"
+const ids = "qwertyuiopasdfghjklzxcvbnm1234567890!@#$%^&*()_+=-`~[]{}|;':"
 function oriId(id) {
     let ori = "";
     const idArray = ids.split("")
