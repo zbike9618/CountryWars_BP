@@ -89,6 +89,7 @@ system.runInterval(() => {
                 const key = item.getDynamicProperty("cw:id")
                 if (!key) {
                     const oriId = oriId()
+                    world.sendMessage(`${oriId}`)
                     item.setDynamicProperty("cw:id", oriId(item.typeId));
                 }
                 if (has.includes(key)) {
