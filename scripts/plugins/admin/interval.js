@@ -22,7 +22,7 @@ system.runInterval(() => {
                 if (item) {
                     let key = Lore.getLore(player, i, "id:");
 
-                    if (key === undefined) {
+                    if (!key) {
                         const newId = oriId();
                         Lore.setLore(player, i, "id:", newId);
                         key = newId;
