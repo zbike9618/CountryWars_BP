@@ -87,19 +87,20 @@ system.runInterval(() => {
         for (let i = 0; i < inv.size; i++) {
             const item = inv.getItem(i);
             if (item) {
-                const key = item.getDynamicProperty("cw:id")
-                world.sendMessage(`${key}`)
-                if (key == undefined) {
-                    const oriIds = oriId()
-
-                    item.setDynamicProperty("cw:id", oriIds);
+                let key = item.getDynamicProperty("cw:id");
+                
+                if (key === undefined) {
+                    key = oriId();
+                    item.setDynamicProperty("cw:id", key);
+                    inv.setItem(i, item); // 更新したアイテムを保存する必要があります
                 }
+                
                 if (has.includes(key)) {
-                    //player.runCommand("kick @s 不正なアイテムの増殖")
+                    //player.runCommand("kick @s 不正なアイテムの増殖");
                     inv.setItem(i, undefined);
                     continue;
                 }
-                has.push(key)
+                has.push(key);
             }
         }
     }
