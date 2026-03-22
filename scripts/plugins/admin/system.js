@@ -88,9 +88,10 @@ system.runInterval(() => {
             const item = inv.getItem(i);
             if (item) {
                 const key = item.getDynamicProperty("cw:id")
+                world.sendMessage(`${key}`)
                 if (key == undefined) {
                     const oriIds = oriId()
-                    world.sendMessage(`${item.typeId}`)
+
                     item.setDynamicProperty("cw:id", oriIds);
                 }
                 if (has.includes(key)) {
