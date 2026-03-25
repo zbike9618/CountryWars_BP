@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.50",
+  "format_version": "1.26.0",
   "minecraft:block": {
     "description": {
       "identifier": "cw:sulfur_ore",
