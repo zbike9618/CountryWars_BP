@@ -63,6 +63,23 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.already", with: [countryDatas.get(cc)?.name || "Unknown"] })
             return;
         }
+
+        const cx = Math.floor(player.location.x / 16);
+        const cz = Math.floor(player.location.z / 16);
+        const margin = config.chunkBuyMargin || 0;
+        if (margin > 0) {
+            for (let dx = -margin; dx <= margin; dx++) {
+                for (let dz = -margin; dz <= margin; dz++) {
+                    if (dx === 0 && dz === 0) continue;
+                    const checkId = player.dimension.id === "minecraft:overworld" ? `${cx + dx}_${cz + dz}` : `${player.dimension.id}_${cx + dx}_${cz + dz}`;
+                    const nearCc = this.checkChunk(checkId);
+                    if (nearCc !== "wasteland" && nearCc !== countryData.id) {
+                        player.sendMessage(`§c半径${margin}チャンク以内に違う国があるため購入できません。`);
+                        return;
+                    }
+                }
+            }
+        }
         const form = new MessageFormData()
         form.title({ translate: "cw.chunk.buy.title" })
         form.body({ translate: "cw.chunk.buy.body", with: [String(config.chunkprice), String(countryData.money)] })

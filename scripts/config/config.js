@@ -11,6 +11,8 @@ export default {
     maintenance: 100,
     //チャンク購入の金額
     chunkprice: 1000,
+    //チャンク購入時に必要な他国との距離（チャンク数）
+    chunkBuyMargin: 2,
     //一国が保有できる最大チャンク数
     maxchunk: 128,
     //設定できるhomeの数
