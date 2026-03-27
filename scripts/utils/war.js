@@ -38,7 +38,7 @@ export class War {
             const defeatProtectionEnd = ownerData.lastDefeated + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
             if (now < defeatProtectionEnd) return true;
         }
-        
+
         if (!countryData.buildtime) return false;
         const protectionEnd = countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
         return now < protectionEnd;
@@ -586,22 +586,19 @@ world.afterEvents.entityDie.subscribe(ev => {
     }
 });
 //ダメージを相殺
-world.afterEvents.entityHurt.subscribe((ev) => {
+world.beforeEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId != "minecraft:player") return
     if (!hitEntity || hitEntity.typeId !== "minecraft:player") return
     if (player.isValid) {
         if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
-            player.addEffect("weakness", 60, { amplifier: 255, showParticles: false })
-            player.addEffect("slowness", 60, { amplifier: 4, showParticles: false })
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknowar" })
         }
     }
 })
-world.afterEvents.entityHurt.subscribe((ev) => {
+world.beforeEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId !== "minecraft:player") return
@@ -611,17 +608,13 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         const chunkId = Chunk.positionToChunkId(hitEntity.location, hitEntity.dimension.id)
         const countryData = countryDatas.get(Chunk.checkChunk(chunkId))
         if (countryData.players.includes(player.id)) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknoown" })
             return;
         }
 
         if (!player.hasTag("cw:duringwar")) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
-            player.addEffect("weakness", 20, { amplifier: 255, showParticles: false })
-            player.addEffect("slowness", 20, { amplifier: 4, showParticles: false })
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknowar" })
         }
 
