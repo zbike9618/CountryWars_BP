@@ -260,7 +260,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     }
 })
 
-world.afterEvents.entityHurt.subscribe((ev) => {
+world.beforeEvents.entityHurt.subscribe((ev) => {
     const entity = ev.hurtEntity
 
     const damageSource = ev.damageSource;
@@ -275,11 +275,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
 
     if (!check.allowed) {
         attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
-        const comp = entity.getComponent("minecraft:health")
-        if (comp && ev.damage) {
-            comp.setCurrentValue(Math.min(comp.currentValue + ev.damage, comp.effectiveMax));
-            entity.clearVelocity()
-        }
+        ev.cancel = true;
     }
 })
 world.beforeEvents.explosion.subscribe((ev) => {
