@@ -61,4 +61,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             ev.sourceEntity?.sendMessage(`§cプレイヤーデータが破損していないため実行できません。`);
         }
     }
+    if (ev.id == "cw:force_initial") {
+        ev.sourceEntity?.clearDynamicProperties();
+        ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+    }
 })
