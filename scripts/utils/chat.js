@@ -116,7 +116,14 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     const player = ev.sender;
     const message = ev.message;
     const playerData = playerDatas.get(player.id);
+    // --- 国に加入していないのに国・同盟チャットになっている場合の修正 ---
+    if ((playerData.chattype === "country" || playerData.chattype === "ally") && (!playerData.country || !countryDatas.get(playerData.country))) {
+        playerData.chattype = "world";
+        playerDatas.set(player.id, playerData);
+    }
+
     const countryname = countryDatas.get(playerData.country)?.name || "§7未所属";
+
 
     // --- AI質問の検知 ---
     if (message.startsWith("!ai ")) {
