@@ -59,6 +59,7 @@ system.runInterval(() => {
         if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
             if (!creativeWhiteList.includes(player.name)) {
                 player.setGameMode(server.GameMode.Survival);
+                world.sendMessage(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
                 DiscordRelay.send(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
             }
         }
