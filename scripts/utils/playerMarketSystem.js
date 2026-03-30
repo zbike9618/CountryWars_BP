@@ -100,8 +100,14 @@ export class playerMarketSystem {
 
         // 【修正: 事前インベントリ空き枠のチェック（アイテムロスト対策）】
         if (amount != 0) {
-            const tempItem = new server.ItemStack(itemId);
-            const AmountMax = tempItem.maxAmount;
+            let tempStack;
+            try {
+                tempStack = new server.ItemStack(itemId);
+            } catch (e) {
+                player.sendMessage("§cエラー: このアイテムは無効な識別子を持っているため購入できません。出品者に連絡してください。");
+                return;
+            }
+            const AmountMax = tempStack.maxAmount;
             const requiredSlots = Math.ceil(amount / AmountMax);
             if (inv.emptySlotsCount < requiredSlots) {
                 player.sendMessage({ translate: "cw.playermarket.invfull" });
@@ -213,7 +219,14 @@ export class playerMarketSystem {
         }
         for (let i = 0; i < marketData.length; i++) {
             const itemData = marketData[i];
-            const AmountMax = new server.ItemStack(itemData.itemId).maxAmount;
+            let AmountMax = 64;
+            let isInvalid = false;
+            try {
+                const tempStack = new server.ItemStack(itemData.itemId);
+                AmountMax = tempStack.maxAmount;
+            } catch (e) {
+                isInvalid = true;
+            }
             const number = Math.floor(itemData.amount / AmountMax)
             const restAmount = itemData.amount - (number * AmountMax)
             const displayAmount = `${number > 0 ? (AmountMax === 1 ? itemData.amount.toString() : number.toString() + "st + " + restAmount.toString()) : restAmount}`
@@ -279,11 +292,18 @@ export class playerMarketSystem {
                 lore.push({ text: "\n" });
                 lore.push({ translate: isDiscount ? "cw.playermarket.discount" : "cw.playermarket.price_up", with: [offInt.toString()] });
             }
+            if (isInvalid) {
+                lore.push({ text: `\n§c§l[ERROR]§r\n§7アイテム識別子が無効です:\n§7${itemData.itemId}` });
+            }
+
             form.setButton(i + 9, {
-                iconPath: itemIdToPath[itemData.itemId],
+                iconPath: isInvalid ? "textures/ui/warning_alex" : itemIdToPath[itemData.itemId],
                 name: {
-                    rawtext: [{ translate: Util.langChangeItemName(itemData.itemId) },
-                    { text: `[${displayAmount}]` }]
+                    rawtext: [
+                        { text: isInvalid ? "§c[Error: Invalid Item] " : "" },
+                        { translate: isInvalid ? "" : Util.langChangeItemName(itemData.itemId) },
+                        { text: ` [${displayAmount}]` }
+                    ]
                 },
                 lore,
                 stackAmount: itemData.amount,

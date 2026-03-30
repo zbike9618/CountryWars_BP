@@ -305,8 +305,15 @@ async function editForm2(player, { page, slot }) {
         const inv = comp.container;
         const { itemId, lore, amount } = marketData
         if (amount != 0) {
-            const tempItem = new server.ItemStack(itemId);
-            const AmountMax = tempItem.maxAmount;
+            let tempStack;
+            try {
+                tempStack = new server.ItemStack(itemId);
+            } catch (e) {
+                player.sendMessage("§c警告: このアイテムは無効な識別子を持っているため、アイテムを返却できません。出品データのみを削除します。");
+                playerMarketSystem.delete({ slot, page })
+                return;
+            }
+            const AmountMax = tempStack.maxAmount;
             const count = Math.floor(amount / AmountMax);
             for (let i = 0; i < count; i++) {
                 const item = new server.ItemStack(itemId, AmountMax)
