@@ -240,6 +240,11 @@ export class Country {
             }
         });
 
+        if (hasPermission(player, "country_home_set")) {
+            form.button("§l国ホーム設定§r\n§7現在地に設定します");
+            actions.push(() => this.setHome(player, countryData));
+        }
+
         // 戦争保護解除ボタン (国王のみ、かつ保護中)
         if (War.isProtected(countryData) && player.id === countryData.owner) {
             form.button({ translate: "cw.scform.protection.cancel" });
@@ -277,9 +282,24 @@ export class Country {
         actions[res.selection]();
     }
 
+    static async setHome(player, countryData) {
+        const confirmForm = new MessageFormData()
+        confirmForm.title("国ホームの設定")
+        confirmForm.body("現在地を国のホーム地点として設定しますか？\n位置: " + Math.floor(player.location.x) + ", " + Math.floor(player.location.y) + ", " + Math.floor(player.location.z))
+        confirmForm.button1({ translate: "cw.form.yes" })
+        confirmForm.button2({ translate: "cw.form.no" })
+        const res = await confirmForm.show(player)
+        if (res.canceled || res.selection == 1) return;
 
-
-
+        countryData.home = {
+            x: Math.floor(player.location.x),
+            y: Math.floor(player.location.y),
+            z: Math.floor(player.location.z),
+            dimension: player.dimension.id
+        }
+        countryDatas.set(countryData.id, countryData)
+        player.sendMessage("§a国のホーム地点を現在地に設定しました！")
+    }
 }
 class Information {
     static async information(player, countryData) {
