@@ -241,7 +241,7 @@ export class Country {
         });
 
         if (hasPermission(player, "country_home_set")) {
-            form.button("§l国ホーム設定§r\n§7現在地に設定します");
+            form.button("§l国ホーム設定§r\n§7設定・上書き・削除");
             actions.push(() => this.setHome(player, countryData));
         }
 
@@ -283,14 +283,44 @@ export class Country {
     }
 
     static async setHome(player, countryData) {
-        const confirmForm = new MessageFormData()
-        confirmForm.title("国ホームの設定")
-        confirmForm.body("現在地を国のホーム地点として設定しますか？\n位置: " + Math.floor(player.location.x) + ", " + Math.floor(player.location.y) + ", " + Math.floor(player.location.z))
-        confirmForm.button1({ translate: "cw.form.yes" })
-        confirmForm.button2({ translate: "cw.form.no" })
-        const res = await confirmForm.show(player)
-        if (res.canceled || res.selection == 1) return;
+        if (countryData.home) {
+            const form = new ActionFormData()
+            form.title("国ホームの設定")
+            form.body(`現在設定されている国ホーム:\n${countryData.home.x}, ${countryData.home.y}, ${countryData.home.z}\n\n現在地で上書きしますか？それとも削除しますか？`)
+            form.button("§l位置を上書き§r\n§7現在地を新しいホームにします")
+            form.button("§c§l国ホームを削除§r\n§7設定を解除します")
+            const res = await form.show(player)
+            if (res.canceled) return;
 
+            if (res.selection === 0) {
+                this._saveHome(player, countryData);
+            } else if (res.selection === 1) {
+                const confirm = new MessageFormData()
+                confirm.title("国ホームの削除")
+                confirm.body("本当に国ホームを削除しますか？")
+                confirm.button1({ translate: "cw.form.yes" })
+                confirm.button2({ translate: "cw.form.no" })
+                const confirmRes = await confirm.show(player)
+                if (confirmRes.canceled || confirmRes.selection === 1) return;
+
+                delete countryData.home;
+                countryDatas.set(countryData.id, countryData)
+                player.sendMessage("§c国ホームを削除しました。")
+            }
+        } else {
+            const confirmForm = new MessageFormData()
+            confirmForm.title("国ホームの設定")
+            confirmForm.body("現在地を国のホーム地点として設定しますか？\n位置: " + Math.floor(player.location.x) + ", " + Math.floor(player.location.y) + ", " + Math.floor(player.location.z))
+            confirmForm.button1({ translate: "cw.form.yes" })
+            confirmForm.button2({ translate: "cw.form.no" })
+            const res = await confirmForm.show(player)
+            if (res.canceled || res.selection == 1) return;
+
+            this._saveHome(player, countryData);
+        }
+    }
+
+    static _saveHome(player, countryData) {
         countryData.home = {
             x: Math.floor(player.location.x),
             y: Math.floor(player.location.y),
@@ -306,26 +336,28 @@ class Information {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
         const dp = countryData.diplomacy;
-        const allyNames   = (dp?.ally   || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const allyNames = (dp?.ally || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
         const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const enemyNames  = (dp?.enemy  || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const warNames    = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const protection  = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
+        const enemyNames = (dp?.enemy || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const warNames = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const protection = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
         form.body({
             rawtext: [
-                { translate: "cw.scform.informations", with: [
-                    `${countryData.name}`,
-                    `${countryData.description}`,
-                    `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                    `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
-                    `${countryData.money}`,
-                    `${countryData.chunkAmount}`,
-                    `${countryData.tax.consumption}`,
-                    `${countryData.tax.income}`,
-                    `${countryData.tax.country}`,
-                    `${countryData.tax.customs}`,
-                    protection
-                ]},
+                {
+                    translate: "cw.scform.informations", with: [
+                        `${countryData.name}`,
+                        `${countryData.description}`,
+                        `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+                        `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                        `${countryData.money}`,
+                        `${countryData.chunkAmount}`,
+                        `${countryData.tax.consumption}`,
+                        `${countryData.tax.income}`,
+                        `${countryData.tax.country}`,
+                        `${countryData.tax.customs}`,
+                        protection
+                    ]
+                },
                 { text: `\n§l--- 外交関係 ---§r\n` },
                 { text: `§a同盟§f: ${allyNames}\n` },
                 { text: `§b友好§f: ${friendNames}\n` },
