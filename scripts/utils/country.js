@@ -241,7 +241,7 @@ export class Country {
         });
 
         if (hasPermission(player, "country_home_set")) {
-            form.button("§l国ホーム設定§r\n§7設定・上書き・削除");
+            form.button("国ホーム設定");
             actions.push(() => this.setHome(player, countryData));
         }
 
