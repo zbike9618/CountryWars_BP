@@ -50,11 +50,6 @@
         "seconds_to_destroy": 30
       },
       "minecraft:destructible_by_explosion": false,
-      //繧ゅ＠縺上・75
-      "minecraft:flammable": {
-        "flame_odds": 0,
-        "burn_odds": 0
-      },
       "minecraft:map_color": "#000000"
     }
   }
