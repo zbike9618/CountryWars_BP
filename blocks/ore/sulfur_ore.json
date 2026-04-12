@@ -56,7 +56,7 @@
         "burn_odds": 0
       },
       "minecraft:map_color": "#000000",
-      "minecraft:loot": "block/sulfur_ore"
+      "minecraft:loot": "loot_tables/block/sulfur_ore.json"
     }
   }
 }

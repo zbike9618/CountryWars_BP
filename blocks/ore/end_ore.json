@@ -55,8 +55,7 @@
         "flame_odds": 0,
         "burn_odds": 0
       },
-      "minecraft:map_color": "#000000",
-      "minecraft:loot": "loot_tables/block/end_ore"
+      "minecraft:map_color": "#000000"
     }
   }
 }
