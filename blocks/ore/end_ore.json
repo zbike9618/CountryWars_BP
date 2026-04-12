@@ -4,7 +4,8 @@
     "description": {
       "identifier": "cw:end_ore",
       "menu_category": {
-        "category": "nature"
+        "category": "nature",
+        "group": "itemGroup.name.oreBlocks"
       }
     },
     "components": {
