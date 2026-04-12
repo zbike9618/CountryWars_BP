@@ -4,8 +4,7 @@
     "description": {
       "identifier": "cw:end_ore",
       "menu_category": {
-        "category": "nature",
-        "group": "itemGroup.name.ore"
+        "category": "nature"
       }
     },
     "components": {
@@ -55,7 +54,8 @@
         "flame_odds": 0,
         "burn_odds": 0
       },
-      "minecraft:map_color": "#000000"
+      "minecraft:map_color": "#000000",
+      "minecraft:loot": "loot_tables/block/end_ore.json"
     }
   }
 }
