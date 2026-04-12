@@ -4,18 +4,19 @@
     "description": {
       "identifier": "cw:security_camera",
       "menu_category": {
-        "category": "construction",
-        "group": "itemGroup.name.playerdolls"
+        "category": "construction"
       }
     },
     "components": {
       "minecraft:placement_filter": {
-  "conditions": [
-    {
-      "allowed_faces": ["up"]
-    }
-  ]
-},
+        "conditions": [
+          {
+            "allowed_faces": [
+              "up"
+            ]
+          }
+        ]
+      },
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 2
       },
@@ -39,7 +40,8 @@
           0,
           0
         ]
-      },"minecraft:selection_box": {
+      },
+      "minecraft:selection_box": {
         "origin": [
           -6,
           0,
@@ -54,5 +56,3 @@
     }
   }
 }
-
-

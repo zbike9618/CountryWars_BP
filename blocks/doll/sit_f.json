@@ -4,8 +4,7 @@
     "description": {
       "identifier": "st:sit_f",
       "menu_category": {
-        "category": "construction",
-        "group": "itemGroup.name.playerdolls"
+        "category": "construction"
       },
       "traits": {
         "minecraft:placement_direction": {
