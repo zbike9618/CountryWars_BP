@@ -1,4 +1,5 @@
 import { Dypro } from "../../utils/dypro";
+import { DiscordRelay } from "../../utils/chat.js";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
@@ -58,7 +59,8 @@ system.runInterval(() => {
         if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
             if (!creativeWhiteList.includes(player.name)) {
                 player.setGameMode(server.GameMode.Survival);
-                player.runCommand("kick @s 不正なゲームモードの変更");
+                world.sendMessage(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
+                DiscordRelay.send(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
             }
         }
         if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
