@@ -517,6 +517,49 @@ export class War {
 
         return true;
     }
+
+    /**
+     * 両国のプレイヤーが不在の場合に戦争を公平に終了させる
+     * @param {Object} country1 
+     * @param {Object} country2 
+     */
+    static forceEndOfflineWar(country1, country2) {
+        // 戦争状態を解除
+        const index2 = country1.warcountry.indexOf(country2.id);
+        if (index2 !== -1) country1.warcountry.splice(index2, 1);
+
+        const index1 = country2.warcountry.indexOf(country1.id);
+        if (index1 !== -1) country2.warcountry.splice(index1, 1);
+
+        // 戦争が一つもなくなった場合、wardeathを0にリセット
+        if (country1.warcountry.length === 0) country1.wardeath = 0;
+        if (country2.warcountry.length === 0) country2.wardeath = 0;
+
+        countryDatas.set(country1.id, country1);
+        countryDatas.set(country2.id, country2);
+
+        // コアを削除
+        const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
+        for (const core of cores) {
+            const chunkId = core.getDynamicProperty("core");
+            if (!chunkId) continue;
+            const cc = Chunk.checkChunk(chunkId);
+            const data = countryDatas.get(cc);
+            if (data && (data.id === country1.id || data.id === country2.id)) {
+                core.remove();
+            }
+        }
+
+        world.sendMessage({
+            rawtext: [
+                { text: "§6[戦争終了] §f両国のプレイヤーが不在のため、§l" },
+                { text: country1.name },
+                { text: "§rと§l" },
+                { text: country2.name },
+                { text: "§rの戦争を公平な条件で強制終了しました。" }
+            ]
+        });
+    }
 }
 world.afterEvents.entityDie.subscribe(ev => {
     const core = ev.deadEntity;
@@ -597,7 +640,57 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
             player.sendMessage({ translate: "cw.war.attacknowar" })
         }
     }
-})
+});
+
+// 両国がオフラインの場合の自動戦争終了チェック
+system.runInterval(() => {
+    const allCountryIds = countryDatas.idList;
+    const handledPairs = new Set();
+
+    for (const idA of allCountryIds) {
+        const countryA = countryDatas.get(idA);
+        if (!countryA || !countryA.warcountry || countryA.warcountry.length === 0) continue;
+
+        for (const idB of countryA.warcountry) {
+            // 重複チェック（対戦カードごとに1回だけ処理）
+            const pairKey = idA < idB ? `${idA}_${idB}` : `${idB}_${idA}`;
+            if (handledPairs.has(pairKey)) continue;
+            handledPairs.add(pairKey);
+
+            const countryB = countryDatas.get(idB);
+            if (!countryB) continue;
+
+            const playersA = Util.GetCountryPlayer(countryA);
+            const playersB = Util.GetCountryPlayer(countryB);
+
+            // 両方の国のプレイヤーがいなければ終了
+            if (playersA.length === 0 && playersB.length === 0) {
+                War.forceEndOfflineWar(countryA, countryB);
+            }
+        }
+    }
+}, 1200); // 60秒(1200ticks)ごとにチェック
+
+// プレイヤー参加時のタグクリーンアップ
+world.afterEvents.playerSpawn.subscribe(ev => {
+    const { player, initialSpawn } = ev;
+    if (!initialSpawn) return;
+
+    const playerData = playerDatas.get(player.id);
+    if (!playerData || !playerData.country) {
+        if (player.hasTag("cw:duringwar")) {
+            player.removeTag("cw:duringwar");
+        }
+        return;
+    }
+
+    const countryData = countryDatas.get(playerData.country);
+    if (!countryData || !countryData.warcountry || countryData.warcountry.length === 0) {
+        if (player.hasTag("cw:duringwar")) {
+            player.removeTag("cw:duringwar");
+        }
+    }
+});
 world.beforeEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
