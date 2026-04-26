@@ -585,6 +585,12 @@ world.afterEvents.entityDie.subscribe(ev => {
         countryDatas.set(countryData.id, countryData);
         Chunk.setChunk(chunkId, mineData)
         world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
+
+        // 近くの領土を探して通知
+        const nearest = Chunk.getNearestChunk(chunkId, countryData.id);
+        if (nearest) {
+            player.sendMessage(`§e近くにある敵の領土の座標: §fX: ${Math.floor(nearest.x)}, Z: ${Math.floor(nearest.z)}`);
+        }
         const newcountryData = countryDatas.get(countryData.id)
         if (newcountryData.chunkAmount == 0) {
             War.finish(mineData, newcountryData, "invade")
