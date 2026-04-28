@@ -78,6 +78,13 @@ async function openmessagebox(player) {
     form.title({ translate: "cw.messagebox.title" })
     form.button({ translate: "cw.messagebox.recieve", with: [`${totalRequests}`] })
     form.button({ translate: "cw.messagebox.send" })
+
+    // 管理者のみボタンを表示 (タグまたはOP権限)
+    const isAdmin = player.hasTag("admin") || player.permissionLevel >= 2;
+    if (isAdmin) {
+        form.button("§d全員に送信(アナウンス)")
+    }
+
     const res = await form.show(player)
     if (res.canceled) return;
     if (res.selection == 0) {
@@ -85,6 +92,9 @@ async function openmessagebox(player) {
     }
     if (res.selection == 1) {
         send(player)
+    }
+    if (res.selection == 2 && isAdmin) {
+        sendAll(player)
     }
 }
 /**
@@ -181,6 +191,42 @@ async function send(player) {
         if (target) target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
     `;
     sendDataForPlayers(data, playerId)
+}
+
+/**
+ * 全プレイヤーにメッセージを送信する（アナウンス用）
+ * @param {server.Player} player 
+ */
+export async function sendAll(player) {
+    const form = new ModalFormData()
+    form.title("全員に送信(アナウンス)")
+    form.textField("メッセージ内容を入力してください。\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    const res = await form.show(player)
+    if (res.canceled || !res.formValues[0]) return;
+
+    const announcement = res.formValues[0];
+    const players = Util.getAllPlayerIdsSorted();
+    
+    player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
+
+    for (const playerId of players) {
+        const message = { player: player.id, message: `[全体アナウンス] ${announcement}` };
+        // 各プレイヤーのデータにメッセージを追加するスクリプトを生成
+        const data = `
+            const playerData = new ShortPlayerData("${playerId}");
+            const messageArray = playerData.get("message") || [];
+            messageArray.push(${JSON.stringify(message)});
+            playerData.set("message", messageArray);
+            
+            // オンラインなら通知
+            const target = world.getEntity("${playerId}");
+            if (target) {
+                target.sendMessage("§e[全体アナウンス] §f${player.name}§7: ${announcement}");
+                target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
+            }
+        `;
+        sendDataForPlayers(data, playerId);
+    }
 }
 
 async function readMessage(player, selection, type) {
