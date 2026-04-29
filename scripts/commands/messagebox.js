@@ -138,7 +138,7 @@ async function recieve(player) {
         form.button({ translate: "cw.messagebox.recieve.invitecountry", with: [name] })
     }
     for (const message of messageArray) {
-        const senderName = playerDatas.get(message.player)?.name || "Unknown"
+        const senderName = message.senderName || playerDatas.get(message.player)?.name || "Unknown"
         form.button({ translate: "cw.messagebox.recieve.message", with: [senderName] })
     }
     const res = await form.show(player)
@@ -210,14 +210,17 @@ export async function sendAll(player) {
     player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
 
     for (const playerId of players) {
-        const message = { player: player.id, message: `[全体アナウンス] ${announcement}` };
+        const message = { player: player.id, message: announcement, senderName: "運営" };
         const data = `
             const playerData = new ShortPlayerData("${playerId}");
             const messageArray = playerData.get("message") || [];
             messageArray.push(${JSON.stringify(message)});
             playerData.set("message", messageArray);
-            const target = world.getEntity("${playerId}");
-            if (target) target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
+            const target = world.getAllPlayers().find(p => p.id === "${playerId}");
+            if (target) {
+                target.sendMessage("§e[全体アナウンス] §f運営§7: ${announcement}");
+                target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
+            }
         `;
         sendDataForPlayers(data, playerId);
     }
@@ -241,7 +244,7 @@ async function readMessage(player, selection, type) {
 
     }
     if (type == "message") {
-        const senderName = playerDatas.get(selection.player)?.name || "Unknown"
+        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown"
         form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] })
     }
     form.button1({ translate: "cw.form.yes" })
