@@ -196,7 +196,7 @@ export class Country {
         return true;
     }
     static async setting(player, countryData) {
-        if (countryData == "none") {
+        if (!countryData || countryData == "none") {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
@@ -775,8 +775,9 @@ class Tax {
 }
 export function hasPermission(player, permissionName) {
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return false
+    if (!playerData || !playerData.country) return false
     const countryData = countryDatas.get(playerData.country)
+    if (!countryData || !countryData.permissions) return false
     const playerPermission = playerData.permission
     if (!playerPermission || !countryData.permissions[playerPermission]) return false
     return countryData.permissions[playerPermission].includes(permissionName)

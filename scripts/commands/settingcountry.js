@@ -51,7 +51,17 @@ function DoCommand(origin) {
     //関数を実行する
     system.run(() => {
         const playerData = playerDatas.get(player.id)
-        const countryData = playerData.country ? countryDatas.get(playerData.country) : "none";
+        let countryData = "none";
+        if (playerData.country) {
+            countryData = countryDatas.get(playerData.country);
+            if (!countryData) {
+                // 国が存在しない場合はプレイヤーの所属データをリセット
+                playerData.country = undefined;
+                playerData.permission = "";
+                playerDatas.set(player.id, playerData);
+                countryData = "none";
+            }
+        }
         Country.setting(player, countryData);
     })
 
