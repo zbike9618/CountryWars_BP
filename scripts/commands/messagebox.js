@@ -211,19 +211,13 @@ export async function sendAll(player) {
 
     for (const playerId of players) {
         const message = { player: player.id, message: `[全体アナウンス] ${announcement}` };
-        // 各プレイヤーのデータにメッセージを追加するスクリプトを生成
         const data = `
             const playerData = new ShortPlayerData("${playerId}");
             const messageArray = playerData.get("message") || [];
             messageArray.push(${JSON.stringify(message)});
             playerData.set("message", messageArray);
-            
-            // オンラインなら通知
             const target = world.getEntity("${playerId}");
-            if (target) {
-                target.sendMessage("§e[全体アナウンス] §f${player.name}§7: ${announcement}");
-                target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
-            }
+            if (target) target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["${player.name}"] });
         `;
         sendDataForPlayers(data, playerId);
     }

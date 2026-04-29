@@ -8,6 +8,36 @@ import config from "../config/config.js";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 
+const deathMessageMap = {
+    "anvil": (v) => `${v} は落下してきた金床に押しつぶされた`,
+    "blockExplosion": (v) => `${v} は爆発に巻き込まれた`,
+    "contact": (v) => `${v} はサボテンに刺されて死んでしまった`,
+    "drowning": (v) => `${v} は溺れ死んだ`,
+    "entityAttack": (v, a) => a ? `${v} は ${a} に殺害された` : `${v} は殺害された`,
+    "entityExplosion": (v, a) => a ? `${v} は ${a} に爆破された` : `${v} は爆発に巻き込まれた`,
+    "fall": (v) => `${v} は高いところから落ちた`,
+    "fallingBlock": (v) => `${v} は落下してきたブロックに押しつぶされた`,
+    "fire": (v) => `${v} は炎に巻かれた`,
+    "fireTick": (v) => `${v} は燃え尽きた`,
+    "fireworks": (v) => `${v} は爆発に巻き込まれた`,
+    "flyIntoWall": (v) => `${v} は激突した`,
+    "freezing": (v) => `${v} は凍死した`,
+    "lava": (v) => `${v} は溶岩の中で泳ごうとした`,
+    "lightning": (v) => `${v} は雷に打たれた`,
+    "magic": (v) => `${v} は魔法によって殺された`,
+    "magma": (v) => `${v} は溶岩の上を歩いた`,
+    "none": (v) => `${v} は死んだ`,
+    "piston": (v) => `${v} は押しつぶされた`,
+    "projectile": (v, a) => a ? `${v} は ${a} に射抜かれた` : `${v} は射抜かれた`,
+    "starve": (v) => `${v} は飢え死にした`,
+    "suffocation": (v) => `${v} は壁の中に埋まった`,
+    "suicide": (v) => `${v} は命を絶った`,
+    "thorns": (v, a) => a ? `${v} は ${a} を攻撃しようとして殺害された` : `${v} は殺害された`,
+    "void": (v) => `${v} は世界の外へ落ちた`,
+    "wither": (v) => `${v} は萎びてしまった`,
+    "sonicBoom": (v, a) => a ? `${v} は ${a} の放った衝撃波で消し飛ばされた` : `${v} は衝撃波で消し飛ばされた`,
+};
+
 /**
  * 死亡ログ処理
  */
@@ -17,12 +47,13 @@ world.afterEvents.entityDie.subscribe((ev) => {
 
     const victim = deadEntity.name;
     const attacker = damageSource.damagingEntity?.name;
-    let msg = "";
+    const cause = damageSource.cause;
 
-    if (attacker) {
-        msg = `[§cDeath§r] ${victim} は ${attacker} に倒されました`;
+    let msg = "";
+    if (deathMessageMap[cause]) {
+        msg = deathMessageMap[cause](victim, attacker);
     } else {
-        msg = `[§cDeath§r] ${victim} が死亡しました`;
+        msg = `${victim} は死んだ`;
     }
 
     DiscordRelay.send(msg);
