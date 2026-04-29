@@ -1,65 +1,63 @@
 import { world, system } from "@minecraft/server";
 import { ShortPlayerData } from "./playerData.js";
 import { Util } from "./util.js";
+import { Dypro } from "./dypro.js";
+
+const sendDataDypro = new Dypro("sendDataQueue");
 /**
  * サーバーにいたプレイヤーに権限を渡す
- * @param {*} dataM 実行したいコード
- * @param {*} playerId 
+ * @param {string} dataM 実行したいコード
+ * @param {string} playerId 
  */
 export function sendDataForPlayers(dataM, playerId) {
-    // dataMがundefined, null, 空文字, "undefined"文字列なら何もしない
+    // dataMが有効な文字列かチェック
     if (typeof dataM !== "string" || !dataM || dataM === "undefined") {
-        world.sendMessage(`[sendDataForPlayers] 無効なdataM: ${String(dataM)}`);
         return;
     }
-    if (world.getEntity(playerId)) {
-        eval(dataM);
+
+    // オンラインプレイヤーを確実に取得
+    const player = world.getAllPlayers().find(p => p.id === playerId);
+    if (player) {
+        try {
+            eval(dataM);
+        } catch (e) {
+            console.warn(`[sendDataForPlayers] Eval error for online player ${playerId}: ${e}`);
+        }
         return;
     }
-    let data = JSON.parse(world.getDynamicProperty("sendDataForPlayer") ?? "[]");
-    const time = world.getAbsoluteTime();
-    // JSONで保存
-    data.push(JSON.stringify({ playerId, dataM, time }));
-    world.setDynamicProperty("sendDataForPlayer", JSON.stringify(data));
+
+    // オフラインの場合はプレイヤー個別のキューに保存（Dyproを使用することで32KB制限を回避）
+    let queue = sendDataDypro.get(playerId) || [];
+    queue.push({ dataM, time: world.getAbsoluteTime() });
+    sendDataDypro.set(playerId, queue);
 }
 
 world.afterEvents.playerSpawn.subscribe((ev) => {
     if (ev.initialSpawn) {
         const player = ev.player;
+        // 参加したプレイヤー専用のキューのみを1tick後に処理
         system.runTimeout(() => {
-            let data = JSON.parse(world.getDynamicProperty("sendDataForPlayer") ?? "[]");
-            let newData = [];
-            for (const d of data) {
-                let entry;
-                try {
-                    entry = JSON.parse(d);
-                } catch {
+            const queue = sendDataDypro.get(player.id);
+            if (!queue || queue.length === 0) return;
+
+            for (const entry of queue) {
+                // 48時間以上経過したデータはスキップ（オプション）
+                const nowTime = world.getAbsoluteTime();
+                if (convertTicks(nowTime).hours - convertTicks(entry.time).hours > 48) {
                     continue;
                 }
-                // entry.dataMがundefined, null, 空文字, "undefined"文字列ならevalしない
-                if (entry.playerId === player.id) {
-                    if (typeof entry.dataM === "string" && entry.dataM && entry.dataM !== "undefined") {
-                        try {
-                            eval(entry.dataM); // セキュリティ注意
-                        }
-                        catch (e) {
-                            //そのやつを消す
-                            continue;
-                        }
-                    } else {
-                        world.sendMessage(`[sendDataForPlayers] 無効なentry.dataM: ${String(entry.dataM)}`);
-                    }
-                } else {
-                    // 48時間以内のデータは残す
-                    const nowtime = world.getAbsoluteTime();
-                    if (convertTicks(nowtime).hours - convertTicks(entry.time).hours <= 48) {
-                        newData.push(d);
+
+                if (typeof entry.dataM === "string" && entry.dataM && entry.dataM !== "undefined") {
+                    try {
+                        eval(entry.dataM);
+                    } catch (e) {
+                        console.warn(`[sendDataForPlayers] Eval error for joining player ${player.name}: ${e}`);
                     }
                 }
             }
-            world.setDynamicProperty("sendDataForPlayer", JSON.stringify(newData));
-
-        }, 20);
+            // 処理が終わったらそのプレイヤーのキューを削除
+            sendDataDypro.delete(player.id);
+        }, 20); // 20ticks(1s) 待ってから実行（ロード完了を確実にするため）
     }
 });
 
