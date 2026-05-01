@@ -125,6 +125,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
             for (const pc of world.getAllPlayers().filter(p => allowedCountries.has(playerDatas.get(p.id).country))) {
                 pc.sendMessage(send);
             }
+            sendChatToDiscord(send, player.name, "ally");
             break;
         }
     }
