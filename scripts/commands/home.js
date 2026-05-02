@@ -3,6 +3,10 @@ const { world, system } = server;
 import { ActionFormData, MessageFormData, ModalFormData } from "@minecraft/server-ui";
 import { Util } from "../utils/util";
 import config from "../config/config";
+import { Chunk } from "../utils/chunk";
+import { hasPermission } from "../utils/country";
+import { Dypro } from "../utils/dypro";
+const playerDatas = new Dypro("player");
 // --- Helpers ---
 function getHomes(player) {
     const data = player.getDynamicProperty("homes");
@@ -54,6 +58,21 @@ async function Sethome(player) {
 
     if (res.selection === 0) {
         // --- Add Home ---
+        const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
+        const chunkOwner = Chunk.checkChunk(chunkId);
+
+        if (chunkOwner !== "wasteland" && chunkOwner !== "admin") {
+            const playerData = playerDatas.get(player.id);
+            if (playerData.country !== chunkOwner) {
+                player.sendMessage({ translate: "cw.home.set.error.other" });
+                return;
+            }
+            if (!hasPermission(player, "home_set")) {
+                player.sendMessage({ translate: "cw.home.set.error.my" });
+                return;
+            }
+        }
+
         const modal = new ModalFormData();
         modal.title({ translate: "cw.home.set.title" });
         modal.textField({ translate: "cw.home.set.name" }, "Name");
@@ -98,6 +117,21 @@ async function Sethome(player) {
 
     } else if (res.selection === 1) {
         // --- Update Position (Overwrite) ---
+        const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
+        const chunkOwner = Chunk.checkChunk(chunkId);
+
+        if (chunkOwner !== "wasteland" && chunkOwner !== "admin") {
+            const playerData = playerDatas.get(player.id);
+            if (playerData.country !== chunkOwner) {
+                player.sendMessage({ translate: "cw.home.set.error.other" });
+                return;
+            }
+            if (!hasPermission(player, "home_set")) {
+                player.sendMessage({ translate: "cw.home.set.error.my" });
+                return;
+            }
+        }
+
         const homes = getHomes(player);
         if (homes.length === 0) {
             player.sendMessage({ translate: "cw.home.tp.nohome" });

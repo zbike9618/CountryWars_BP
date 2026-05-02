@@ -19,6 +19,30 @@ world.afterEvents.worldLoad.subscribe(() => {
             const chunk = Chunk.checkChunk(chunkId)
             const playerData = new ShortPlayerData(player.id)
 
+            // 戦争中のエリトラ制限
+            if (player.hasTag("cw:duringwar")) {
+                const equipment = player.getComponent("minecraft:equippable");
+                if (equipment) {
+                    const chestItem = equipment.getEquipment(server.EquipmentSlot.Chest);
+                    if (chestItem && chestItem.typeId === "minecraft:elytra") {
+                        equipment.setEquipment(server.EquipmentSlot.Chest, undefined);
+                        const inventory = player.getComponent("minecraft:inventory");
+                        let added = false;
+                        if (inventory) {
+                            const container = inventory.container;
+                            if (container.emptySlotsCount > 0) {
+                                container.addItem(chestItem);
+                                added = true;
+                            }
+                        }
+                        if (!added) {
+                            player.dimension.spawnItem(chestItem, player.location);
+                        }
+                        player.sendMessage("§c戦争中はエリトラを装備できません！");
+                    }
+                }
+            }
+
             if (chunk == playerData.get("DisplayChunk")) continue;
             if (chunk == "wasteland") {
                 player.onScreenDisplay.setActionBar({ translate: "cw.chunk.actionbar.wasteland" })

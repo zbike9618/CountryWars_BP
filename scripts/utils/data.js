@@ -23,7 +23,11 @@ export class Data {
             "war_manage",
             "chunk_buy",
             "chunk_sell",
-            "country_home_set"
+            "country_home_set",
+            "block_place",
+            "block_break",
+            "mob_kill",
+            "home_set"
         ]
     static enchantsLang = {
         "power": "enchantment.arrowDamage",

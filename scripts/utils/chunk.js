@@ -207,7 +207,12 @@ export class Chunk {
         const playerData = playerDatas.get(player.id);
         const playerCountryId = playerData.country;
 
-        if (playerCountryId === countryId) return { allowed: true };
+        if (playerCountryId === countryId) {
+            if (permType === "place_block" && !hasPermission(player, "block_place")) return { allowed: false, countryName: "§c(権限不足) " + countryData.name };
+            if (permType === "break_block" && !hasPermission(player, "block_break")) return { allowed: false, countryName: "§c(権限不足) " + countryData.name };
+            if (permType === "attack_entity" && !hasPermission(player, "mob_kill")) return { allowed: false, countryName: "§c(権限不足) " + countryData.name };
+            return { allowed: true };
+        }
 
         let relation = "neutral";
         if (playerCountryId && countryData.diplomacy) {
