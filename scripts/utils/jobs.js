@@ -1,5 +1,5 @@
 import * as ui from "@minecraft/server-ui";
-import { system, world } from "@minecraft/server";
+import { system, world, EquipmentSlot } from "@minecraft/server";
 import { Util } from "../utils/util";
 import { default as config } from "../config/config.js";
 import { JobsConfig, JOB_CONFIG } from "../config/jobs_config.js";
@@ -57,6 +57,12 @@ export class Jobs {
 */
 world.afterEvents.playerBreakBlock.subscribe(ev => {
     const { player, brokenBlockPermutation } = ev;
+
+    // バケツ使用時の不正稼ぎ防止
+    const equippable = player.getComponent("equippable");
+    const mainhand = equippable?.getEquipment(EquipmentSlot.Mainhand);
+    if (mainhand && mainhand.typeId.includes("bucket")) return;
+
     const blockId = brokenBlockPermutation.type.id;
 
     for (const jobId of ["miner", "lumberjack", "farmer", "netherdigger"]) { // ← 制限！
@@ -90,6 +96,12 @@ world.afterEvents.playerBreakBlock.subscribe(ev => {
  */
 world.afterEvents.playerPlaceBlock.subscribe(ev => {
     const { player, block } = ev;
+
+    // バケツ使用時の不正稼ぎ防止
+    const equippable = player.getComponent("equippable");
+    const mainhand = equippable?.getEquipment(EquipmentSlot.Mainhand);
+    if (mainhand && mainhand.typeId.includes("bucket")) return;
+
     const blockId = block.typeId;
 
     for (const jobId of ["builder", "farmer"]) { // ← 制限！
