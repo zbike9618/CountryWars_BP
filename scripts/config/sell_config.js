@@ -1,0 +1,96 @@
+export const SellConfig = {
+    items: {
+        // --- 建材・ブロック ---
+        "minecraft:cobblestone": 1,
+        "minecraft:stone": 1.5,
+        "minecraft:dirt": 0.5,
+        "minecraft:sand": 1,
+        "minecraft:gravel": 1,
+        "minecraft:andesite": 1,
+        "minecraft:diorite": 1,
+        "minecraft:granite": 1,
+        "minecraft:deepslate": 1.5,
+        "minecraft:obsidian": 50,
+        "minecraft:glass": 3,
+        "minecraft:netherrack": 0.5,
+        "minecraft:soul_sand": 2,
+
+        // --- 木材関連 ---
+        "minecraft:oak_log": 3,
+        "minecraft:birch_log": 3,
+        "minecraft:spruce_log": 3,
+        "minecraft:jungle_log": 3,
+        "minecraft:acacia_log": 3,
+        "minecraft:dark_oak_log": 3,
+        "minecraft:mangrove_log": 3,
+        "minecraft:cherry_log": 3,
+
+        // --- 鉱石・インゴット・宝石 ---
+        "minecraft:coal": 3,
+        "minecraft:raw_iron": 8,
+        "minecraft:iron_ingot": 10,
+        "minecraft:raw_gold": 15,
+        "minecraft:gold_ingot": 20,
+        "minecraft:raw_copper": 5,
+        "minecraft:copper_ingot": 8,
+        "minecraft:diamond": 100,
+        "minecraft:emerald": 50,
+        "minecraft:lapis_lazuli": 5,
+        "minecraft:redstone": 2,
+        "minecraft:quartz": 5,
+        "minecraft:netherite_ingot": 1000,
+        "minecraft:gold_nugget": 2,
+        "minecraft:iron_nugget": 1,
+
+        // --- 農作物・植物 ---
+        "minecraft:wheat": 2,
+        "minecraft:carrots": 2,
+        "minecraft:potatoes": 2,
+        "minecraft:beetroot": 2,
+        "minecraft:melon_slice": 1,
+        "minecraft:pumpkin": 3,
+        "minecraft:apple": 5,
+        "minecraft:sweet_berries": 1,
+        "minecraft:glow_berries": 2,
+        "minecraft:sugar_cane": 2,
+        "minecraft:kelp": 0.5,
+        "minecraft:bamboo": 1,
+        "minecraft:cactus": 2,
+        "minecraft:cocoa_beans": 3,
+
+        // --- 食べ物 ---
+        "minecraft:bread": 10,
+        "minecraft:cooked_beef": 15,
+        "minecraft:cooked_porkchop": 15,
+        "minecraft:cooked_chicken": 10,
+        "minecraft:cooked_mutton": 12,
+        "minecraft:cooked_rabbit": 12,
+        "minecraft:baked_potato": 5,
+        "minecraft:golden_carrot": 25,
+        "minecraft:golden_apple": 100,
+
+        // --- モブドロップ ---
+        "minecraft:rotten_flesh": 1,
+        "minecraft:bone": 2,
+        "minecraft:string": 2,
+        "minecraft:spider_eye": 3,
+        "minecraft:gunpowder": 5,
+        "minecraft:ender_pearl": 20,
+        "minecraft:blaze_rod": 30,
+        "minecraft:slime_ball": 10,
+        "minecraft:ghast_tear": 50,
+        "minecraft:phantom_membrane": 20,
+        "minecraft:leather": 5,
+        "minecraft:feather": 2,
+        "minecraft:rabbit_hide": 3,
+        "minecraft:ink_sac": 3,
+        "minecraft:glow_ink_sac": 5,
+        "minecraft:magma_cream": 8,
+        "minecraft:shulker_shell": 50,
+        
+        // --- その他素材 ---
+        "minecraft:clay_ball": 2,
+        "minecraft:flint": 1,
+        "minecraft:glowstone_dust": 5
+    }
+};
