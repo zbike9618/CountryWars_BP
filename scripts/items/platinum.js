@@ -48,8 +48,9 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
     // 相手の合計防御力を計算
     const totalDefense = armorSlot.totalArmor + armorSlot.totalToughness
 
-    // 削る耐久値の計算（防御力の5倍）
-    const reduce = Math.max(1, Math.floor(totalDefense * 5));
+    // 削る耐久値の計算（防御力の15倍）
+    const reduce = Math.max(1, Math.floor(totalDefense * 15
+    ));
 
     const armorSlots = ["Head", "Chest", "Legs", "Feet"];
     for (const slot of armorSlots) {
