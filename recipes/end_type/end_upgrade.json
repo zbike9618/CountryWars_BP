@@ -1,0 +1,36 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:end_upgrade_recipe"
+        },
+        "tags": [ "crafting_table" ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "XYX",
+            "XZX",
+            "XYX"
+        ],
+        "key": {
+            "X": {
+                "item": "cw:end_ingot"
+            },
+            "Y": {
+                "item": "minecraft:netherite_ingot"
+            },
+            "Z": {
+                "item": "minecraft:netherite_upgrade_smithing_template"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:end_ingot"
+            }
+        ],
+        "result": {
+            "item": "cw:end_upgrade",
+            "count": 1
+        }
+    }
+}
