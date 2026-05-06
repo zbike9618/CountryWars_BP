@@ -4,3 +4,4 @@ export const opWhiteList = turnedOnPlugins["admin"].opWhiteList;
 export const creativeWhiteList = turnedOnPlugins["admin"].creativeWhiteList;
 import "./commands";
 import "./system"
+import "./interval"

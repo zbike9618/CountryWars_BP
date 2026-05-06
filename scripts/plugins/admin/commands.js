@@ -79,7 +79,7 @@ function CheckInventoryC(origin, target) {
     CheckInventory(origin.sourceEntity, player)
     return {
         status: server.CustomCommandStatus.Success,
-        message: "unknown"
+        message: { translate: "cw.admin.checkinventory.success", with: [player.name] },
     }
 }
 

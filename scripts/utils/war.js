@@ -30,8 +30,16 @@ export class War {
      * @returns {boolean}
      */
     static isProtected(countryData) {
-        if (!countryData || !countryData.buildtime) return false;
+        if (!countryData) return false;
         const now = Date.now();
+        // 国王が敗北時の強制保護を持っているか確認
+        const ownerData = playerDatas.get(countryData.owner);
+        if (ownerData && ownerData.lastDefeated) {
+            const defeatProtectionEnd = ownerData.lastDefeated + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+            if (now < defeatProtectionEnd) return true;
+        }
+
+        if (!countryData.buildtime) return false;
         const protectionEnd = countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
         return now < protectionEnd;
     }
@@ -52,7 +60,9 @@ export class War {
         }
 
         const now = Date.now();
-        const defeatCutoff = (countryData.lastDefeated || 0) + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
+        const ownerData = playerDatas.get(countryData.owner);
+        const lastDefeated = ownerData?.lastDefeated || countryData.lastDefeated || 0;
+        const defeatCutoff = lastDefeated + (config.warProtectionPeriod * 24 * 60 * 60 * 1000);
         if (now < defeatCutoff) {
             const rem = defeatCutoff - now;
             player.sendMessage({ translate: "cw.scform.protection.cancel.defeated", with: [Util.formatTime(rem)] });
@@ -137,6 +147,16 @@ export class War {
         if (this.isProtected(mineData) || this.isProtected(enemyData)) {
             return false;
         }
+
+        // 借金チェック
+        if (mineData.money < 0) return false;
+        for (const playerId of mineData.players) {
+            const pd = playerDatas.get(playerId);
+            if (pd && pd.money < 0) {
+                return false;
+            }
+        }
+
         const myplayers = Util.GetCountryPlayer(mineData);
         const enemyplayers = Util.GetCountryPlayer(enemyData);
 
@@ -207,12 +227,39 @@ export class War {
             number *= 0.5;
         }
 
+        // --- 連勝処理 ---
+        const newWinnerStreak = (winnerData.winStreak || 0) + 1;
+
+        // 勝利国の連勝によるボーナス倍率（最大1.3倍）
+        const winnerStreakCount = Math.min(newWinnerStreak, config.maxWinStreakBonusCount);
+        const winMultiplier = 1 + ((config.maxWinStreakWinMultiplier - 1) * (winnerStreakCount / config.maxWinStreakBonusCount));
+
+        // 敗北（討伐）した国が連勝していた場合のボーナス倍率（最大5倍）
+        const loserStreakCount = Math.min(loserData.winStreak || 0, config.maxWinStreakBonusCount);
+        const loseMultiplier = 1 + ((config.maxWinStreakLoseMultiplier - 1) * (loserStreakCount / config.maxWinStreakBonusCount));
+
+        // 倍率を適用
+        number = Math.floor(number * winMultiplier * loseMultiplier);
+
+        // データのリセットと更新
+        winnerData.winStreak = newWinnerStreak;
+        loserData.winStreak = 0;
+
         loserData.money -= number
         winnerData.money += number
         winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
         loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
 
-        // 敗北時の保護期間再設定
+        // 敗北時の強制保護期間を全プレイヤーのデータに設定する
+        for (const playerId of loserData.players) {
+            const pd = playerDatas.get(playerId);
+            if (pd) {
+                pd.lastDefeated = Date.now();
+                playerDatas.set(playerId, pd);
+            }
+        }
+
+        // 敗北時の保護期間再設定（互換性のため国データにも残す）
         loserData.buildtime = Date.now();
         loserData.lastDefeated = Date.now();
 
@@ -470,6 +517,49 @@ export class War {
 
         return true;
     }
+
+    /**
+     * 両国のプレイヤーが不在の場合に戦争を公平に終了させる
+     * @param {Object} country1 
+     * @param {Object} country2 
+     */
+    static forceEndOfflineWar(country1, country2) {
+        // 戦争状態を解除
+        const index2 = country1.warcountry.indexOf(country2.id);
+        if (index2 !== -1) country1.warcountry.splice(index2, 1);
+
+        const index1 = country2.warcountry.indexOf(country1.id);
+        if (index1 !== -1) country2.warcountry.splice(index1, 1);
+
+        // 戦争が一つもなくなった場合、wardeathを0にリセット
+        if (country1.warcountry.length === 0) country1.wardeath = 0;
+        if (country2.warcountry.length === 0) country2.wardeath = 0;
+
+        countryDatas.set(country1.id, country1);
+        countryDatas.set(country2.id, country2);
+
+        // コアを削除
+        const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
+        for (const core of cores) {
+            const chunkId = core.getDynamicProperty("core");
+            if (!chunkId) continue;
+            const cc = Chunk.checkChunk(chunkId);
+            const data = countryDatas.get(cc);
+            if (data && (data.id === country1.id || data.id === country2.id)) {
+                core.remove();
+            }
+        }
+
+        world.sendMessage({
+            rawtext: [
+                { text: "§6[戦争終了] §f両国のプレイヤーが不在のため、§l" },
+                { text: country1.name },
+                { text: "§rと§l" },
+                { text: country2.name },
+                { text: "§rの戦争を公平な条件で強制終了しました。" }
+            ]
+        });
+    }
 }
 world.afterEvents.entityDie.subscribe(ev => {
     const core = ev.deadEntity;
@@ -539,22 +629,69 @@ world.afterEvents.entityDie.subscribe(ev => {
     }
 });
 //ダメージを相殺
-world.afterEvents.entityHurt.subscribe((ev) => {
+world.beforeEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId != "minecraft:player") return
     if (!hitEntity || hitEntity.typeId !== "minecraft:player") return
     if (player.isValid) {
         if (!player.hasTag("cw:duringwar") && hitEntity.hasTag("cw:duringwar")) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
-            player.addEffect("weakness", 60, { amplifier: 255, showParticles: false })
-            player.addEffect("slowness", 60, { amplifier: 4, showParticles: false })
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknowar" })
         }
     }
-})
-world.afterEvents.entityHurt.subscribe((ev) => {
+});
+
+// 両国がオフラインの場合の自動戦争終了チェック
+system.runInterval(() => {
+    const allCountryIds = countryDatas.idList;
+    const handledPairs = new Set();
+
+    for (const idA of allCountryIds) {
+        const countryA = countryDatas.get(idA);
+        if (!countryA || !countryA.warcountry || countryA.warcountry.length === 0) continue;
+
+        for (const idB of countryA.warcountry) {
+            // 重複チェック（対戦カードごとに1回だけ処理）
+            const pairKey = idA < idB ? `${idA}_${idB}` : `${idB}_${idA}`;
+            if (handledPairs.has(pairKey)) continue;
+            handledPairs.add(pairKey);
+
+            const countryB = countryDatas.get(idB);
+            if (!countryB) continue;
+
+            const playersA = Util.GetCountryPlayer(countryA);
+            const playersB = Util.GetCountryPlayer(countryB);
+
+            // 両方の国のプレイヤーがいなければ終了
+            if (playersA.length === 0 && playersB.length === 0) {
+                War.forceEndOfflineWar(countryA, countryB);
+            }
+        }
+    }
+}, 1200); // 60秒(1200ticks)ごとにチェック
+
+// プレイヤー参加時のタグクリーンアップ
+world.afterEvents.playerSpawn.subscribe(ev => {
+    const { player, initialSpawn } = ev;
+    if (!initialSpawn) return;
+
+    const playerData = playerDatas.get(player.id);
+    if (!playerData || !playerData.country) {
+        if (player.hasTag("cw:duringwar")) {
+            player.removeTag("cw:duringwar");
+        }
+        return;
+    }
+
+    const countryData = countryDatas.get(playerData.country);
+    if (!countryData || !countryData.warcountry || countryData.warcountry.length === 0) {
+        if (player.hasTag("cw:duringwar")) {
+            player.removeTag("cw:duringwar");
+        }
+    }
+});
+world.beforeEvents.entityHurt.subscribe((ev) => {
     const player = ev.damageSource.damagingEntity;
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId !== "minecraft:player") return
@@ -564,17 +701,13 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         const chunkId = Chunk.positionToChunkId(hitEntity.location, hitEntity.dimension.id)
         const countryData = countryDatas.get(Chunk.checkChunk(chunkId))
         if (countryData.players.includes(player.id)) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknoown" })
             return;
         }
 
         if (!player.hasTag("cw:duringwar")) {
-            Util.heal(hitEntity, ev.damage)
-            hitEntity.clearVelocity()
-            player.addEffect("weakness", 20, { amplifier: 255, showParticles: false })
-            player.addEffect("slowness", 20, { amplifier: 4, showParticles: false })
+            ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknowar" })
         }
 
