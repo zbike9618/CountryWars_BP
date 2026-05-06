@@ -4,7 +4,7 @@ import { ModalFormData } from "@minecraft/server-ui";
 import { Ban } from "./ban";
 export async function permList(player) {
     const form = new ModalFormData();
-    const commands = ["/ban", "/kick", "/gamemode", "Custom"];
+    const commands = ["/ban", "/kick", "/gamemode", "Custom", "eval"];
     form.title("DoCommand");
     form.dropdown("CommandList", commands);
     const res = await form.show(player);
