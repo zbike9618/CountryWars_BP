@@ -220,6 +220,71 @@ export class Chunk {
 
         return { allowed: false, countryName: countryData.name };
     }
+
+    /**
+     * 指定された座標から最も近い、指定された国が所有するチャンクの座標を返す
+     * @param {string} originChunkId 基準となるチャンクID
+     * @param {string} countryId 対象の国ID
+     * @returns {{x: number, z: number} | null} 座標オブジェクト、または見つからない場合はnull
+     */
+    static getNearestChunk(originChunkId, countryId) {
+        const allChunkIds = chunkDatas.idList;
+        let nearestChunkId = null;
+        let minDistance = Infinity;
+
+        // 基準点のパース
+        const originParts = originChunkId.split("_");
+        let ox, oz, odim;
+        if (originParts.length === 2) {
+            ox = Number(originParts[0]);
+            oz = Number(originParts[1]);
+            odim = "minecraft:overworld";
+        } else {
+            odim = originParts[0];
+            ox = Number(originParts[1]);
+            oz = Number(originParts[2]);
+        }
+
+        for (const id of allChunkIds) {
+            if (id === originChunkId) continue;
+            const data = chunkDatas.get(id);
+            if (data && data.country === countryId) {
+                const parts = id.split("_");
+                let tx, tz, tdim;
+                if (parts.length === 2) {
+                    tx = Number(parts[0]);
+                    tz = Number(parts[1]);
+                    tdim = "minecraft:overworld";
+                } else {
+                    tdim = parts[0];
+                    tx = Number(parts[1]);
+                    tz = Number(parts[2]);
+                }
+
+                if (tdim !== odim) continue; // 同一次元のみを対象とする
+
+                const distance = Math.sqrt(Math.pow(tx - ox, 2) + Math.pow(tz - oz, 2));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestChunkId = id;
+                }
+            }
+        }
+
+        if (nearestChunkId) {
+            const parts = nearestChunkId.split("_");
+            let nx, nz;
+            if (parts.length === 2) {
+                nx = Number(parts[0]);
+                nz = Number(parts[1]);
+            } else {
+                nx = Number(parts[1]);
+                nz = Number(parts[2]);
+            }
+            return { x: nx * 16 + 8, z: nz * 16 + 8 };
+        }
+        return null;
+    }
 }
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player

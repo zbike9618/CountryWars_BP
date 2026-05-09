@@ -196,7 +196,7 @@ export class Country {
         return true;
     }
     static async setting(player, countryData) {
-        if (countryData == "none") {
+        if (!countryData || countryData == "none") {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
@@ -358,6 +358,7 @@ class Information {
                         protection
                     ]
                 },
+                { text: `\n§6平和主義§f: ${countryData.isPeace ? "§a平和" : "§c非平和"}` },
                 { text: `\n§l--- 外交関係 ---§r\n` },
                 { text: `§a同盟§f: ${allyNames}\n` },
                 { text: `§b友好§f: ${friendNames}\n` },
@@ -774,8 +775,9 @@ class Tax {
 }
 export function hasPermission(player, permissionName) {
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return false
+    if (!playerData || !playerData.country) return false
     const countryData = countryDatas.get(playerData.country)
+    if (!countryData || !countryData.permissions) return false
     const playerPermission = playerData.permission
     if (!playerPermission || !countryData.permissions[playerPermission]) return false
     return countryData.permissions[playerPermission].includes(permissionName)

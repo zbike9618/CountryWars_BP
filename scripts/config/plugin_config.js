@@ -3,7 +3,8 @@
  * 有効にするプラグイン(.jsファイル名)
  */
 export const turnedOnPlugins = {
-    //"tweakeroo":{},
+    //"tweakeroo",
+
     "admin": {
         blackList: [
             "test"
