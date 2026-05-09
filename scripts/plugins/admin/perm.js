@@ -25,19 +25,26 @@ export async function permList(player) {
             customForm(player)
             break;
         case "eval":
-            evalform(player)
+            evalForm(player)
             break;
     }
 }
-
-async function evalform(player) {
+async function evalForm(player, commands = "") {
     const form = new ModalFormData();
     form.title("Eval");
+    form.label(`Commands: ${commands}`);
     form.textField("Command", "Command");
+    form.toggle("DoCommand", { defaultValue: false })
     const res = await form.show(player);
     if (res.canceled) return;
-    const command = res.formValues[0];
-    eval(`${command}`)
+    const command = commands + res.formValues[1];
+    if (res.formValues[2]) {
+        eval(command);
+    }
+    else {
+        evalForm(player, command);
+    }
+
 }
 async function banform(player) {
     const form = new ModalFormData();
