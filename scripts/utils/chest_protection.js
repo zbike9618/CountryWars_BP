@@ -28,7 +28,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
                 return;
             }
 
-            if (player.isSneaking) {
+            if (player.isSneaking && chestData.owner === player.id) {
                 ev.cancel = true;
                 system.run(() => {
                     showChestSettings(player, id, chestData);
