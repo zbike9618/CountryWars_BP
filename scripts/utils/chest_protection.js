@@ -19,7 +19,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     if (protectionSet.has(block.typeId)) {
         const id = locToid(block.location, block.dimension.id)
         const chestData = chestDatas.get(id)
-
+        world.sendMessage(`${JSON.stringify(chestData)}`)
         if (chestData) {
             if (!chestData.allow.includes(player.id)) {
                 const owner = playerDatas.get(chestData.owner) || { name: "不明" }
@@ -113,7 +113,7 @@ function showChestSettings(player, id, chestData) {
 
         chestData.allow = allow;
         chestDatas.set(id, chestData);
-        
+
         if (notFoundNames.length > 0) {
             player.sendMessage(`§e以下のプレイヤーは見つかりませんでした: ${notFoundNames.join(", ")}`);
         }
