@@ -69,6 +69,7 @@ world.beforeEvents.playerBreakBlock.subscribe((ev) => {
 function showChestSettings(player, id, chestData) {
     const playersNames = [];
     for (const pid of chestData.allow) {
+        if (pid === player.id) continue; // 自分（オーナー）は表示しない
         const playerData = playerDatas.get(pid);
         if (playerData) {
             playersNames.push(playerData.name);
