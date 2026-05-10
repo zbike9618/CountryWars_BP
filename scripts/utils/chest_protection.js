@@ -20,7 +20,6 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
         const id = locToid(block.location, block.dimension.id)
         const chestData = chestDatas.get(id)
         if (chestData) {
-            world.sendMessage(`${!chestData.allow.includes(player.id)}`)
 
             if (!chestData.allow.includes(player.id)) {
                 const owner = playerDatas.get(chestData.owner) || { name: "不明" }
@@ -28,10 +27,8 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
                 ev.cancel = true;
                 return;
             }
-            world.sendMessage(`BeforeSetting`)
 
             if (player.isSneaking) {
-                world.sendMessage(`Setting`)
                 ev.cancel = true;
                 system.run(() => {
                     showChestSettings(player, id, chestData);
@@ -80,8 +77,8 @@ function showChestSettings(player, id, chestData) {
 
     const form = new ModalFormData()
     form.title("チェスト設定")
-    form.textField("アクセス許可 (コンマ区切りで入力)", "STEVE,ALEX", playersNames.join(","))
-    form.toggle("保護", true)
+    form.textField("アクセス許可 (コンマ区切りで入力)", "STEVE,ALEX", { defaultValue: playersNames.join(",") })
+    form.toggle("保護", { defaultValue: true })
 
     form.show(player).then((res) => {
         if (res.canceled) return
