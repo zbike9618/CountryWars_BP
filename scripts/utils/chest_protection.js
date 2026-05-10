@@ -19,16 +19,19 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     if (protectionSet.has(block.typeId)) {
         const id = locToid(block.location, block.dimension.id)
         const chestData = chestDatas.get(id)
-        world.sendMessage(`${JSON.stringify(chestData)}`)
         if (chestData) {
+            world.sendMessage(`${!chestData.allow.includes(player.id)}`)
+
             if (!chestData.allow.includes(player.id)) {
                 const owner = playerDatas.get(chestData.owner) || { name: "不明" }
                 player.sendMessage(`§c${owner.name}のチェストです`)
                 ev.cancel = true;
                 return;
             }
+            world.sendMessage(`BeforeSetting`)
 
             if (player.isSneaking) {
+                world.sendMessage(`Setting`)
                 ev.cancel = true;
                 system.run(() => {
                     showChestSettings(player, id, chestData);
