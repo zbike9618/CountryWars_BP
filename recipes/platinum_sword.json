@@ -1,0 +1,35 @@
+{
+    "format_version": "1.20.10",
+    "minecraft:recipe_shaped": {
+        "description": {
+            "identifier": "cw:platinum_sword_recipe"
+        },
+        "tags": [
+            "crafting_table"
+        ],
+        "assume_symmetry": false,
+        "priority": 1,
+        "pattern": [
+            "CXC",
+            "CXC",
+            "CSC"
+        ],
+        "key": {
+            "X": {
+                "item": "cw:platinum_ingot"
+            },
+            "S": {
+                "item": "minecraft:stick"
+            }
+        },
+        "unlock": [
+            {
+                "item": "cw:platinum_ingot"
+            }
+        ],
+        "result": {
+            "item": "cw:platinum_sword",
+            "count": 1
+        }
+    }
+}

@@ -78,6 +78,13 @@ async function openmessagebox(player) {
     form.title({ translate: "cw.messagebox.title" })
     form.button({ translate: "cw.messagebox.recieve", with: [`${totalRequests}`] })
     form.button({ translate: "cw.messagebox.send" })
+
+    // 管理者のみボタンを表示 (タグまたはOP権限)
+    const isAdmin = player.hasTag("admin") || player.permissionLevel >= 2;
+    if (isAdmin) {
+        form.button("§d全員に送信(アナウンス)")
+    }
+
     const res = await form.show(player)
     if (res.canceled) return;
     if (res.selection == 0) {
@@ -85,6 +92,9 @@ async function openmessagebox(player) {
     }
     if (res.selection == 1) {
         send(player)
+    }
+    if (res.selection == 2 && isAdmin) {
+        sendAll(player)
     }
 }
 /**
@@ -128,7 +138,7 @@ async function recieve(player) {
         form.button({ translate: "cw.messagebox.recieve.invitecountry", with: [name] })
     }
     for (const message of messageArray) {
-        const senderName = playerDatas.get(message.player)?.name || "Unknown"
+        const senderName = message.senderName || playerDatas.get(message.player)?.name || "Unknown"
         form.button({ translate: "cw.messagebox.recieve.message", with: [senderName] })
     }
     const res = await form.show(player)
@@ -183,6 +193,39 @@ async function send(player) {
     sendDataForPlayers(data, playerId)
 }
 
+/**
+ * 全プレイヤーにメッセージを送信する（アナウンス用）
+ * @param {server.Player} player 
+ */
+export async function sendAll(player) {
+    const form = new ModalFormData()
+    form.title("全員に送信(アナウンス)")
+    form.textField("メッセージ内容を入力してください。\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    const res = await form.show(player)
+    if (res.canceled || !res.formValues[0]) return;
+
+    const announcement = res.formValues[0];
+    const players = Util.getAllPlayerIdsSorted();
+    
+    player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
+
+    for (const playerId of players) {
+        const message = { player: player.id, message: announcement, senderName: "運営" };
+        const data = `
+            const playerData = new ShortPlayerData("${playerId}");
+            const messageArray = playerData.get("message") || [];
+            messageArray.push(${JSON.stringify(message)});
+            playerData.set("message", messageArray);
+            const target = world.getAllPlayers().find(p => p.id === "${playerId}");
+            if (target) {
+                target.sendMessage("§e[全体アナウンス] §f運営§7: ${announcement}");
+                target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
+            }
+        `;
+        sendDataForPlayers(data, playerId);
+    }
+}
+
 async function readMessage(player, selection, type) {
     const form = new MessageFormData()
     form.title({ translate: "cw.messagebox.recieve", with: ["0"] })
@@ -201,7 +244,7 @@ async function readMessage(player, selection, type) {
 
     }
     if (type == "message") {
-        const senderName = playerDatas.get(selection.player)?.name || "Unknown"
+        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown"
         form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] })
     }
     form.button1({ translate: "cw.form.yes" })

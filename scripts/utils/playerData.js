@@ -2,6 +2,7 @@ import * as server from "@minecraft/server";
 import { Dypro } from "./dypro.js";
 import { Util } from "./util.js";
 import { default as config } from "../config/config.js";
+import { sendToDiscord } from "./discord.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
@@ -28,6 +29,7 @@ world.afterEvents.playerSpawn.subscribe(ev => {
         playerDatas.set(player.id, playerData);
         DoInitialSpawn(player);//初期スポーンメッセージ等 
         player.setDynamicProperty("initial", true);
+        sendToDiscord(`§a${player.name}はサーバーに初参加です！`)
     }
     if (initialSpawn) {
         const playerData = playerDatas.get(player.id)

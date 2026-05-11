@@ -120,6 +120,25 @@ async function declareForm(player, countryData) {
             player.sendMessage({ translate: "cw.warform.declare.protected.enemy", with: [enemyData.name] })
             return
         }
+
+        // 借金チェック
+        if (countryData.money < 0) {
+            player.sendMessage({ rawtext: [{ text: "§c国庫が借金を抱えているため宣戦布告できません。" }] });
+            return;
+        }
+        let hasDebtPlayer = false;
+        for (const playerId of countryData.players) {
+            const pd = playerDatas.get(playerId);
+            if (pd && pd.money < 0) {
+                hasDebtPlayer = true;
+                break;
+            }
+        }
+        if (hasDebtPlayer) {
+            player.sendMessage({ rawtext: [{ text: "§c国民の誰かが借金を抱えているため宣戦布告できません。" }] });
+            return;
+        }
+
         if (War.declareTo(countryData, enemyData)) {
             //宣戦布告を送信
             world.sendMessage({ translate: `cw.warform.declare.message`, with: [countryData.name, enemyData.name] })

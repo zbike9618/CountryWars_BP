@@ -72,7 +72,7 @@ async function executeBlockLog(player, radius, days) {
     player.sendMessage(`§e周辺のログを検索中... (半径${searchRadius} / 期間:${searchDays === 0 ? "全期間" : searchDays + "日以内"})§r`);
 
     // リクエストパラメータの組み立て
-    const requestBody = { x, y, z, radius: searchRadius, days: searchDays };
+    const requestBody = { x, y, z, radius: searchRadius, days: searchDays, dimension: player.dimension.id };
 
     const request = new HttpRequest(VIEWER_URL);
     request.method = HttpRequestMethod.Post;
