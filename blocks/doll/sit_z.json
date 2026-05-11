@@ -1,12 +1,11 @@
 {
-  "format_version": "1.20.20",
+  "format_version": "1.26.0",
   "minecraft:block": {
     "description": {
       "identifier": "st:sit_z",
       "menu_category": {
-        "category": "construction",
-        "group": "itemGroup.name.playerdolls"
-},
+        "category": "construction"
+      },
       "traits": {
         "minecraft:placement_direction": {
           "enabled_states": [

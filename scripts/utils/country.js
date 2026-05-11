@@ -73,6 +73,7 @@ export class Country {
             robbedChunkAmount: [],//国ごとに保存
             wardeath: 0,//戦争中に死んでいい回数
             warcountry: [],//戦争中
+            winStreak: 0,//連勝数
             peaceProposals: {},//講和提案
             stock: [{ price: 10, date: Date.now() }],//株
             diplomacy: {
@@ -195,7 +196,7 @@ export class Country {
         return true;
     }
     static async setting(player, countryData) {
-        if (countryData == "none") {
+        if (!countryData || countryData == "none") {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
@@ -239,6 +240,11 @@ export class Country {
             }
         });
 
+        if (hasPermission(player, "country_home_set")) {
+            form.button("国ホーム設定");
+            actions.push(() => this.setHome(player, countryData));
+        }
+
         // 戦争保護解除ボタン (国王のみ、かつ保護中)
         if (War.isProtected(countryData) && player.id === countryData.owner) {
             form.button({ translate: "cw.scform.protection.cancel" });
@@ -276,35 +282,83 @@ export class Country {
         actions[res.selection]();
     }
 
+    static async setHome(player, countryData) {
+        if (countryData.home) {
+            const form = new ActionFormData()
+            form.title("国ホームの設定")
+            form.body(`現在設定されている国ホーム:\n${countryData.home.x}, ${countryData.home.y}, ${countryData.home.z}\n\n現在地で上書きしますか？それとも削除しますか？`)
+            form.button("§l位置を上書き§r\n§7現在地を新しいホームにします")
+            form.button("§c§l国ホームを削除§r\n§7設定を解除します")
+            const res = await form.show(player)
+            if (res.canceled) return;
 
+            if (res.selection === 0) {
+                this._saveHome(player, countryData);
+            } else if (res.selection === 1) {
+                const confirm = new MessageFormData()
+                confirm.title("国ホームの削除")
+                confirm.body("本当に国ホームを削除しますか？")
+                confirm.button1({ translate: "cw.form.yes" })
+                confirm.button2({ translate: "cw.form.no" })
+                const confirmRes = await confirm.show(player)
+                if (confirmRes.canceled || confirmRes.selection === 1) return;
 
+                delete countryData.home;
+                countryDatas.set(countryData.id, countryData)
+                player.sendMessage("§c国ホームを削除しました。")
+            }
+        } else {
+            const confirmForm = new MessageFormData()
+            confirmForm.title("国ホームの設定")
+            confirmForm.body("現在地を国のホーム地点として設定しますか？\n位置: " + Math.floor(player.location.x) + ", " + Math.floor(player.location.y) + ", " + Math.floor(player.location.z))
+            confirmForm.button1({ translate: "cw.form.yes" })
+            confirmForm.button2({ translate: "cw.form.no" })
+            const res = await confirmForm.show(player)
+            if (res.canceled || res.selection == 1) return;
 
+            this._saveHome(player, countryData);
+        }
+    }
+
+    static _saveHome(player, countryData) {
+        countryData.home = {
+            x: Math.floor(player.location.x),
+            y: Math.floor(player.location.y),
+            z: Math.floor(player.location.z),
+            dimension: player.dimension.id
+        }
+        countryDatas.set(countryData.id, countryData)
+        player.sendMessage("§a国のホーム地点を現在地に設定しました！")
+    }
 }
 class Information {
     static async information(player, countryData) {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
         const dp = countryData.diplomacy;
-        const allyNames   = (dp?.ally   || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const allyNames = (dp?.ally || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
         const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const enemyNames  = (dp?.enemy  || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const warNames    = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const protection  = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
+        const enemyNames = (dp?.enemy || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const warNames = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const protection = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
         form.body({
             rawtext: [
-                { translate: "cw.scform.informations", with: [
-                    `${countryData.name}`,
-                    `${countryData.description}`,
-                    `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                    `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
-                    `${countryData.money}`,
-                    `${countryData.chunkAmount}`,
-                    `${countryData.tax.consumption}`,
-                    `${countryData.tax.income}`,
-                    `${countryData.tax.country}`,
-                    `${countryData.tax.customs}`,
-                    protection
-                ]},
+                {
+                    translate: "cw.scform.informations", with: [
+                        `${countryData.name}`,
+                        `${countryData.description}`,
+                        `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+                        `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                        `${countryData.money}`,
+                        `${countryData.chunkAmount}`,
+                        `${countryData.tax.consumption}`,
+                        `${countryData.tax.income}`,
+                        `${countryData.tax.country}`,
+                        `${countryData.tax.customs}`,
+                        protection
+                    ]
+                },
+                { text: `\n§6平和主義§f: ${countryData.isPeace ? "§a平和" : "§c非平和"}` },
                 { text: `\n§l--- 外交関係 ---§r\n` },
                 { text: `§a同盟§f: ${allyNames}\n` },
                 { text: `§b友好§f: ${friendNames}\n` },
@@ -557,6 +611,11 @@ class Member {
         sendDataForPlayers(data, playerId)
     }
     static async transferOwner(player, countryData) {
+        if (countryData.money < 0) {
+            player.sendMessage({ rawtext: [{ text: "§c国庫が借金を抱えているため国王を譲れません。" }] });
+            return;
+        }
+
         const members = countryData.players.filter(id => id !== player.id);
         if (members.length === 0) {
             player.sendMessage({ translate: "cw.form.noplayers" });
@@ -716,8 +775,9 @@ class Tax {
 }
 export function hasPermission(player, permissionName) {
     const playerData = playerDatas.get(player.id)
-    if (!playerData.country) return false
+    if (!playerData || !playerData.country) return false
     const countryData = countryDatas.get(playerData.country)
+    if (!countryData || !countryData.permissions) return false
     const playerPermission = playerData.permission
     if (!playerPermission || !countryData.permissions[playerPermission]) return false
     return countryData.permissions[playerPermission].includes(permissionName)

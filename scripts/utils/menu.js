@@ -6,6 +6,7 @@ import { Dypro } from "../utils/dypro";
 import { Country } from "../utils/country";
 import { War } from "../utils/war";
 import { Chunk } from "./chunk";
+import { sendAll } from "../commands/messagebox";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 const chunkDatas = new Dypro("chunk");
@@ -18,6 +19,8 @@ export class Menu {
         form.button({ translate: "cw.menu.adminchunk" });
         form.button({ translate: "cw.menu.playerdatareset" });
         form.button({ translate: "cw.menu.deletecountry" })
+        form.button("チャンク一覧");
+        form.button("全体アナウンス");
         form.show(player).then((response) => {
             if (response.canceled) return;
             if (response.selection === 0) {
@@ -30,6 +33,10 @@ export class Menu {
                 PlayerDataReset(player);
             } else if (response.selection === 4) {
                 DeleteCountry(player);
+            } else if (response.selection === 5) {
+                ChunkListCountrySelect(player);
+            } else if (response.selection === 6) {
+                sendAll(player);
             }
         });
     }
@@ -80,6 +87,59 @@ async function movemoney(player) {
             return;
         }
         player.sendMessage({ translate: `cw.menu.movemoney.success.${action}`, with: [`${selectedPlayer.name}`, `${actionmoney}`, `${newMoney}`] });
+    });
+}
+
+async function ChunkListCountrySelect(player) {
+    const countries = countryDatas.idList
+        .map(id => countryDatas.get(id))
+        .filter(country => country?.name);
+    const form = new ui.ActionFormData();
+    form.title("国家一覧 (チャンク表示)");
+    for (const country of countries) {
+        form.button(country.name);
+    }
+    form.show(player).then((response) => {
+        if (response.canceled) {
+            Menu.showForm(player);
+            return;
+        };
+        const countryData = countries[response.selection];
+        ShowCountryChunks(player, countryData);
+    });
+}
+
+async function ShowCountryChunks(player, countryData) {
+    const allChunkIds = chunkDatas.idList;
+    const countryChunks = [];
+
+    for (const id of allChunkIds) {
+        const data = chunkDatas.get(id);
+        if (data && data.country === countryData.id) {
+            const parts = id.split("_");
+            let x, z, dim = "Overworld";
+            if (parts.length === 2) {
+                x = parts[0];
+                z = parts[1];
+            } else {
+                dim = parts[0];
+                x = parts[1];
+                z = parts[2];
+            }
+            countryChunks.push(`${dim}: (${x}, ${z})`);
+        }
+    }
+
+    const form = new ui.ActionFormData();
+    form.title(`${countryData.name} のチャンク一覧`);
+    if (countryChunks.length === 0) {
+        form.body("所有しているチャンクはありません。");
+    } else {
+        form.body(`所有チャンク数: ${countryChunks.length}\n\n` + countryChunks.join("\n"));
+    }
+    form.button("戻る");
+    form.show(player).then((res) => {
+        ChunkListCountrySelect(player);
     });
 }
 

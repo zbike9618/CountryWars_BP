@@ -4,7 +4,7 @@ import { ModalFormData } from "@minecraft/server-ui";
 import { Ban } from "./ban";
 export async function permList(player) {
     const form = new ModalFormData();
-    const commands = ["/ban", "/kick", "/gamemode", "Custom"];
+    const commands = ["/ban", "/kick", "/gamemode", "Custom", "eval"];
     form.title("DoCommand");
     form.dropdown("CommandList", commands);
     const res = await form.show(player);
@@ -24,9 +24,28 @@ export async function permList(player) {
         case "Custom":
             customForm(player)
             break;
+        case "eval":
+            evalForm(player)
+            break;
     }
 }
+async function evalForm(player, commands = "") {
+    const form = new ModalFormData();
+    form.title("Eval");
+    form.label(`Commands: ${commands}`);
+    form.textField("Command", "Command");
+    form.toggle("DoCommand", { defaultValue: false })
+    const res = await form.show(player);
+    if (res.canceled) return;
+    const command = commands + res.formValues[1];
+    if (res.formValues[2]) {
+        eval(command);
+    }
+    else {
+        evalForm(player, command);
+    }
 
+}
 async function banform(player) {
     const form = new ModalFormData();
     const players = world.getAllPlayers()

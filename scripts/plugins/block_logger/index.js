@@ -17,6 +17,7 @@ function sendLog(action, player, block, blockType) {
         action: action, // "Break" もしくは "Place"
         playerName: player.name,
         blockName: blockType,
+        dimension: block.dimension.id,
         x: block.x,
         y: block.y,
         z: block.z
@@ -24,7 +25,7 @@ function sendLog(action, player, block, blockType) {
 
     http.request(request).catch(() => {
         // エラーハンドリング（コンソールに出すと重くなる可能性があるので無視するか最小限に）
-        // console.warn(`[BlockLogger] サーバーへの送信に失敗しました`);
+        console.warn(`[BlockLogger] サーバーへの送信に失敗しました`);
     });
 }
 

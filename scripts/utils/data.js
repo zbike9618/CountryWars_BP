@@ -22,7 +22,8 @@ export class Data {
             "tax_manage",
             "war_manage",
             "chunk_buy",
-            "chunk_sell"
+            "chunk_sell",
+            "country_home_set"
         ]
     static enchantsLang = {
         "power": "enchantment.arrowDamage",
