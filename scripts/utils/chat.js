@@ -1,63 +1,113 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-import { DiscordRelay, sendChatToDiscord, sendToDiscord } from "./discord.js";
-export { DiscordRelay, sendChatToDiscord, sendToDiscord };
+import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { Dypro } from "./dypro.js";
 import config from "../config/config.js";
 
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
+const SERVER_URL = "http://localhost:3000/mc-to-discord";
+const GET_URL = "http://localhost:3000/get-messages";
 
-const deathMessageMap = {
-    "anvil": (v) => `${v} は落下してきた金床に押しつぶされた`,
-    "blockExplosion": (v) => `${v} は爆発に巻き込まれた`,
-    "contact": (v) => `${v} はサボテンに刺されて死んでしまった`,
-    "drowning": (v) => `${v} は溺れ死んだ`,
-    "entityAttack": (v, a) => a ? `${v} は ${a} に殺害された` : `${v} は殺害された`,
-    "entityExplosion": (v, a) => a ? `${v} は ${a} に爆破された` : `${v} は爆発に巻き込まれた`,
-    "fall": (v) => `${v} は高いところから落ちた`,
-    "fallingBlock": (v) => `${v} は落下してきたブロックに押しつぶされた`,
-    "fire": (v) => `${v} は炎に巻かれた`,
-    "fireTick": (v) => `${v} は燃え尽きた`,
-    "fireworks": (v) => `${v} は爆発に巻き込まれた`,
-    "flyIntoWall": (v) => `${v} は激突した`,
-    "freezing": (v) => `${v} は凍死した`,
-    "lava": (v) => `${v} は溶岩の中で泳ごうとした`,
-    "lightning": (v) => `${v} は雷に打たれた`,
-    "magic": (v) => `${v} は魔法によって殺された`,
-    "magma": (v) => `${v} は溶岩の上を歩いた`,
-    "none": (v) => `${v} は死んだ`,
-    "piston": (v) => `${v} は押しつぶされた`,
-    "projectile": (v, a) => a ? `${v} は ${a} に射抜かれた` : `${v} は射抜かれた`,
-    "starve": (v) => `${v} は飢え死にした`,
-    "suffocation": (v) => `${v} は壁の中に埋まった`,
-    "suicide": (v) => `${v} は命を絶った`,
-    "thorns": (v, a) => a ? `${v} は ${a} を攻撃しようとして殺害された` : `${v} は殺害された`,
-    "void": (v) => `${v} は世界の外へ落ちた`,
-    "wither": (v) => `${v} は萎びてしまった`,
-    "sonicBoom": (v, a) => a ? `${v} は ${a} の放った衝撃波で消し飛ばされた` : `${v} は衝撃波で消し飛ばされた`,
-};
+console.warn("CountryWars Script Loading...");
 
 /**
- * 死亡ログ処理
+ * サーバー起動通知
+ * 起動時に一度だけNode.jsへ信号を送り、Discordに通知させます
  */
-world.afterEvents.entityDie.subscribe((ev) => {
-    const { deadEntity, damageSource } = ev;
-    if (deadEntity.typeId !== "minecraft:player") return;
-
-    const victim = deadEntity.name;
-    const attacker = damageSource.damagingEntity?.name;
-    const cause = damageSource.cause;
-
-    let msg = "";
-    if (deathMessageMap[cause]) {
-        msg = deathMessageMap[cause](victim, attacker);
-    } else {
-        msg = `${victim} は死んだ`;
-    }
-
-    DiscordRelay.send(msg);
+system.run(() => {
+    const request = new HttpRequest(SERVER_URL);
+    request.method = HttpRequestMethod.Post;
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
+    request.body = JSON.stringify({ type: "start" });
+    http.request(request).catch(() => { });
 });
+
+/**
+ * Discordからのメッセージ受信 & 死活監視(Ping)
+ *  */
+system.runInterval(() => {
+    const request = new HttpRequest(GET_URL);
+    request.method = HttpRequestMethod.Get;
+    request.headers = [new HttpHeader("Authorization", "Bearer " + config.apiToken)];
+
+    http.request(request).then(response => {
+        if (response.status === 200) {
+            const messages = JSON.parse(response.body);
+            for (const msg of messages) {
+                // AIの回答は青色、通常は水色などで区別
+                const prefix = msg.author === "AI" ? "§b[AI]§r " : "§b[Discord] §r";
+                world.sendMessage(`${prefix}${msg.author}: ${msg.content}`);
+            }
+        }
+    }).catch(() => {
+        // 接続失敗時はエラーを出さず無視（Node側が落ちている場合など）
+    });
+}, 20);
+
+
+/**
+ * 通常チャット・AI質問用
+ */
+function sendChatToDiscord(text, playerName = "Server", chatType = "world") {
+    // メンション防止: 半角の「@」を全角の「＠」に変更します。
+    const safeText = text.replace(/@/g, "＠");
+
+    const request = new HttpRequest(SERVER_URL);
+    request.method = HttpRequestMethod.Post;
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
+    request.body = JSON.stringify({
+        message: safeText,
+        sender: playerName,
+        chatType: chatType
+    });
+    http.request(request).catch(() => { });
+}
+
+/**
+ * サーバー通知・管理者呼び出し用
+ */
+function sendToDiscord(text, playerName = "Server") {
+    const request = new HttpRequest(SERVER_URL);
+    request.method = HttpRequestMethod.Post;
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
+    request.body = JSON.stringify({
+        message: text,
+        sender: playerName
+    });
+    http.request(request).catch(() => { });
+}
+
+/**
+ * システム通知・翻訳用
+ */
+function sendTranslatedToDiscord(key, args = []) {
+    const request = new HttpRequest(SERVER_URL);
+    request.method = HttpRequestMethod.Post;
+    request.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", "Bearer " + config.apiToken)
+    ];
+    request.body = JSON.stringify({
+        key: key,
+        args: args
+    });
+    http.request(request).catch(e => console.error("[Discord Relay] Error:", e));
+}
+
+export const DiscordRelay = {
+    send: (text) => sendToDiscord(text),
+    sendTranslate: (key, args) => sendTranslatedToDiscord(key, args)
+};
 
 /**
  * チャット処理
@@ -66,14 +116,7 @@ world.beforeEvents.chatSend.subscribe((ev) => {
     const player = ev.sender;
     const message = ev.message;
     const playerData = playerDatas.get(player.id);
-    // --- 国に加入していないのに国・同盟チャットになっている場合の修正 ---
-    if ((playerData.chattype === "country" || playerData.chattype === "ally") && (!playerData.country || !countryDatas.get(playerData.country))) {
-        playerData.chattype = "world";
-        playerDatas.set(player.id, playerData);
-    }
-
     const countryname = countryDatas.get(playerData.country)?.name || "§7未所属";
-
 
     // --- AI質問の検知 ---
     if (message.startsWith("!ai ")) {
@@ -125,7 +168,6 @@ world.beforeEvents.chatSend.subscribe((ev) => {
             for (const pc of world.getAllPlayers().filter(p => allowedCountries.has(playerDatas.get(p.id).country))) {
                 pc.sendMessage(send);
             }
-            sendChatToDiscord(send, player.name, "ally");
             break;
         }
     }

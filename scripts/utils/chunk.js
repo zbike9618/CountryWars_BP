@@ -63,23 +63,6 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.already", with: [countryDatas.get(cc)?.name || "Unknown"] })
             return;
         }
-
-        const cx = Math.floor(player.location.x / 16);
-        const cz = Math.floor(player.location.z / 16);
-        const margin = config.chunkBuyMargin || 0;
-        if (margin > 0) {
-            for (let dx = -margin; dx <= margin; dx++) {
-                for (let dz = -margin; dz <= margin; dz++) {
-                    if (dx === 0 && dz === 0) continue;
-                    const checkId = player.dimension.id === "minecraft:overworld" ? `${cx + dx}_${cz + dz}` : `${player.dimension.id}_${cx + dx}_${cz + dz}`;
-                    const nearCc = this.checkChunk(checkId);
-                    if (nearCc !== "wasteland" && nearCc !== countryData.id) {
-                        player.sendMessage(`§c半径${margin}チャンク以内に違う国があるため購入できません。`);
-                        return;
-                    }
-                }
-            }
-        }
         const form = new MessageFormData()
         form.title({ translate: "cw.chunk.buy.title" })
         form.body({ translate: "cw.chunk.buy.body", with: [String(config.chunkprice), String(countryData.money)] })
@@ -220,71 +203,6 @@ export class Chunk {
 
         return { allowed: false, countryName: countryData.name };
     }
-
-    /**
-     * 指定された座標から最も近い、指定された国が所有するチャンクの座標を返す
-     * @param {string} originChunkId 基準となるチャンクID
-     * @param {string} countryId 対象の国ID
-     * @returns {{x: number, z: number} | null} 座標オブジェクト、または見つからない場合はnull
-     */
-    static getNearestChunk(originChunkId, countryId) {
-        const allChunkIds = chunkDatas.idList;
-        let nearestChunkId = null;
-        let minDistance = Infinity;
-
-        // 基準点のパース
-        const originParts = originChunkId.split("_");
-        let ox, oz, odim;
-        if (originParts.length === 2) {
-            ox = Number(originParts[0]);
-            oz = Number(originParts[1]);
-            odim = "minecraft:overworld";
-        } else {
-            odim = originParts[0];
-            ox = Number(originParts[1]);
-            oz = Number(originParts[2]);
-        }
-
-        for (const id of allChunkIds) {
-            if (id === originChunkId) continue;
-            const data = chunkDatas.get(id);
-            if (data && data.country === countryId) {
-                const parts = id.split("_");
-                let tx, tz, tdim;
-                if (parts.length === 2) {
-                    tx = Number(parts[0]);
-                    tz = Number(parts[1]);
-                    tdim = "minecraft:overworld";
-                } else {
-                    tdim = parts[0];
-                    tx = Number(parts[1]);
-                    tz = Number(parts[2]);
-                }
-
-                if (tdim !== odim) continue; // 同一次元のみを対象とする
-
-                const distance = Math.sqrt(Math.pow(tx - ox, 2) + Math.pow(tz - oz, 2));
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestChunkId = id;
-                }
-            }
-        }
-
-        if (nearestChunkId) {
-            const parts = nearestChunkId.split("_");
-            let nx, nz;
-            if (parts.length === 2) {
-                nx = Number(parts[0]);
-                nz = Number(parts[1]);
-            } else {
-                nx = Number(parts[1]);
-                nz = Number(parts[2]);
-            }
-            return { x: nx * 16 + 8, z: nz * 16 + 8 };
-        }
-        return null;
-    }
 }
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     const player = ev.player
@@ -325,7 +243,7 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     }
 })
 
-world.beforeEvents.entityHurt.subscribe((ev) => {
+world.afterEvents.entityHurt.subscribe((ev) => {
     const entity = ev.hurtEntity
 
     const damageSource = ev.damageSource;
@@ -340,7 +258,11 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
 
     if (!check.allowed) {
         attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
-        ev.cancel = true;
+        const comp = entity.getComponent("minecraft:health")
+        if (comp && ev.damage) {
+            comp.setCurrentValue(Math.min(comp.currentValue + ev.damage, comp.effectiveMax));
+            entity.clearVelocity()
+        }
     }
 })
 world.beforeEvents.explosion.subscribe((ev) => {

@@ -100,15 +100,7 @@ export class playerMarketSystem {
 
         // 【修正: 事前インベントリ空き枠のチェック（アイテムロスト対策）】
         if (amount != 0) {
-            let tempStack;
-            try {
-                tempStack = new server.ItemStack(itemId);
-            } catch (e) {
-                player.sendMessage("§cエラー: このアイテムは無効な識別子を持っているため購入できません。出品者に連絡してください。");
-                return;
-            }
-            const AmountMax = tempStack.maxAmount;
-            const requiredSlots = Math.ceil(amount / AmountMax);
+            const requiredSlots = Math.ceil(amount / 64);
             if (inv.emptySlotsCount < requiredSlots) {
                 player.sendMessage({ translate: "cw.playermarket.invfull" });
                 return;
@@ -116,11 +108,9 @@ export class playerMarketSystem {
         }
 
         if (amount != 0) {
-            const tempItem = new server.ItemStack(itemId);
-            const AmountMax = tempItem.maxAmount;
-            const count = Math.floor(amount / AmountMax);
+            const count = Math.floor(amount / 64);
             for (let i = 0; i < count; i++) {
-                const item = new server.ItemStack(itemId, AmountMax)
+                const item = new server.ItemStack(itemId, 64)
                 if (itemData.lore) {
                     const lore = itemData.lore.split("\n")
                     item.setLore(lore)
@@ -129,8 +119,7 @@ export class playerMarketSystem {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = itemData.enchants
                     for (const enchantment of enchantments) {
-                        const type = server.EnchantmentTypes.get(enchantment.id);
-                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
+                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
                 }
                 if (itemData.durability) {
@@ -139,7 +128,7 @@ export class playerMarketSystem {
                 }
                 inv.addItem(item)
             }
-            const result = amount - (count * AmountMax)
+            const result = amount - (count * 64)
             if (result != 0) {
 
                 const item = new server.ItemStack(itemId, result)
@@ -151,8 +140,7 @@ export class playerMarketSystem {
                     const comp = item.getComponent("minecraft:enchantable")
                     const enchantments = itemData.enchants
                     for (const enchantment of enchantments) {
-                        const type = server.EnchantmentTypes.get(enchantment.id);
-                        if (type) comp.addEnchantment({ type: type, level: enchantment.level })
+                        comp.addEnchantment({ type: new server.EnchantmentType(enchantment.id), level: enchantment.level })
                     }
                 }
                 if (itemData.durability) {
@@ -219,17 +207,9 @@ export class playerMarketSystem {
         }
         for (let i = 0; i < marketData.length; i++) {
             const itemData = marketData[i];
-            let AmountMax = 64;
-            let isInvalid = false;
-            try {
-                const tempStack = new server.ItemStack(itemData.itemId);
-                AmountMax = tempStack.maxAmount;
-            } catch (e) {
-                isInvalid = true;
-            }
-            const number = Math.floor(itemData.amount / AmountMax)
-            const restAmount = itemData.amount - (number * AmountMax)
-            const displayAmount = `${number > 0 ? (AmountMax === 1 ? itemData.amount.toString() : number.toString() + "st + " + restAmount.toString()) : restAmount}`
+            const number = Math.floor(itemData.amount / 64)
+            const restAmount = itemData.amount - (number * 64)
+            const displayAmount = `${number > 0 ? number.toString() + "st + " + restAmount.toString() : restAmount}`
             let offInt = 0;
             let isDiscount = false;
             if (itemData.price.length > 1) {
@@ -292,18 +272,11 @@ export class playerMarketSystem {
                 lore.push({ text: "\n" });
                 lore.push({ translate: isDiscount ? "cw.playermarket.discount" : "cw.playermarket.price_up", with: [offInt.toString()] });
             }
-            if (isInvalid) {
-                lore.push({ text: `\n§c§l[ERROR]§r\n§7アイテム識別子が無効です:\n§7${itemData.itemId}` });
-            }
-
             form.setButton(i + 9, {
-                iconPath: isInvalid ? "textures/ui/warning_alex" : itemIdToPath[itemData.itemId],
+                iconPath: itemIdToPath[itemData.itemId],
                 name: {
-                    rawtext: [
-                        { text: isInvalid ? "§c[Error: Invalid Item] " : "" },
-                        { translate: isInvalid ? "" : Util.langChangeItemName(itemData.itemId) },
-                        { text: ` [${displayAmount}]` }
-                    ]
+                    rawtext: [{ translate: Util.langChangeItemName(itemData.itemId) },
+                    { text: `[${displayAmount}]` }]
                 },
                 lore,
                 stackAmount: itemData.amount,

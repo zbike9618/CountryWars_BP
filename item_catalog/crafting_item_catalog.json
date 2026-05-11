@@ -22,39 +22,6 @@
                         ]
                     }
                 ]
-            },
-            {
-                "category_name": "nature",
-                "groups": [
-                    {
-                        "group_identifier": {
-                            "icon": "cw:dance_b",
-                            "name": "itemGroup.name.playerdolls"
-                        },
-                        "items": [
-                            "cw:dance_b",
-                            "cw:dance_c",
-                            "cw:dance_f",
-                            "cw:dance_t",
-                            "cw:dance_z",
-                            "cw:happy_b",
-                            "cw:happy_c",
-                            "cw:happy_f",
-                            "cw:happy_t",
-                            "cw:happy_z",
-                            "cw:sit_b",
-                            "cw:sit_c",
-                            "cw:sit_f",
-                            "cw:sit_t",
-                            "cw:sit_z",
-                            "cw:sleep_b",
-                            "cw:sleep_c",
-                            "cw:sleep_f",
-                            "cw:sleep_t",
-                            "cw:sleep_z"
-                        ]
-                    }
-                ]
             }
         ]
     }

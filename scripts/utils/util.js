@@ -236,5 +236,4 @@ export class Util {
         result += `${minutes}m`;
         return result.trim();
     }
-
 }

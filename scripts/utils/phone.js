@@ -100,21 +100,21 @@ function show_form(player) {
     })
     form.setButton(10, {
         iconPath: "textures/ui/message",
-        name: "cw.wchat.title",
+        name: "cw.wchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(11, {
         iconPath: "textures/ui/message",
-        name: "cw.lchat.title",
+        name: "cw.lchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
     form.setButton(12, {
         iconPath: "textures/ui/message",
-        name: "cw.cchat.title",
+        name: "cw.cchatform.title",
         stackAmount: 1,
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true

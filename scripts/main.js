@@ -1,7 +1,6 @@
 import { world } from "@minecraft/server"
 import { http, HttpRequestMethod, HttpHeader, HttpRequest } from "@minecraft/server-net";
 import { system } from "@minecraft/server";
-import { transferPlayer } from "@minecraft/server-admin";
 import config from "./config/config.js";
 import "./commands/command"
 import "./utils/playerData"
@@ -10,7 +9,6 @@ import "./items/items"
 import "./utils/chat"
 import "./utils/bank"
 import "./plugin_controller"
-import "./utils/chest_protection.js"
 
 
 world.afterEvents.worldLoad.subscribe(() => {
