@@ -122,7 +122,8 @@ export class playerMarketSystem {
                     if (durComp) durComp.damage = itemData.durability;
                 }
                 if (inv.emptySlotsCount == 0) {
-                    player.dimension.spawnItem(item, player.location)
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
                 } else {
                     inv.addItem(item)
                 }
@@ -148,7 +149,8 @@ export class playerMarketSystem {
                     if (durComp) durComp.damage = itemData.durability;
                 }
                 if (inv.emptySlotsCount == 0) {
-                    player.dimension.spawnItem(item, player.location)
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
                 } else {
                     inv.addItem(item)
                 }

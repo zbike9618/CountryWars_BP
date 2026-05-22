@@ -259,7 +259,8 @@ async function sellFormS(player, item, maxamount) {
         newItem.clearDynamicProperties()
         newItem.amount = AmountMax;
         if (inv.emptySlotsCount == 0) {
-            player.dimension.spawnItem(newItem, player.location)
+            const ent = player.dimension.spawnItem(newItem, player.location)
+            ent.clearVelocity()
         } else {
             inv.addItem(newItem)
         }
@@ -270,7 +271,8 @@ async function sellFormS(player, item, maxamount) {
         newItem.clearDynamicProperties()
         newItem.amount = remainder;
         if (inv.emptySlotsCount == 0) {
-            player.dimension.spawnItem(newItem, player.location)
+            const ent = player.dimension.spawnItem(newItem, player.location)
+            ent.clearVelocity()
         } else {
             inv.addItem(newItem)
         }
@@ -364,7 +366,8 @@ async function editForm2(player, { page, slot }) {
                     if (durComp) durComp.damage = marketData.durability;
                 }
                 if (inv.emptySlotsCount == 0) {
-                    player.dimension.spawnItem(item, player.location)
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
                 } else {
                     inv.addItem(item)
                 }

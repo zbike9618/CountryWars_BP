@@ -258,7 +258,8 @@ function withdrawAllItems(player, itemStack, storedData) {
     if (remainingItem) {
       const actualAdded = withdrawAmount - remainingItem.amount;
       totalWithdrawn += actualAdded;
-      player.dimension.spawnItem(remainingItem, player.location);
+      const ent = player.dimension.spawnItem(remainingItem, player.location)
+      ent.clearVelocity()
       droppedItems += remainingItem.amount;
       remainingItems -= withdrawAmount;
     } else {

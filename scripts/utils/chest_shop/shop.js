@@ -109,7 +109,8 @@ async function buyForm(player, itemData) {
         for (let i = 0; i < count; i++) {
             const item = new server.ItemStack(id, 64)
             if (inv.emptySlotsCount == 0) {
-                player.dimension.spawnItem(item, player.location)
+                const ent = player.dimension.spawnItem(item, player.location)
+                ent.clearVelocity()
             } else {
                 inv.addItem(item)
             }
@@ -119,7 +120,8 @@ async function buyForm(player, itemData) {
 
             const item = new server.ItemStack(id, result)
             if (inv.emptySlotsCount == 0) {
-                player.dimension.spawnItem(item, player.location)
+                const ent = player.dimension.spawnItem(item, player.location)
+                ent.clearVelocity()
             } else {
                 inv.addItem(item)
             }
