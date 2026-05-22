@@ -261,12 +261,14 @@ async function sellFormS(player, item, maxamount) {
     const count = Math.floor(amountC / AmountMax);
     for (let i = 0; i < count; i++) {
         const newItem = item.clone();
+        newItem.clearDynamicProperties()
         newItem.amount = AmountMax;
         inv.addItem(newItem);
     }
     const remainder = amountC - (count * AmountMax);
     if (remainder > 0) {
         const newItem = item.clone();
+        newItem.clearDynamicProperties()
         newItem.amount = remainder;
         inv.addItem(newItem);
     }
