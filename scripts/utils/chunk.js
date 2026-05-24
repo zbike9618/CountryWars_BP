@@ -206,8 +206,13 @@ export class Chunk {
         const playerCountryId = playerData ? playerData.country : undefined;
 
         if (countryData.warcountry && countryData.warcountry.length > 0) {
-            if (playerCountryId === countryId || countryData.warcountry.includes(playerCountryId)) {
+            if (playerCountryId === countryId) {
                 return { allowed: true };
+            }
+            if (countryData.warcountry.includes(playerCountryId)) {
+                if (permType === "attack_player" || permType === "attack_entity") {
+                    return { allowed: true };
+                }
             }
         }
 
