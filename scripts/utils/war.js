@@ -7,6 +7,7 @@ import { Util } from "./util.js";
 import { Country } from "./country.js";
 import config from "../config/config.js";
 import { DiscordRelay } from "./chat.js";
+import { sendDataForPlayers } from "./sendData.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
@@ -270,17 +271,14 @@ export class War {
         countryDatas.set(loserData.id, loserData)
         countryDatas.set(winnerData.id, winnerData)
 
-        const loserplayers = Util.GetCountryPlayer(loserData);
-        for (const player of loserplayers) {
-            player.sendMessage({ translate: "cw.war.invade.finish.money", with: [winnerData.name, `${number}`] })
-            if (loserData.warcountry.length === 0) {
-                player.removeTag("cw:duringwar")
-            }
+        for (const playerId of loserData.players) {
+            const data = `const p = world.getEntity("${playerId}"); if (p) { p.sendMessage({ translate: "cw.war.invade.finish.money", with: ["${winnerData.name}", "${number}"] }); ${loserData.warcountry.length === 0 ? 'p.removeTag("cw:duringwar");' : ''} }`;
+            sendDataForPlayers(data, playerId);
         }
-        const winnerplayers = Util.GetCountryPlayer(winnerData);
-        for (const player of winnerplayers) {
+        for (const playerId of winnerData.players) {
             if (winnerData.warcountry.length === 0) {
-                player.removeTag("cw:duringwar")
+                const data = `const p = world.getEntity("${playerId}"); if (p) p.removeTag("cw:duringwar");`;
+                sendDataForPlayers(data, playerId);
             }
         }
         const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
@@ -476,17 +474,16 @@ export class War {
         countryDatas.set(targetCountry.id, targetCountry);
 
         // プレイヤーからタグを削除
-        const proposerPlayers = Util.GetCountryPlayer(proposerCountry);
-        const targetPlayers = Util.GetCountryPlayer(targetCountry);
-
-        for (const p of proposerPlayers) {
+        for (const playerId of proposerCountry.players) {
             if (proposerCountry.warcountry.length === 0) {
-                p.removeTag("cw:duringwar");
+                const data = `const p = world.getEntity("${playerId}"); if (p) p.removeTag("cw:duringwar");`;
+                sendDataForPlayers(data, playerId);
             }
         }
-        for (const p of targetPlayers) {
+        for (const playerId of targetCountry.players) {
             if (targetCountry.warcountry.length === 0) {
-                p.removeTag("cw:duringwar");
+                const data = `const p = world.getEntity("${playerId}"); if (p) p.removeTag("cw:duringwar");`;
+                sendDataForPlayers(data, playerId);
             }
         }
 
@@ -537,6 +534,20 @@ export class War {
 
         countryDatas.set(country1.id, country1);
         countryDatas.set(country2.id, country2);
+
+        // プレイヤーからタグを削除
+        for (const playerId of country1.players) {
+            if (country1.warcountry.length === 0) {
+                const data = `const p = world.getEntity("${playerId}"); if (p) p.removeTag("cw:duringwar");`;
+                sendDataForPlayers(data, playerId);
+            }
+        }
+        for (const playerId of country2.players) {
+            if (country2.warcountry.length === 0) {
+                const data = `const p = world.getEntity("${playerId}"); if (p) p.removeTag("cw:duringwar");`;
+                sendDataForPlayers(data, playerId);
+            }
+        }
 
         // コアを削除
         const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
