@@ -227,40 +227,103 @@ export async function sendAll(player) {
 }
 
 async function readMessage(player, selection, type) {
-    const form = new MessageFormData()
-    form.title({ translate: "cw.messagebox.recieve", with: ["0"] })
+    const playerData = new ShortPlayerData(player.id);
+    
+    if (type == "message") {
+        const form = new ActionFormData();
+        form.title({ translate: "cw.messagebox.recieve", with: ["0"] });
+        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] });
+        form.button("閉じる");
+        form.button("削除する");
+        
+        const res = await form.show(player);
+        if (res.canceled) return;
+        
+        if (res.selection == 0) {
+            recieve(player);
+        } else if (res.selection == 1) {
+            const messageArray = playerData.get("message") || [];
+            const index = messageArray.findIndex(msg => msg.player === selection.player && msg.message === selection.message && msg.senderName === selection.senderName);
+            if (index !== -1) {
+                messageArray.splice(index, 1);
+                playerData.set("message", messageArray);
+            }
+            recieve(player);
+        }
+        return;
+    }
+
+    // tpa, tpaRequest, invitecountry
+    const form = new ActionFormData();
+    form.title({ translate: "cw.messagebox.recieve", with: ["0"] });
     if (type == "tpa") {
-        const name = playerDatas.get(selection)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [name] })
+        const name = playerDatas.get(selection)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [name] });
     }
     if (type == "tpaRequest") {
-        const name = playerDatas.get(selection)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [name] })
+        const name = playerDatas.get(selection)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [name] });
     }
     if (type == "invitecountry") {
-        const countryData = countryDatas.get(selection)
-        const name = countryData?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [name] })
-
+        const countryData = countryDatas.get(selection);
+        const name = countryData?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [name] });
     }
-    if (type == "message") {
-        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] })
-    }
-    form.button1({ translate: "cw.form.yes" })
-    form.button2({ translate: "cw.form.no" })
-    const res = await form.show(player)
+    form.button({ translate: "cw.form.yes" });
+    form.button({ translate: "cw.form.no" });
+    
+    const res = await form.show(player);
     if (res.canceled) return;
+
     if (res.selection == 0) {
         if (type == "tpa") {
-            player.teleport(world.getEntity(selection).location)
+            const target = world.getAllPlayers().find(p => p.id === selection) || world.getEntity(selection);
+            if (target) {
+                player.teleport(target.location);
+            } else {
+                player.sendMessage("プレイヤーが見つかりませんでした。");
+            }
         }
         if (type == "tpaRequest") {
-            world.getEntity(selection).teleport(player.location)
+            const target = world.getAllPlayers().find(p => p.id === selection) || world.getEntity(selection);
+            if (target) {
+                target.teleport(player.location);
+            } else {
+                player.sendMessage("プレイヤーが見つかりませんでした。");
+            }
         }
         if (type == "invitecountry") {
-            Country.join(player, countryDatas.get(selection))
+            Country.join(player, countryDatas.get(selection));
         }
-        // messageタイプは確認のみなので何もしない
+    }
+
+    // 承認(0)または拒否(1)が実行された場合、リストから削除して元のメニューに戻る
+    if (res.selection == 0 || res.selection == 1) {
+        if (type == "tpa") {
+            const tpaArray = playerData.get("tpa") || [];
+            const index = tpaArray.indexOf(selection);
+            if (index !== -1) {
+                tpaArray.splice(index, 1);
+                playerData.set("tpa", tpaArray);
+            }
+        }
+        if (type == "tpaRequest") {
+            const tpaRequestArray = playerData.get("tpaRequest") || [];
+            const index = tpaRequestArray.indexOf(selection);
+            if (index !== -1) {
+                tpaRequestArray.splice(index, 1);
+                playerData.set("tpaRequest", tpaRequestArray);
+            }
+        }
+        if (type == "invitecountry") {
+            const invitecountryArray = playerData.get("invitecountry") || [];
+            const index = invitecountryArray.indexOf(selection);
+            if (index !== -1) {
+                invitecountryArray.splice(index, 1);
+                playerData.set("invitecountry", invitecountryArray);
+            }
+        }
+        recieve(player);
     }
 }
