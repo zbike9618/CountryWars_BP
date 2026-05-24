@@ -108,13 +108,23 @@ async function buyForm(player, itemData) {
         const count = Math.floor(finalAmount / 64);
         for (let i = 0; i < count; i++) {
             const item = new server.ItemStack(id, 64)
-            inv.addItem(item)
+            if (inv.emptySlotsCount == 0) {
+                const ent = player.dimension.spawnItem(item, player.location)
+                ent.clearVelocity()
+            } else {
+                inv.addItem(item)
+            }
         }
         const result = finalAmount - (count * 64)
         if (result != 0) {
 
             const item = new server.ItemStack(id, result)
-            inv.addItem(item)
+            if (inv.emptySlotsCount == 0) {
+                const ent = player.dimension.spawnItem(item, player.location)
+                ent.clearVelocity()
+            } else {
+                inv.addItem(item)
+            }
         }
     }
 

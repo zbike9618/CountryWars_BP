@@ -98,22 +98,6 @@ export class playerMarketSystem {
         const comp = player.getComponent("minecraft:inventory");
         const inv = comp.container;
 
-        // 【修正: 事前インベントリ空き枠のチェック（アイテムロスト対策）】
-        if (amount != 0) {
-            let tempStack;
-            try {
-                tempStack = new server.ItemStack(itemId);
-            } catch (e) {
-                player.sendMessage("§cエラー: このアイテムは無効な識別子を持っているため購入できません。出品者に連絡してください。");
-                return;
-            }
-            const AmountMax = tempStack.maxAmount;
-            const requiredSlots = Math.ceil(amount / AmountMax);
-            if (inv.emptySlotsCount < requiredSlots) {
-                player.sendMessage({ translate: "cw.playermarket.invfull" });
-                return;
-            }
-        }
 
         if (amount != 0) {
             const tempItem = new server.ItemStack(itemId);
@@ -137,7 +121,12 @@ export class playerMarketSystem {
                     const durComp = item.getComponent("minecraft:durability");
                     if (durComp) durComp.damage = itemData.durability;
                 }
-                inv.addItem(item)
+                if (inv.emptySlotsCount == 0) {
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
+                } else {
+                    inv.addItem(item)
+                }
             }
             const result = amount - (count * AmountMax)
             if (result != 0) {
@@ -159,7 +148,12 @@ export class playerMarketSystem {
                     const durComp = item.getComponent("minecraft:durability");
                     if (durComp) durComp.damage = itemData.durability;
                 }
-                inv.addItem(item)
+                if (inv.emptySlotsCount == 0) {
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
+                } else {
+                    inv.addItem(item)
+                }
             }
         }
 
