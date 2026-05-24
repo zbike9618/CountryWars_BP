@@ -15,7 +15,7 @@ const protectionSet = new Set([
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const block = ev.block
     const player = ev.player
-
+    if (ev.itemStack) return;
     if (protectionSet.has(block.typeId)) {
         const id = locToid(block.location, block.dimension.id)
         const chestData = chestDatas.get(id)
