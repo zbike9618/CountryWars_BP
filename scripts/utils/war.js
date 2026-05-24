@@ -8,6 +8,7 @@ import { Country } from "./country.js";
 import config from "../config/config.js";
 import { DiscordRelay } from "./chat.js";
 import { sendDataForPlayers } from "./sendData.js";
+import { clearChunkChestProtection } from "./chest_protection.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
@@ -218,7 +219,7 @@ export class War {
         if (type == "force") {//国は滅ぼさない
             const chunkAmount = winnerData.robbedChunkAmount || 0;
             const savePlayer = winnerData.wardeath || 0;
-            number = Math.min(chunkAmount[loserData.id] * 2000 || 0 + savePlayer * 3000 || 0, config.maxWarMoney);
+            number = Math.min((chunkAmount[loserData.id] * 2000 || 0) + (savePlayer * 3000 || 0), config.maxWarMoney);
             world.sendMessage({ translate: "cw.war.finish.force", with: [loserData.name, winnerData.name] })
         }
         if (winnerData.isPeace) {
@@ -595,6 +596,7 @@ world.afterEvents.entityDie.subscribe(ev => {
         countryDatas.set(mineData.id, mineData);
         countryDatas.set(countryData.id, countryData);
         Chunk.setChunk(chunkId, mineData)
+        clearChunkChestProtection(chunkId)
         world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
 
         // 近くの領土を探して通知

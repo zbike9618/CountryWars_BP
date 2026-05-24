@@ -12,6 +12,38 @@ const protectionSet = new Set([
     "minecraft:barrel",
 ])
 
+export function clearChunkChestProtection(chunkId) {
+    const parts = chunkId.split("_");
+    let cDim, cx, cz;
+    if (parts.length === 2) {
+        cDim = "minecraft:overworld";
+        cx = Number(parts[0]);
+        cz = Number(parts[1]);
+    } else {
+        cDim = parts[0];
+        cx = Number(parts[1]);
+        cz = Number(parts[2]);
+    }
+
+    const chestIds = chestDatas.idList;
+    let deletedCount = 0;
+    for (const id of chestIds) {
+        const [dim, bx, by, bz] = id.split(",");
+        if (dim === cDim) {
+            const blockX = Number(bx);
+            const blockZ = Number(bz);
+            const blockChunkX = Math.floor(blockX / 16);
+            const blockChunkZ = Math.floor(blockZ / 16);
+            if (blockChunkX === cx && blockChunkZ === cz) {
+                chestDatas.delete(id);
+                deletedCount++;
+            }
+        }
+    }
+    return deletedCount;
+}
+
+
 world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
     const block = ev.block
     const player = ev.player
