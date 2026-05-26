@@ -175,11 +175,20 @@ async function send(player) {
     const form = new ModalFormData()
     form.title({ translate: "cw.messagebox.send" })
     form.dropdown({ translate: "cw.form.playerchoise" }, playersname)
-    form.textField({ translate: "cw.messagebox.send.message" }, "Write Message")
+    // 文字制限突破のため、メッセージを複数行に分割して入力可能にする
+    form.textField({ translate: "cw.messagebox.send.message" }, "メッセージ (1行目)")
+    form.textField("メッセージ (2行目)", "追加行 (任意)")
+    form.textField("メッセージ (3行目)", "追加行 (任意)")
     const res = await form.show(player)
     if (res.canceled) return;
+    // 空でない行だけ結合して1つのメッセージにする
+    const messageLines = res.formValues.slice(1)
+        .filter(v => v && v.trim() !== "")
+        .map(v => v.replace(/\\n/g, "\n")); // \nと入力しても改行になる
+    if (messageLines.length === 0) return;
+    const combinedMessage = messageLines.join("\n");
     const playerId = players[res.formValues[0]];
-    const message = { player: player.id, message: res.formValues[1] };
+    const message = { player: player.id, message: combinedMessage };
     const targetName = playerDatas.get(playerId)?.name || "Unknown";
     player.sendMessage({ translate: "cw.messagebox.send.success", with: [targetName] });
     const data = `
@@ -200,25 +209,41 @@ async function send(player) {
 export async function sendAll(player) {
     const form = new ModalFormData()
     form.title("全員に送信(アナウンス)")
-    form.textField("メッセージ内容を入力してください。\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    // 文字制限突破: 5つの入力欄に分割（各行が改行として結合される）
+    form.textField("メッセージ (1行目)\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    form.textField("メッセージ (2行目)", "追加行 (任意)")
+    form.textField("メッセージ (3行目)", "追加行 (任意)")
+    form.textField("メッセージ (4行目)", "追加行 (任意)")
+    form.textField("メッセージ (5行目)", "追加行 (任意)")
     const res = await form.show(player)
-    if (res.canceled || !res.formValues[0]) return;
+    if (res.canceled) return;
 
-    const announcement = res.formValues[0];
+    // 空でない行だけ取得して改行で結合する
+    // \n と入力した場合も実際の改行に変換する
+    const lines = res.formValues
+        .filter(v => v && v.trim() !== "")
+        .map(v => v.replace(/\\n/g, "\n"));
+
+    if (lines.length === 0) return;
+
+    const announcement = lines.join("\n");
     const players = Util.getAllPlayerIdsSorted();
     
     player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
 
     for (const playerId of players) {
         const message = { player: player.id, message: announcement, senderName: "運営" };
+        // JSON.stringifyで改行文字を正しくシリアライズする
+        const announcementJson = JSON.stringify(announcement);
+        const messageJson = JSON.stringify(message);
         const data = `
             const playerData = new ShortPlayerData("${playerId}");
             const messageArray = playerData.get("message") || [];
-            messageArray.push(${JSON.stringify(message)});
+            messageArray.push(${messageJson});
             playerData.set("message", messageArray);
             const target = world.getAllPlayers().find(p => p.id === "${playerId}");
             if (target) {
-                target.sendMessage("§e[全体アナウンス] §f運営§7: ${announcement}");
+                target.sendMessage("§e[全体アナウンス] §f運営§7: " + ${announcementJson});
                 target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
             }
         `;
