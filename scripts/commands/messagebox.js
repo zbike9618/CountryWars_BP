@@ -5,6 +5,7 @@ import { Country } from "../utils/country";
 import { Dypro } from "../utils/dypro";
 import { ShortPlayerData } from "../utils/playerData";
 import { Util } from "../utils/util";
+import * as Discordrelay from "../utils/discord"
 import { sendDataForPlayers } from "../utils/sendData";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
@@ -228,7 +229,7 @@ export async function sendAll(player) {
 
     const announcement = lines.join("\n");
     const players = Util.getAllPlayerIdsSorted();
-    
+
     player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
 
     for (const playerId of players) {
@@ -248,12 +249,15 @@ export async function sendAll(player) {
             }
         `;
         sendDataForPlayers(data, playerId);
+
+        const discord_announcement = "§e[CountryWars] §f運営からのお知らせ§7: " + announcement;
+        Discordrelay.sendToDiscord(discord_announcement);
     }
 }
 
 async function readMessage(player, selection, type) {
     const playerData = new ShortPlayerData(player.id);
-    
+
     if (type == "message") {
         const form = new ActionFormData();
         form.title({ translate: "cw.messagebox.recieve", with: ["0"] });
@@ -261,10 +265,10 @@ async function readMessage(player, selection, type) {
         form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] });
         form.button("閉じる");
         form.button("削除する");
-        
+
         const res = await form.show(player);
         if (res.canceled) return;
-        
+
         if (res.selection == 0) {
             recieve(player);
         } else if (res.selection == 1) {
@@ -297,7 +301,7 @@ async function readMessage(player, selection, type) {
     }
     form.button({ translate: "cw.form.yes" });
     form.button({ translate: "cw.form.no" });
-    
+
     const res = await form.show(player);
     if (res.canceled) return;
 
