@@ -200,3 +200,55 @@ function DoBanList(origin) {
         message: message,
     }
 }
+
+system.beforeEvents.startup.subscribe(ev => {
+    /**
+     * 
+     * @type {import("@minecraft/server").CustomCommand}
+     */
+    const command = {
+        name: "cw:permission",
+        description: "OP権限（クリエイティブモード）の切り替え",
+        permissionLevel: server.CommandPermissionLevel.Admin,
+        mandatoryParameters: [
+            { name: "cw:booleanEnum", type: server.CustomCommandParamType.Enum }
+        ]
+    };
+    ev.customCommandRegistry.registerEnum("cw:booleanEnum", ["true", "false"]);
+    ev.customCommandRegistry.registerCommand(command, DoPermission);
+});
+
+/**
+ * 
+ * @param {import("@minecraft/server").CustomCommandOrigin} origin 
+ * @param {string} value 
+ */
+function DoPermission(origin, value) {
+    const player = origin.sourceEntity;
+    if (!player || player.typeId !== "minecraft:player") {
+        return {
+            status: server.CustomCommandStatus.Failure,
+            message: "実行者はプレイヤーである必要があります",
+        };
+    }
+
+    const isTrue = value === "true";
+
+    system.run(() => {
+        if (isTrue) {
+            player.addTag("cw:creative_allowed");
+            player.setGameMode(server.GameMode.Creative);
+            world.sendMessage(`${player.name}がOP権限を使用中です`);
+        } else {
+            player.removeTag("cw:creative_allowed");
+            player.setGameMode(server.GameMode.Survival);
+            world.sendMessage(`${player.name}がOP権限の使用を終了しました`);
+        }
+    });
+
+    return {
+        status: server.CustomCommandStatus.Success,
+        message: isTrue ? "OP権限を有効にしました" : "OP権限を無効にしました",
+    };
+}
+
