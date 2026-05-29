@@ -250,9 +250,9 @@ export async function sendAll(player) {
         `;
         sendDataForPlayers(data, playerId);
 
-        const discord_announcement = "§e[CountryWars] §f運営からのお知らせ§7: " + announcement;
-        Discordrelay.sendToDiscord(discord_announcement);
     }
+    const discord_announcement = "§e[CountryWars] §f運営からのお知らせ§7: " + announcement;
+    Discordrelay.sendToDiscord(discord_announcement);
 }
 
 async function readMessage(player, selection, type) {
