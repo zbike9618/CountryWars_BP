@@ -219,6 +219,23 @@ system.beforeEvents.startup.subscribe(ev => {
 });
 
 /**
+ * プレイヤーのクリエイティブ・サバイバル権限を切り替えます
+ * @param {import("@minecraft/server").Player} player 
+ * @param {boolean} isTrue 
+ */
+function togglePermission(player, isTrue) {
+    if (isTrue) {
+        player.addTag("cw:creative_allowed");
+        player.setGameMode(server.GameMode.Creative);
+        world.sendMessage(`${player.name}がOP権限を使用中です`);
+    } else {
+        player.removeTag("cw:creative_allowed");
+        player.setGameMode(server.GameMode.Survival);
+        world.sendMessage(`${player.name}がOP権限の使用を終了しました`);
+    }
+}
+
+/**
  * 
  * @param {import("@minecraft/server").CustomCommandOrigin} origin 
  * @param {string} value 
@@ -235,15 +252,7 @@ function DoPermission(origin, value) {
     const isTrue = value === "true";
 
     system.run(() => {
-        if (isTrue) {
-            player.addTag("cw:creative_allowed");
-            player.setGameMode(server.GameMode.Creative);
-            world.sendMessage(`${player.name}がOP権限を使用中です`);
-        } else {
-            player.removeTag("cw:creative_allowed");
-            player.setGameMode(server.GameMode.Survival);
-            world.sendMessage(`${player.name}がOP権限の使用を終了しました`);
-        }
+        togglePermission(player, isTrue);
     });
 
     return {
@@ -251,4 +260,49 @@ function DoPermission(origin, value) {
         message: isTrue ? "OP権限を有効にしました" : "OP権限を無効にしました",
     };
 }
+
+// コマンドブロック等からの実行に対応するためのスクリプトイベント受信
+system.afterEvents.scriptEventReceive.subscribe(ev => {
+    if (ev.id !== "cw:permission") return;
+
+    const message = ev.message?.trim();
+    if (!message) return;
+
+    const args = message.split(/\s+/);
+    const value = args[0];
+    if (value !== "true" && value !== "false") return;
+
+    const isTrue = value === "true";
+    let targetPlayer = null;
+
+    if (args[1]) {
+        // 引数でプレイヤー名が指定されている場合
+        const nameInput = args[1].replace(/"/g, "");
+        targetPlayer = world.getAllPlayers().find(p => p.name === nameInput);
+    } else if (ev.sourceType === "Entity" && ev.sourceEntity.typeId === "minecraft:player") {
+        // チャット等で実行したプレイヤー自身
+        targetPlayer = ev.sourceEntity;
+    } else if (ev.sourceType === "Block") {
+        // コマンドブロックからの実行の場合、一番近いプレイヤーを対象にする
+        const blockLocation = ev.sourceBlock.location;
+        const dimension = ev.sourceBlock.dimension;
+        let closestDist = Infinity;
+        for (const player of dimension.getPlayers()) {
+            const dx = player.location.x - blockLocation.x;
+            const dy = player.location.y - blockLocation.y;
+            const dz = player.location.z - blockLocation.z;
+            const dist = dx * dx + dy * dy + dz * dz;
+            if (dist < closestDist) {
+                closestDist = dist;
+                targetPlayer = player;
+            }
+        }
+    }
+
+    if (!targetPlayer) return;
+
+    system.run(() => {
+        togglePermission(targetPlayer, isTrue);
+    });
+});
 
