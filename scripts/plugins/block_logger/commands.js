@@ -41,7 +41,7 @@ async function forceShow(player, form) {
     }
 }
 
-async function executeBlockLog(player, radius, days) {
+async function executeBlockLog(player, radius, days, page = 0, cachedLogs = null) {
     let searchRadius = radius;
     let searchDays = days;
 
@@ -62,6 +62,10 @@ async function executeBlockLog(player, radius, days) {
         // 選択されたインデックスから日数を計算
         const dayMap = [0, 30, 14, 7, 6, 5, 4, 3, 2, 1];
         searchDays = dayMap[timeIndex];
+
+        // 新規検索なのでキャッシュをクリア
+        cachedLogs = null;
+        page = 0;
     }
 
     const loc = player.location;
@@ -69,69 +73,114 @@ async function executeBlockLog(player, radius, days) {
     const y = Math.floor(loc.y);
     const z = Math.floor(loc.z);
 
-    player.sendMessage(`§e周辺のログを検索中... (半径${searchRadius} / 期間:${searchDays === 0 ? "全期間" : searchDays + "日以内"})§r`);
+    let logs = cachedLogs;
 
-    // リクエストパラメータの組み立て
-    const requestBody = { x, y, z, radius: searchRadius, days: searchDays, dimension: player.dimension.id };
+    // キャッシュがない場合のみサーバーからデータを取得する
+    if (!logs) {
+        player.sendMessage(`§e周辺のログを検索中... (半径${searchRadius} / 期間:${searchDays === 0 ? "全期間" : searchDays + "日以内"})§r`);
 
-    const request = new HttpRequest(VIEWER_URL);
-    request.method = HttpRequestMethod.Post;
-    request.headers = [
-        new HttpHeader("Content-Type", "application/json"),
-        new HttpHeader("Authorization", "Bearer " + config.apiToken)
-    ];
-    request.body = JSON.stringify(requestBody);
+        // リクエストパラメータの組み立て
+        const requestBody = { x, y, z, radius: searchRadius, days: searchDays, dimension: player.dimension.id };
 
-    try {
-        // --- サーバーへデータ要求 ---
-        const httpResponse = await http.request(request);
+        const request = new HttpRequest(VIEWER_URL);
+        request.method = HttpRequestMethod.Post;
+        request.headers = [
+            new HttpHeader("Content-Type", "application/json"),
+            new HttpHeader("Authorization", "Bearer " + config.apiToken)
+        ];
+        request.body = JSON.stringify(requestBody);
 
-        if (httpResponse.status !== 200) {
-            player.sendMessage("§cログの取得に失敗しました。サーバーが起動しているか確認してください。");
-            return;
-        }
-
-        let logs;
         try {
-            logs = JSON.parse(httpResponse.body);
-        } catch (e) {
-            player.sendMessage("§cデータのパースに失敗しました。");
-            return;
-        }
+            // --- サーバーへデータ要求 ---
+            const httpResponse = await http.request(request);
 
-        // --- 検索結果の表示 ---
-        if (logs.length === 0) {
-            const emptyForm = new ActionFormData()
-                .title(`§e検索結果 (半径${searchRadius}マス)§r`)
-                .body(`§7指定された条件で見つかりませんでした。§r\n§7(期間: ${searchDays === 0 ? "全期間" : searchDays + "日以内"})`)
-                .button("条件を変えて検索")
-                .button("閉じる");
-            const emptyRes = await forceShow(player, emptyForm);
-            if (emptyRes.selection === 0) {
-                system.run(() => executeBlockLog(player, undefined, undefined));
+            if (httpResponse.status !== 200) {
+                player.sendMessage("§cログの取得に失敗しました。サーバーが起動しているか確認してください。");
+                return;
             }
+
+            try {
+                logs = JSON.parse(httpResponse.body);
+            } catch (e) {
+                player.sendMessage("§cデータのパースに失敗しました。");
+                return;
+            }
+        } catch (err) {
+            player.sendMessage("§cサーバーとの通信エラーが発生しました。");
             return;
         }
+    }
 
-        const resultForm = new ActionFormData()
-            .title(`§e検索結果 (${logs.length}件)§r`)
-            .body(`半径${searchRadius}マスの範囲で見つかったログです。\n§7(期間: ${searchDays === 0 ? "全期間" : searchDays + "日以内"})§r`);
+    // --- 検索結果の表示 ---
+    if (logs.length === 0) {
+        const emptyForm = new ActionFormData()
+            .title(`§e検索結果 (半径${searchRadius}マス)§r`)
+            .body(`§7指定された条件で見つかりませんでした。§r\n§7(期間: ${searchDays === 0 ? "全期間" : searchDays + "日以内"})`)
+            .button("条件を変えて検索")
+            .button("閉じる");
+        const emptyRes = await forceShow(player, emptyForm);
+        if (emptyRes.selection === 0) {
+            system.run(() => executeBlockLog(player, undefined, undefined));
+        }
+        return;
+    }
 
-        logs.forEach(log => {
-            const actionColor = log.action === "Place" ? "§a" : "§c";
-            // log.timestamp ("YYYY-MM-DD HH:MM:SS") から 月/日 と 時:分 を抽出
-            const dateStr = log.timestamp.substring(5, 10).replace('-', '/'); // "MM/DD"
-            const timeStr = log.timestamp.substring(11, 16); // "HH:MM"
-            const displayTime = `${dateStr} ${timeStr}`;
+    // 1ページあたりの表示件数
+    const ITEMS_PER_PAGE = 15;
+    const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
 
-            resultForm.button(`${actionColor}[${displayTime}] ${log.playerName}\n§7${log.blockName}§r`);
-        });
+    const startIndex = page * ITEMS_PER_PAGE;
+    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, logs.length);
+    const pageLogs = logs.slice(startIndex, endIndex);
 
-        const response = await forceShow(player, resultForm);
-        if (response.canceled) return;
+    const resultForm = new ActionFormData()
+        .title(`§e検索結果 (${page + 1}/${totalPages} ページ)§r`)
+        .body(`半径${searchRadius}マスの範囲で見つかったログです（全${logs.length}件）。\n§7(期間: ${searchDays === 0 ? "全期間" : searchDays + "日以内"})§r`);
 
+    // ボタンのインデックスと対応するアクションをマッピングする配列
+    const buttonActions = [];
+
+    // 前のページボタン
+    if (page > 0) {
+        resultForm.button("§b◀ 前のページへ");
+        buttonActions.push({ type: "prev" });
+    }
+
+    // ログボタン
+    pageLogs.forEach((log, idx) => {
+        const actionColor = log.action === "Place" ? "§a" : "§c";
+        // log.timestamp ("YYYY-MM-DD HH:MM:SS") から 月/日 と 時:分 を抽出
+        const dateStr = log.timestamp.substring(5, 10).replace('-', '/'); // "MM/DD"
+        const timeStr = log.timestamp.substring(11, 16); // "HH:MM"
+        const displayTime = `${dateStr} ${timeStr}`;
+
+        resultForm.button(`${actionColor}[${displayTime}] ${log.playerName}\n§7${log.blockName}§r`);
+        buttonActions.push({ type: "log", index: startIndex + idx });
+    });
+
+    // 次のページボタン
+    if (page < totalPages - 1) {
+        resultForm.button("§b次のページへ ▶");
+        buttonActions.push({ type: "next" });
+    }
+
+    // 条件を変えて検索ボタン
+    resultForm.button("§e条件を変えて検索");
+    buttonActions.push({ type: "search_again" });
+
+    const response = await forceShow(player, resultForm);
+    if (response.canceled) return;
+
+    const action = buttonActions[response.selection];
+    if (action.type === "prev") {
+        system.run(() => executeBlockLog(player, searchRadius, searchDays, page - 1, logs));
+    } else if (action.type === "next") {
+        system.run(() => executeBlockLog(player, searchRadius, searchDays, page + 1, logs));
+    } else if (action.type === "search_again") {
+        system.run(() => executeBlockLog(player, undefined, undefined));
+    } else if (action.type === "log") {
         // 選択されたログの詳細を表示
-        const selectedLog = logs[response.selection];
+        const selectedLog = logs[action.index];
         const actionColor = selectedLog.action === "Place" ? "§a" : "§c";
         const actionName = selectedLog.action === "Place" ? "設置" : "破壊";
 
@@ -150,10 +199,7 @@ async function executeBlockLog(player, radius, days) {
         const detailRes = await forceShow(player, detailForm);
         if (detailRes.selection === 0) {
             // 「戻る」が押されたら再帰的に結果を表示
-            system.run(() => executeBlockLog(player, searchRadius, searchDays));
+            system.run(() => executeBlockLog(player, searchRadius, searchDays, page, logs));
         }
-
-    } catch (err) {
-        player.sendMessage("§cサーバーとの通信エラーが発生しました。");
     }
 }
