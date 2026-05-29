@@ -4,6 +4,7 @@ import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
 import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
+import { Ban } from "./ban.js";
 
 world.afterEvents.playerSpawn.subscribe(ev => {
     if (!ev.initialSpawn) return;
@@ -61,10 +62,12 @@ system.runInterval(() => {
                 player.setGameMode(server.GameMode.Survival);
                 world.sendMessage(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
                 DiscordRelay.send(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
+                Ban.setBan(player, "不正なゲームモード", "day", 365)
             }
         }
         if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
+                Ban.setBan(player, "不正な権限", "day", 365)
                 player.runCommand("kick @s 不正な権限");
             }
         }
