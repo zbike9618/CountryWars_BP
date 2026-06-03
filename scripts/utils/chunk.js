@@ -42,7 +42,7 @@ export class Chunk {
             player.sendMessage({ translate: "cw.chunk.buy.overworld" })
             return;
         }
-        if (!playerData.country) {
+        if (!playerData || !playerData.country) {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return;
         }
@@ -109,7 +109,7 @@ export class Chunk {
             return;
         }
         const countryData = countryDatas.get(chunkData.country)
-        if (chunkData.country != playerData.country) {
+        if (!playerData || chunkData.country != playerData.country) {
             player.sendMessage({ translate: "cw.chunk.sell.notfound" })
             return;
         }
@@ -202,10 +202,19 @@ export class Chunk {
         const countryData = countryDatas.get(countryId);
         if (!countryData) return { allowed: true };
 
-        if (countryData.warcountry && countryData.warcountry.length > 0) return { allowed: true };
-
         const playerData = playerDatas.get(player.id);
-        const playerCountryId = playerData.country;
+        const playerCountryId = playerData ? playerData.country : undefined;
+
+        if (countryData.warcountry && countryData.warcountry.length > 0) {
+            if (playerCountryId === countryId) {
+                return { allowed: true };
+            }
+            if (countryData.warcountry.includes(playerCountryId)) {
+                if (permType === "attack_player" || permType === "attack_entity") {
+                    return { allowed: true };
+                }
+            }
+        }
 
         if (playerCountryId === countryId) return { allowed: true };
 

@@ -5,6 +5,7 @@ import { Country } from "../utils/country";
 import { Dypro } from "../utils/dypro";
 import { ShortPlayerData } from "../utils/playerData";
 import { Util } from "../utils/util";
+import * as Discordrelay from "../utils/discord"
 import { sendDataForPlayers } from "../utils/sendData";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
@@ -175,11 +176,20 @@ async function send(player) {
     const form = new ModalFormData()
     form.title({ translate: "cw.messagebox.send" })
     form.dropdown({ translate: "cw.form.playerchoise" }, playersname)
-    form.textField({ translate: "cw.messagebox.send.message" }, "Write Message")
+    // 文字制限突破のため、メッセージを複数行に分割して入力可能にする
+    form.textField({ translate: "cw.messagebox.send.message" }, "メッセージ (1行目)")
+    form.textField("メッセージ (2行目)", "追加行 (任意)")
+    form.textField("メッセージ (3行目)", "追加行 (任意)")
     const res = await form.show(player)
     if (res.canceled) return;
+    // 空でない行だけ結合して1つのメッセージにする
+    const messageLines = res.formValues.slice(1)
+        .filter(v => v && v.trim() !== "")
+        .map(v => v.replace(/\\n/g, "\n")); // \nと入力しても改行になる
+    if (messageLines.length === 0) return;
+    const combinedMessage = messageLines.join("\n");
     const playerId = players[res.formValues[0]];
-    const message = { player: player.id, message: res.formValues[1] };
+    const message = { player: player.id, message: combinedMessage };
     const targetName = playerDatas.get(playerId)?.name || "Unknown";
     player.sendMessage({ translate: "cw.messagebox.send.success", with: [targetName] });
     const data = `
@@ -200,67 +210,149 @@ async function send(player) {
 export async function sendAll(player) {
     const form = new ModalFormData()
     form.title("全員に送信(アナウンス)")
-    form.textField("メッセージ内容を入力してください。\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    // 文字制限突破: 5つの入力欄に分割（各行が改行として結合される）
+    form.textField("メッセージ (1行目)\n全プレイヤーのメッセージボックスに送信されます。", "アナウンス内容を入力")
+    form.textField("メッセージ (2行目)", "追加行 (任意)")
+    form.textField("メッセージ (3行目)", "追加行 (任意)")
+    form.textField("メッセージ (4行目)", "追加行 (任意)")
+    form.textField("メッセージ (5行目)", "追加行 (任意)")
     const res = await form.show(player)
-    if (res.canceled || !res.formValues[0]) return;
+    if (res.canceled) return;
 
-    const announcement = res.formValues[0];
+    // 空でない行だけ取得して改行で結合する
+    // \n と入力した場合も実際の改行に変換する
+    const lines = res.formValues
+        .filter(v => v && v.trim() !== "")
+        .map(v => v.replace(/\\n/g, "\n"));
+
+    if (lines.length === 0) return;
+
+    const announcement = lines.join("\n");
     const players = Util.getAllPlayerIdsSorted();
-    
+
     player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
 
     for (const playerId of players) {
         const message = { player: player.id, message: announcement, senderName: "運営" };
+        // JSON.stringifyで改行文字を正しくシリアライズする
+        const announcementJson = JSON.stringify(announcement);
+        const messageJson = JSON.stringify(message);
         const data = `
             const playerData = new ShortPlayerData("${playerId}");
             const messageArray = playerData.get("message") || [];
-            messageArray.push(${JSON.stringify(message)});
+            messageArray.push(${messageJson});
             playerData.set("message", messageArray);
             const target = world.getAllPlayers().find(p => p.id === "${playerId}");
             if (target) {
-                target.sendMessage("§e[全体アナウンス] §f運営§7: ${announcement}");
+                target.sendMessage("§e[全体アナウンス] §f運営§7: " + ${announcementJson});
                 target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
             }
         `;
         sendDataForPlayers(data, playerId);
+
     }
+    const discord_announcement = "§e[CountryWars] §f運営からのお知らせ§7: " + announcement;
+    Discordrelay.sendToDiscord(discord_announcement);
 }
 
 async function readMessage(player, selection, type) {
-    const form = new MessageFormData()
-    form.title({ translate: "cw.messagebox.recieve", with: ["0"] })
+    const playerData = new ShortPlayerData(player.id);
+
+    if (type == "message") {
+        const form = new ActionFormData();
+        form.title({ translate: "cw.messagebox.recieve", with: ["0"] });
+        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] });
+        form.button("閉じる");
+        form.button("削除する");
+
+        const res = await form.show(player);
+        if (res.canceled) return;
+
+        if (res.selection == 0) {
+            recieve(player);
+        } else if (res.selection == 1) {
+            const messageArray = playerData.get("message") || [];
+            const index = messageArray.findIndex(msg => msg.player === selection.player && msg.message === selection.message && msg.senderName === selection.senderName);
+            if (index !== -1) {
+                messageArray.splice(index, 1);
+                playerData.set("message", messageArray);
+            }
+            recieve(player);
+        }
+        return;
+    }
+
+    // tpa, tpaRequest, invitecountry
+    const form = new ActionFormData();
+    form.title({ translate: "cw.messagebox.recieve", with: ["0"] });
     if (type == "tpa") {
-        const name = playerDatas.get(selection)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [name] })
+        const name = playerDatas.get(selection)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.tpa.read", with: [name] });
     }
     if (type == "tpaRequest") {
-        const name = playerDatas.get(selection)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [name] })
+        const name = playerDatas.get(selection)?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.tpaRequest.read", with: [name] });
     }
     if (type == "invitecountry") {
-        const countryData = countryDatas.get(selection)
-        const name = countryData?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [name] })
+        const countryData = countryDatas.get(selection);
+        const name = countryData?.name || "Unknown";
+        form.body({ translate: "cw.messagebox.recieve.invitecountry.read", with: [name] });
+    }
+    form.button({ translate: "cw.form.yes" });
+    form.button({ translate: "cw.form.no" });
 
-    }
-    if (type == "message") {
-        const senderName = selection.senderName || playerDatas.get(selection.player)?.name || "Unknown"
-        form.body({ translate: "cw.messagebox.recieve.message.read", with: [senderName, selection.message] })
-    }
-    form.button1({ translate: "cw.form.yes" })
-    form.button2({ translate: "cw.form.no" })
-    const res = await form.show(player)
+    const res = await form.show(player);
     if (res.canceled) return;
+
     if (res.selection == 0) {
         if (type == "tpa") {
-            player.teleport(world.getEntity(selection).location)
+            const target = world.getAllPlayers().find(p => p.id === selection) || world.getEntity(selection);
+            if (target) {
+                player.teleport(target.location);
+            } else {
+                player.sendMessage("プレイヤーが見つかりませんでした。");
+            }
         }
         if (type == "tpaRequest") {
-            world.getEntity(selection).teleport(player.location)
+            const target = world.getAllPlayers().find(p => p.id === selection) || world.getEntity(selection);
+            if (target) {
+                target.teleport(player.location);
+            } else {
+                player.sendMessage("プレイヤーが見つかりませんでした。");
+            }
         }
         if (type == "invitecountry") {
-            Country.join(player, countryDatas.get(selection))
+            Country.join(player, countryDatas.get(selection));
         }
-        // messageタイプは確認のみなので何もしない
+    }
+
+    // 承認(0)または拒否(1)が実行された場合、リストから削除して元のメニューに戻る
+    if (res.selection == 0 || res.selection == 1) {
+        if (type == "tpa") {
+            const tpaArray = playerData.get("tpa") || [];
+            const index = tpaArray.indexOf(selection);
+            if (index !== -1) {
+                tpaArray.splice(index, 1);
+                playerData.set("tpa", tpaArray);
+            }
+        }
+        if (type == "tpaRequest") {
+            const tpaRequestArray = playerData.get("tpaRequest") || [];
+            const index = tpaRequestArray.indexOf(selection);
+            if (index !== -1) {
+                tpaRequestArray.splice(index, 1);
+                playerData.set("tpaRequest", tpaRequestArray);
+            }
+        }
+        if (type == "invitecountry") {
+            const invitecountryArray = playerData.get("invitecountry") || [];
+            const index = invitecountryArray.indexOf(selection);
+            if (index !== -1) {
+                invitecountryArray.splice(index, 1);
+                playerData.set("invitecountry", invitecountryArray);
+            }
+        }
+        recieve(player);
     }
 }

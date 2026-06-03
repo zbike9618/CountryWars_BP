@@ -162,11 +162,6 @@ async function buyForm(player, { slot, page }) {
     }
 
     if (res.selection === 0) {
-        const inv = player.getComponent("minecraft:inventory").container;
-        if (inv.emptySlotsCount === 0) {
-            player.sendMessage({ translate: "cw.playermarket.invfull" })
-            return;
-        }
         playerMarketSystem.buy(player, { slot, page })
     } else {
         const loc = await playerMarketSystem.show(player, page)
@@ -261,14 +256,26 @@ async function sellFormS(player, item, maxamount) {
     const count = Math.floor(amountC / AmountMax);
     for (let i = 0; i < count; i++) {
         const newItem = item.clone();
+        newItem.clearDynamicProperties()
         newItem.amount = AmountMax;
-        inv.addItem(newItem);
+        if (inv.emptySlotsCount == 0) {
+            const ent = player.dimension.spawnItem(newItem, player.location)
+            ent.clearVelocity()
+        } else {
+            inv.addItem(newItem)
+        }
     }
     const remainder = amountC - (count * AmountMax);
     if (remainder > 0) {
         const newItem = item.clone();
+        newItem.clearDynamicProperties()
         newItem.amount = remainder;
-        inv.addItem(newItem);
+        if (inv.emptySlotsCount == 0) {
+            const ent = player.dimension.spawnItem(newItem, player.location)
+            ent.clearVelocity()
+        } else {
+            inv.addItem(newItem)
+        }
     }
 
 }
@@ -333,7 +340,11 @@ async function editForm2(player, { page, slot }) {
                     const durComp = item.getComponent("minecraft:durability");
                     if (durComp) durComp.damage = marketData.durability;
                 }
-                inv.addItem(item)
+                if (inv.emptySlotsCount == 0) {
+                    player.dimension.spawnItem(item, player.location)
+                } else {
+                    inv.addItem(item)
+                }
             }
             const result = amount - (count * AmountMax)
             if (result != 0) {
@@ -354,7 +365,12 @@ async function editForm2(player, { page, slot }) {
                     const durComp = item.getComponent("minecraft:durability");
                     if (durComp) durComp.damage = marketData.durability;
                 }
-                inv.addItem(item)
+                if (inv.emptySlotsCount == 0) {
+                    const ent = player.dimension.spawnItem(item, player.location)
+                    ent.clearVelocity()
+                } else {
+                    inv.addItem(item)
+                }
             }
         }
         playerMarketSystem.delete({ slot, page })

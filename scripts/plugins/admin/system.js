@@ -3,7 +3,8 @@ import { DiscordRelay } from "../../utils/chat.js";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
+import { blacklist, opWhiteList } from "./import.js";
+import { Ban } from "./ban.js";
 
 world.afterEvents.playerSpawn.subscribe(ev => {
     if (!ev.initialSpawn) return;
@@ -55,19 +56,20 @@ function formatTime(ms) {
 }
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
-        if (player.hasTag("cw:op")) continue;
+        // ゲームモードのチェック
         if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
-            if (!creativeWhiteList.includes(player.name)) {
+            // cw:creative_allowed タグがないプレイヤーはサバイバルに戻す
+            if (!player.hasTag("cw:creative_allowed")) {
                 player.setGameMode(server.GameMode.Survival);
-                world.sendMessage(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
-                DiscordRelay.send(`[CountryWars]${player.name} が不正なゲームモードの変更を試みました`);
             }
         }
+        // OP権限の不正監視
         if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
+                Ban.setBan(player, "不正な権限", "day", 365);
                 player.runCommand("kick @s 不正な権限");
             }
         }
     }
-}, 20);
+}, 1);
 
