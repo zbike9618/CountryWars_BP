@@ -15,7 +15,7 @@ system.beforeEvents.startup.subscribe(ev => {
     const command = {
         name: "cw:stock", // コマンド名
         description: "株関連の操作", // コマンド説明
-        permissionLevel: server.CommandPermissionLevel.Any, // 権限レベル: ope
+        permissionLevel: server.CommandPermissionLevel.Admin, // 権限レベル: ope
         // 必須の引数
         mandatoryParameters: [
         ], // なし
