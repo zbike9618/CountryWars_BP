@@ -1,6 +1,6 @@
 import * as server from "@minecraft/server";
 const { world, system } = server;
-import { MessageFormData } from "@minecraft/server-ui"
+import { MessageFormData, ModalFormData } from "@minecraft/server-ui"
 import { Dypro } from "./dypro"
 import { Util } from "./util";
 import config from "../config/config"
@@ -206,12 +206,40 @@ export class Chunk {
         const playerCountryId = playerData ? playerData.country : undefined;
 
         if (countryData.warcountry && countryData.warcountry.length > 0) {
-            if (playerCountryId === countryId) {
-                return { allowed: true };
-            }
             if (countryData.warcountry.includes(playerCountryId)) {
                 if (permType === "attack_player" || permType === "attack_entity") {
                     return { allowed: true };
+                }
+            }
+        }
+
+        // Check specific plot setting if exists
+        const chunkData = chunkDatas.get(chunkId);
+        if (chunkData && chunkData.setting && chunkData.setting[permType] !== undefined) {
+            const settingLevel = chunkData.setting[permType];
+            if (settingLevel > 0) {
+                const hasChunkEdit = () => {
+                    if (!playerCountryId) return false;
+                    const pCountry = countryDatas.get(playerCountryId);
+                    return hasPermission(player, "chunk_edit") || (pCountry && pCountry.owner === player.id);
+                };
+
+                if (settingLevel === 1) {
+                    if (playerCountryId !== countryId) return { allowed: false, countryName: countryData.name };
+                    return { allowed: true };
+                } else if (settingLevel === 2) {
+                    if (playerCountryId !== countryId) return { allowed: false, countryName: countryData.name };
+                    if (!hasChunkEdit()) return { allowed: false, countryName: countryData.name };
+                    return { allowed: true };
+                } else if (settingLevel === 3) {
+                    if (playerCountryId === countryId) {
+                        if (hasChunkEdit()) return { allowed: true };
+                        return { allowed: false, countryName: countryData.name };
+                    }
+                    if (countryData.diplomacy && countryData.diplomacy.ally && countryData.diplomacy.ally.includes(playerCountryId)) {
+                        if (hasChunkEdit()) return { allowed: true };
+                    }
+                    return { allowed: false, countryName: countryData.name };
                 }
             }
         }
@@ -293,6 +321,126 @@ export class Chunk {
             return { x: nx * 16 + 8, z: nz * 16 + 8 };
         }
         return null;
+    }
+
+    static getConnectedChunks(startChunkId, countryId) {
+        const connected = new Set();
+        const queue = [startChunkId];
+        
+        const parts = startChunkId.split("_");
+        let odim, ox, oz;
+        if (parts.length === 2) {
+            odim = "minecraft:overworld";
+            ox = Number(parts[0]);
+            oz = Number(parts[1]);
+        } else {
+            odim = parts[0];
+            ox = Number(parts[1]);
+            oz = Number(parts[2]);
+        }
+    
+        connected.add(startChunkId);
+        
+        let head = 0;
+        while(head < queue.length) {
+            const currentId = queue[head++];
+            const cParts = currentId.split("_");
+            let cx, cz;
+            if (cParts.length === 2) { cx = Number(cParts[0]); cz = Number(cParts[1]); }
+            else { cx = Number(cParts[1]); cz = Number(cParts[2]); }
+            
+            const neighbors = [
+                [cx+1, cz], [cx-1, cz], [cx, cz+1], [cx, cz-1]
+            ];
+            
+            for (const [nx, nz] of neighbors) {
+                const nId = odim === "minecraft:overworld" ? `${nx}_${nz}` : `${odim}_${nx}_${nz}`;
+                if (!connected.has(nId)) {
+                    const cData = chunkDatas.get(nId);
+                    if (cData && cData.country === countryId) {
+                        connected.add(nId);
+                        queue.push(nId);
+                    }
+                }
+            }
+        }
+        return Array.from(connected);
+    }
+
+    static async settingMenu(player, chunkId) {
+        const chunkData = chunkDatas.get(chunkId);
+        if (!chunkData) {
+            player.sendMessage({ translate: "cw.plotchunk.notowned" });
+            return;
+        }
+        if (chunkData.country === "admin") {
+            player.sendMessage({ translate: "cw.plotchunk.admin" });
+            return;
+        }
+        const countryData = countryDatas.get(chunkData.country);
+        if (!countryData) return;
+    
+        const playerData = playerDatas.get(player.id);
+        if (!playerData || playerData.country !== countryData.id) {
+            player.sendMessage({ translate: "cw.plotchunk.notyourcountry" });
+            return;
+        }
+    
+        if (countryData.owner !== player.id && !hasPermission(player, "chunk_edit")) {
+            player.sendMessage({ translate: "cw.plotchunk.nopermission" });
+            return;
+        }
+    
+        const form = new ModalFormData();
+        form.title({ translate: "cw.plotchunk.form.title" });
+        
+        const options = [
+            { translate: "cw.plotchunk.form.option.default" },
+            { translate: "cw.plotchunk.form.option.citizen" },
+            { translate: "cw.plotchunk.form.option.chunk_edit" },
+            { translate: "cw.plotchunk.form.option.ally" }
+        ];
+    
+        const currentSetting = chunkData.setting || {};
+    
+        form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, currentSetting.break_block || 0);
+        form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, currentSetting.place_block || 0);
+        form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, currentSetting.interact || 0);
+        form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, currentSetting.attack_player || 0);
+        form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, currentSetting.attack_entity || 0);
+        form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, false);
+        form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, false);
+    
+        const res = await form.show(player);
+        if (res.canceled) return;
+    
+        const newSetting = {
+            break_block: res.formValues[0],
+            place_block: res.formValues[1],
+            interact: res.formValues[2],
+            attack_player: res.formValues[3],
+            attack_entity: res.formValues[4],
+        };
+        const doDelete = res.formValues[5];
+        const applyToConnected = res.formValues[6];
+    
+        let targetChunks = [chunkId];
+        if (applyToConnected) {
+            targetChunks = this.getConnectedChunks(chunkId, countryData.id);
+        }
+    
+        for (const tid of targetChunks) {
+            const tData = chunkDatas.get(tid);
+            if (tData && tData.country === countryData.id) {
+                if (doDelete) {
+                    delete tData.setting;
+                } else {
+                    tData.setting = newSetting;
+                }
+                chunkDatas.set(tid, tData);
+            }
+        }
+        player.sendMessage({ translate: "cw.plotchunk.success", with: [String(targetChunks.length)] });
     }
 }
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {

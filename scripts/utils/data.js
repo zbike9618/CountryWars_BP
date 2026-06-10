@@ -23,6 +23,7 @@ export class Data {
             "war_manage",
             "chunk_buy",
             "chunk_sell",
+            "chunk_edit",
             "country_home_set"
         ]
     static enchantsLang = {
