@@ -418,7 +418,7 @@ export class Chunk {
             const res = await form.show(player);
             if (res.canceled) return;
         
-            const newSetting = {
+            const allValues = {
                 break_block: res.formValues[0],
                 place_block: res.formValues[1],
                 interact: res.formValues[2],
@@ -427,6 +427,14 @@ export class Chunk {
             };
             const doDelete = res.formValues[5];
             const applyToConnected = res.formValues[6];
+
+            // デフォルト(0)と異なる値だけ保存する
+            const newSetting = {};
+            for (const [key, val] of Object.entries(allValues)) {
+                if (val !== 0) newSetting[key] = val;
+            }
+            // すべてデフォルトなら設定自体を削除扱いにする
+            const isEmpty = Object.keys(newSetting).length === 0;
         
             let targetChunks = [chunkId];
             if (applyToConnected) {
@@ -436,7 +444,7 @@ export class Chunk {
             for (const tid of targetChunks) {
                 const tData = chunkDatas.get(tid);
                 if (tData && tData.country === countryData.id) {
-                    if (doDelete) {
+                    if (doDelete || isEmpty) {
                         delete tData.setting;
                     } else {
                         tData.setting = newSetting;
