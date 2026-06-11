@@ -412,8 +412,8 @@ export class Chunk {
             form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, { defaultValueIndex: currentSetting.interact || 0 });
             form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, { defaultValueIndex: currentSetting.attack_player || 0 });
             form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, { defaultValueIndex: currentSetting.attack_entity || 0 });
-            form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, false);
-            form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, false);
+            form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, { defaultValue: false });
+            form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, { defaultValue: false });
         
             const res = await form.show(player);
             if (res.canceled) return;
