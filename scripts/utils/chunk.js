@@ -399,19 +399,19 @@ export class Chunk {
             form.title({ translate: "cw.plotchunk.form.title" });
             
             const options = [
-                "デフォルト (国設定に従う)",
-                "国民のみ",
-                "上位権限(chunk_edit)を持つ国民のみ",
-                "上位権限(chunk_edit)を持つ国民・同盟国のみ"
+                { translate: "cw.plotchunk.form.option.default" },
+                { translate: "cw.plotchunk.form.option.citizen" },
+                { translate: "cw.plotchunk.form.option.chunk_edit" },
+                { translate: "cw.plotchunk.form.option.ally" }
             ];
         
             const currentSetting = chunkData.setting || {};
         
-            form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, currentSetting.break_block || 0);
-            form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, currentSetting.place_block || 0);
-            form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, currentSetting.interact || 0);
-            form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, currentSetting.attack_player || 0);
-            form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, currentSetting.attack_entity || 0);
+            form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, { defaultValueIndex: currentSetting.break_block || 0 });
+            form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, { defaultValueIndex: currentSetting.place_block || 0 });
+            form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, { defaultValueIndex: currentSetting.interact || 0 });
+            form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, { defaultValueIndex: currentSetting.attack_player || 0 });
+            form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, { defaultValueIndex: currentSetting.attack_entity || 0 });
             form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, false);
             form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, false);
         
