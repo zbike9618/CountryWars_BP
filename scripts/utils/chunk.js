@@ -368,79 +368,87 @@ export class Chunk {
     }
 
     static async settingMenu(player, chunkId) {
-        const chunkData = chunkDatas.get(chunkId);
-        if (!chunkData) {
-            player.sendMessage({ translate: "cw.plotchunk.notowned" });
-            return;
-        }
-        if (chunkData.country === "admin") {
-            player.sendMessage({ translate: "cw.plotchunk.admin" });
-            return;
-        }
-        const countryData = countryDatas.get(chunkData.country);
-        if (!countryData) return;
-    
-        const playerData = playerDatas.get(player.id);
-        if (!playerData || playerData.country !== countryData.id) {
-            player.sendMessage({ translate: "cw.plotchunk.notyourcountry" });
-            return;
-        }
-    
-        if (countryData.owner !== player.id && !hasPermission(player, "chunk_edit")) {
-            player.sendMessage({ translate: "cw.plotchunk.nopermission" });
-            return;
-        }
-    
-        const form = new ModalFormData();
-        form.title({ translate: "cw.plotchunk.form.title" });
-        
-        const options = [
-            { translate: "cw.plotchunk.form.option.default" },
-            { translate: "cw.plotchunk.form.option.citizen" },
-            { translate: "cw.plotchunk.form.option.chunk_edit" },
-            { translate: "cw.plotchunk.form.option.ally" }
-        ];
-    
-        const currentSetting = chunkData.setting || {};
-    
-        form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, currentSetting.break_block || 0);
-        form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, currentSetting.place_block || 0);
-        form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, currentSetting.interact || 0);
-        form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, currentSetting.attack_player || 0);
-        form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, currentSetting.attack_entity || 0);
-        form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, false);
-        form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, false);
-    
-        const res = await form.show(player);
-        if (res.canceled) return;
-    
-        const newSetting = {
-            break_block: res.formValues[0],
-            place_block: res.formValues[1],
-            interact: res.formValues[2],
-            attack_player: res.formValues[3],
-            attack_entity: res.formValues[4],
-        };
-        const doDelete = res.formValues[5];
-        const applyToConnected = res.formValues[6];
-    
-        let targetChunks = [chunkId];
-        if (applyToConnected) {
-            targetChunks = this.getConnectedChunks(chunkId, countryData.id);
-        }
-    
-        for (const tid of targetChunks) {
-            const tData = chunkDatas.get(tid);
-            if (tData && tData.country === countryData.id) {
-                if (doDelete) {
-                    delete tData.setting;
-                } else {
-                    tData.setting = newSetting;
-                }
-                chunkDatas.set(tid, tData);
+        try {
+            const chunkData = chunkDatas.get(chunkId);
+            if (!chunkData) {
+                player.sendMessage({ translate: "cw.plotchunk.notowned" });
+                return;
             }
+            if (chunkData.country === "admin") {
+                player.sendMessage({ translate: "cw.plotchunk.admin" });
+                return;
+            }
+            const countryData = countryDatas.get(chunkData.country);
+            if (!countryData) {
+                player.sendMessage("§cエラー: 国のデータが見つかりません。");
+                return;
+            }
+        
+            const playerData = playerDatas.get(player.id);
+            if (!playerData || playerData.country !== countryData.id) {
+                player.sendMessage({ translate: "cw.plotchunk.notyourcountry" });
+                return;
+            }
+        
+            if (countryData.owner !== player.id && !hasPermission(player, "chunk_edit")) {
+                player.sendMessage({ translate: "cw.plotchunk.nopermission" });
+                return;
+            }
+        
+            const form = new ModalFormData();
+            form.title({ translate: "cw.plotchunk.form.title" });
+            
+            // Note: If dropdown fails due to translate objects, it will be caught by the catch block below.
+            const options = [
+                { translate: "cw.plotchunk.form.option.default" },
+                { translate: "cw.plotchunk.form.option.citizen" },
+                { translate: "cw.plotchunk.form.option.chunk_edit" },
+                { translate: "cw.plotchunk.form.option.ally" }
+            ];
+        
+            const currentSetting = chunkData.setting || {};
+        
+            form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, currentSetting.break_block || 0);
+            form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, currentSetting.place_block || 0);
+            form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, currentSetting.interact || 0);
+            form.dropdown({ translate: "cw.plotchunk.form.label.attack_player" }, options, currentSetting.attack_player || 0);
+            form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, currentSetting.attack_entity || 0);
+            form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, false);
+            form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, false);
+        
+            const res = await form.show(player);
+            if (res.canceled) return;
+        
+            const newSetting = {
+                break_block: res.formValues[0],
+                place_block: res.formValues[1],
+                interact: res.formValues[2],
+                attack_player: res.formValues[3],
+                attack_entity: res.formValues[4],
+            };
+            const doDelete = res.formValues[5];
+            const applyToConnected = res.formValues[6];
+        
+            let targetChunks = [chunkId];
+            if (applyToConnected) {
+                targetChunks = this.getConnectedChunks(chunkId, countryData.id);
+            }
+        
+            for (const tid of targetChunks) {
+                const tData = chunkDatas.get(tid);
+                if (tData && tData.country === countryData.id) {
+                    if (doDelete) {
+                        delete tData.setting;
+                    } else {
+                        tData.setting = newSetting;
+                    }
+                    chunkDatas.set(tid, tData);
+                }
+            }
+            player.sendMessage({ translate: "cw.plotchunk.success", with: [String(targetChunks.length)] });
+        } catch (e) {
+            player.sendMessage("§cプロット設定メニューの展開に失敗しました: " + e);
         }
-        player.sendMessage({ translate: "cw.plotchunk.success", with: [String(targetChunks.length)] });
     }
 }
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
