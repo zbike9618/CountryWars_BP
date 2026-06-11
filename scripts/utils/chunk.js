@@ -398,12 +398,11 @@ export class Chunk {
             const form = new ModalFormData();
             form.title({ translate: "cw.plotchunk.form.title" });
             
-            // Note: If dropdown fails due to translate objects, it will be caught by the catch block below.
             const options = [
-                { translate: "cw.plotchunk.form.option.default" },
-                { translate: "cw.plotchunk.form.option.citizen" },
-                { translate: "cw.plotchunk.form.option.chunk_edit" },
-                { translate: "cw.plotchunk.form.option.ally" }
+                "デフォルト (国設定に従う)",
+                "国民のみ",
+                "上位権限(chunk_edit)を持つ国民のみ",
+                "上位権限(chunk_edit)を持つ国民・同盟国のみ"
             ];
         
             const currentSetting = chunkData.setting || {};
