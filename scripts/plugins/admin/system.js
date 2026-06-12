@@ -3,12 +3,8 @@ import { DiscordRelay } from "../../utils/chat.js";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-<<<<<<< HEAD
 import { blacklist, opWhiteList } from "./import.js";
 import { Ban } from "./ban.js";
-=======
-import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
->>>>>>> b928e11 (a)
 
 world.afterEvents.playerSpawn.subscribe(ev => {
     if (!ev.initialSpawn) return;
@@ -65,13 +61,13 @@ system.runInterval(() => {
             if (!creativeWhiteList.includes(player.name)) {
                 //player.setGamemode(server.GameMode.Survival);
                 player.runCommand("kick @s 不正なゲームモードの変更");
-                world.sendMessage("kick")
+                Ban.setBan(player, "不正な権限", "day", 365);
             }
         }
         if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
                 player.runCommand("kick @s 不正な権限");
-                world.sendMessage("kick")
+                Ban.setBan(player, "不正な権限", "day", 365);
 
             }
         }
