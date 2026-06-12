@@ -1,9 +1,10 @@
 import { Util } from "../utils/util";
 import { world, system } from "@minecraft/server";
 import { Dypro } from "../utils/dypro";
-import { Stock } from "../utils/stock";
+import { PlayerDataStore, CountryDataStore } from "../utils/data_store"
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
+
 // ===== 管理者用金銭操作コマンド =====
 system.afterEvents.scriptEventReceive.subscribe(ev => {
     if (ev.id == "cw:setmoney") {
@@ -64,5 +65,72 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
     if (ev.id == "cw:force_initial") {
         ev.sourceEntity?.clearDynamicProperties();
         ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+    }
+    if (ev.id === "cw:migrate") {
+        const player = ev.sourceEntity;
+        if (player) {
+            player.sendMessage("§e[システム] Dyproデータのマイグレーションを開始します...");
+        } else {
+            console.warn("[システム] Dyproデータのマイグレーションを開始します...");
+        }
+
+        // 非同期処理を正しく行うため、内部で即時実行関数（IIFE）を使うか、外側をasyncにします。
+        // （admin_command.jsは他のコマンドと同居しているため、非同期として処理を切り出します）
+        (async () => {
+            // 既存の全ダイナミックプロパティのIDを取得
+            const allIds = world.getDynamicPropertyIds();
+            const dyproKeys = new Map(); // name -> Set of paths
+
+            for (const id of allIds) {
+                // パターン: "name.path" または "name#path"
+                const match = id.match(/^([^.#]+)[.#](.*)$/);
+                if (match) {
+                    const name = match[1];
+                    let path = match[2];
+                    // 分割保存用のサフィックスを除去して純粋なキーにする
+                    path = path.replace(/__part\d+$/, "").replace(/__count$/, "");
+
+                    if (!dyproKeys.has(name)) dyproKeys.set(name, new Set());
+                    dyproKeys.get(name).add(path);
+                }
+            }
+
+            let totalCount = 0;
+
+            for (const [name, paths] of dyproKeys.entries()) {
+                const dypro = new Dypro(name); // データ操作用の一時インスタンス
+
+                for (const path of paths) {
+                    try {
+                        // 古い形式（#や分割保存）を含めてワールドからデータを復元
+                        const data = dypro._getFromWorld(path);
+
+                        if (data !== undefined) {
+                            // 一旦古いワールドデータを完全に消去（#のキーや分割キーの掃除）
+                            dypro._deleteFromWorld(path);
+
+                            // 新しい形式で保存（playerとcountryは外部DBへ、それ以外はLRUキャッシュへ）
+                            await dypro.set(path, data);
+                            totalCount++;
+                        }
+                    } catch (e) {
+                        console.warn(`[Migrate] ${name}.${path} の移行中にエラー: ${e}`);
+                    }
+                }
+
+                // 一般データについて、LRUキャッシュに乗った変更をワールドに書き出し
+                dypro.flushAll();
+            }
+
+            // 外部DBのキューに溜まった player / country の変更も強制送信して完了
+            await PlayerDataStore.flushAll();
+            await CountryDataStore.flushAll();
+
+            if (player) {
+                player.sendMessage(`§a[システム] マイグレーション完了！計 ${totalCount} 件のデータを新しい形式に変換・保存しました。`);
+            } else {
+                console.warn(`[システム] マイグレーション完了！計 ${totalCount} 件のデータを新しい形式に変換・保存しました。`);
+            }
+        })();
     }
 })
