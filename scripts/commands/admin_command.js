@@ -98,6 +98,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             let totalCount = 0;
 
             for (const [name, paths] of dyproKeys.entries()) {
+                if (name === "player" || name === "country") continue; // playerとcountryは除外
+
                 const dypro = new Dypro(name); // データ操作用の一時インスタンス
 
                 for (const path of paths) {
@@ -122,9 +124,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
                 dypro.flushAll();
             }
 
-            // 外部DBのキューに溜まった player / country の変更も強制送信して完了
-            await PlayerDataStore.flushAll();
-            await CountryDataStore.flushAll();
+            // 外部DBのキュー送信は除外されたため削除しました
+
 
             if (player) {
                 player.sendMessage(`§a[システム] マイグレーション完了！計 ${totalCount} 件のデータを新しい形式に変換・保存しました。`);
