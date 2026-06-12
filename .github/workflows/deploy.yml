@@ -1,8 +1,10 @@
-name: Deploy Addon to Debug Server
+name: Deploy Addon to Servers
 
 on:
   push:
-    branches: [ server ] # serverブランチにpushされたら発動
+    branches:
+      - server
+      - 'feature/**'
 
 jobs:
   deploy:
@@ -15,13 +17,34 @@ jobs:
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: --accept-routes  # ← これを追加
-      - name: Deploy via SSH
+          args: --accept-routes
+
+      # 1. 【デバッグ鯖への反映】feature/* ブランチの時（従来通りスクリプト実行）
+      - name: Deploy to Debug Server via SSH
+        if: startsWith(github.ref, 'refs/heads/feature/')
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
-          username: root # または minecraft ユーザー
+          username: root
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
             bash /home/minecraft/sh/reboot.sh
+
+      # 2. 【本番鯖への反映】serverブランチの時（確実に動くssh-action内でrsyncを実行）
+      - name: Deploy to Production Server via rsync
+        if: github.ref == 'refs/heads/server'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          script: |
+            # サーバー内で直接、Git管理（リモート）からファイルを引っ張る、または処理を行う形にします。
+            # もしActions側のファイルを直接送る場合は、rsyncを叩く代わりにデバッグ同様スクリプトを叩くか、
+            # もしくは本番鯖側で `cd /root/cw_bp && git pull` を行うのが一番確実です。
+            
+            cd /root/cw_bp
+            git fetch origin server
+            git reset --hard origin/server
