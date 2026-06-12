@@ -36,8 +36,8 @@ function showMap(origin) {
         const myCountryData = myCountryId ? countryDatas.get(myCountryId) : null;
 
         // 自国の外交リストを取得
-        const allyIds   = myCountryData?.diplomacy?.ally   ?? [];
-        const enemyIds  = myCountryData?.diplomacy?.enemy  ?? [];
+        const allyIds = myCountryData?.diplomacy?.ally ?? [];
+        const enemyIds = myCountryData?.diplomacy?.enemy ?? [];
         const friendIds = myCountryData?.diplomacy?.friend ?? [];
 
         // プレイヤーの現在チャンク座標を計算
@@ -83,23 +83,25 @@ function showMap(origin) {
         }
 
         // 凡例
-        const legend = [
-            "§1■§r 自分の位置",
-            "§a■§r 自国",
-            "§b■§r 同盟国",
-            "§d■§r 友好国",
-            "§e■§r 他国",
-            "§c■§r 敵対国",
-            "§f■§r 未領土",
-        ].join("  ");
+        const legend = {
+            rawtext: [
+                { text: "§1■§r " }, { translate: "cw.mapform.myposition" }, { text: "  " },
+                { text: "§a■§r " }, { translate: "cw.mapform.mycountry" }, { text: "  " },
+                { text: "§b■§r " }, { translate: "cw.mapform.allycountry" }, { text: "  " },
+                { text: "§d■§r " }, { translate: "cw.mapform.friendcountry" }, { text: "  " },
+                { text: "§e■§r " }, { translate: "cw.mapform.othercountry" }, { text: "  " },
+                { text: "§c■§r " }, { translate: "cw.mapform.enemycountry" }, { text: "  " },
+                { text: "§f■§r " }, { translate: "cw.mapform.unclaimed" }
+            ]
+        };
 
         const separator = "  §8" + "─".repeat(19);
         const mapText = `${separator}\n${rows.join("\n")}\n${separator}`;
 
         const form = new ActionFormData();
-        form.title("§l周辺マップ");
-        form.body(`${mapText}\n\n${legend}`);
-        form.button("閉じる");
+        form.title({ translate: "cw.mapform.title" });
+        form.body({ rawtext: [{ text: `${mapText}\n\n` }, ...legend.rawtext] });
+        form.button({ translate: "cw.form.redo" });
 
         system.run(() => {
             form.show(player);

@@ -31,17 +31,17 @@ function DoCommand(origin) {
     }
 
     const player = origin.sourceEntity;
-    
+
     system.run(() => {
         const playerData = playerDatas.get(player.id);
         if (!playerData.country) {
-            player.sendMessage("§cあなたは国に所属していません。");
+            player.sendMessage({ translate: "cw.countryhome.notmember" });
             return;
         }
 
         const countryData = countryDatas.get(playerData.country);
         if (!countryData.home) {
-            player.sendMessage("§c国ホームが設定されていません。国の設定メニュー（/sc）から設定してください。");
+            player.sendMessage({ translate: "cw.countryhome.nothome" });
             return;
         }
 
@@ -49,7 +49,7 @@ function DoCommand(origin) {
         const targetDimension = world.getDimension(targetPos.dimension || "overworld");
 
         player.teleport(targetPos, { dimension: targetDimension });
-        player.sendMessage(`§a国ホーム「${countryData.name}」へテレポートしました。`);
+        player.sendMessage({ translate: "cw.countryhome.teleport", args: [countryData.name] });
     });
 
     return {

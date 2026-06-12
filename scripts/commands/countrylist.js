@@ -72,32 +72,34 @@ async function information(player, countryData) {
     const form = new ActionFormData()
     form.title({ translate: "cw.scform.information" })
     const dp = countryData.diplomacy;
-    const allyNames   = (dp?.ally   || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+    const allyNames = (dp?.ally || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
     const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const enemyNames  = (dp?.enemy  || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const warNames    = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const protection  = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
+    const enemyNames = (dp?.enemy || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+    const warNames = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+    const protection = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
     form.body({
         rawtext: [
-            { translate: "cw.scform.informations", with: [
-                `${countryData.name}`,
-                `${countryData.description}`,
-                `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
-                `${countryData.money}`,
-                `${countryData.chunkAmount}`,
-                `${countryData.tax.consumption}`,
-                `${countryData.tax.income}`,
-                `${countryData.tax.country}`,
-                `${countryData.tax.customs}`,
-                protection
-            ]},
-            { text: `\n§6平和主義§f: ${countryData.isPeace ? "§a平和" : "§c非平和"}` },
-            { text: `\n§l--- 外交関係 ---§r\n` },
-            { text: `§a同盟§f: ${allyNames}\n` },
-            { text: `§b友好§f: ${friendNames}\n` },
-            { text: `§c敵対§f: ${enemyNames}\n` },
-            { text: `§4戦争中§f: ${warNames}` },
+            {
+                translate: "cw.scform.informations", with: [
+                    `${countryData.name}`,
+                    `${countryData.description}`,
+                    `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
+                    `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                    `${countryData.money}`,
+                    `${countryData.chunkAmount}`,
+                    `${countryData.tax.consumption}`,
+                    `${countryData.tax.income}`,
+                    `${countryData.tax.country}`,
+                    `${countryData.tax.customs}`,
+                    protection
+                ]
+            },
+            { translate: "cw.scform.informations.peace", with: [countryData.isPeace ? "§a平和" : "§c非平和"] },
+            { translate: "cw.scform.informations.diplomacy" },
+            { translate: "cw.scform.informations.ally", with: [allyNames] },
+            { translate: "cw.scform.informations.friend", with: [friendNames] },
+            { translate: "cw.scform.informations.enemy", with: [enemyNames] },
+            { translate: "cw.scform.informations.war", with: [warNames] },
         ]
     })
     form.button({ translate: "cw.form.redo" })

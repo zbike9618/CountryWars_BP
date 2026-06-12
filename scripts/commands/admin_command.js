@@ -58,7 +58,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             ev.sourceEntity?.clearDynamicProperties();
             ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
         } else {
-            ev.sourceEntity?.sendMessage(`§cプレイヤーデータが破損していないため実行できません。`);
+            ev.sourceEntity?.sendMessage({ translate: "cw.admin.initial.error" });
         }
     }
     if (ev.id == "cw:force_initial") {
