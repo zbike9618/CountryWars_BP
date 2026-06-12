@@ -58,21 +58,6 @@ function formatTime(ms) {
 
     return parts.join(" ");
 }
-<<<<<<< HEAD
-system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
-        // ゲームモードのチェック
-        if ([server.GameMode.Creative, server.GameMode.Spectator].includes(player.getGameMode())) {
-            // cw:creative_allowed タグがないプレイヤーはサバイバルに戻す
-            if (!player.hasTag("cw:creative_allowed")) {
-                player.setGameMode(server.GameMode.Survival);
-            }
-        }
-        // OP権限の不正監視
-        if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
-            if (!opWhiteList.includes(player.name)) {
-                Ban.setBan(player, "不正な権限", "day", 365);
-=======
 
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
@@ -85,16 +70,10 @@ system.runInterval(() => {
         }
         if (player.commandPermissionLevel != server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
->>>>>>> b928e11 (a)
                 player.runCommand("kick @s 不正な権限");
                 world.sendMessage("kick")
 
             }
         }
     }
-<<<<<<< HEAD
-}, 1);
-
-=======
 }, 20);
->>>>>>> b928e11 (a)
