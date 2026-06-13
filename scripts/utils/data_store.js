@@ -25,26 +25,15 @@ class LRUDataManager {
             dyproData = await getCountryDypro(id);
         }
 
-        const dataObj = {};
-        if (dyproData) {
-            for (const item of dyproData) {
-                // 値がJSON形式であればパースを試みる
-                try {
-                    dataObj[item.key] = JSON.parse(item.value);
-                } catch {
-                    dataObj[item.key] = item.value;
-                }
-            }
-        }
-        return dataObj;
+        // 新しいAPI仕様ではオブジェクト全体が返ってくる
+        return dyproData || {};
     }
 
-    async _save(id, key, value) {
-        const valToSave = typeof value === "object" ? JSON.stringify(value) : value;
+    async _save(id, dataObject) {
         if (this.type === "user") {
-            await saveUserDypro(id, key, valToSave);
+            await saveUserDypro(id, dataObject);
         } else {
-            await saveCountryDypro(id, key, valToSave);
+            await saveCountryDypro(id, dataObject);
         }
     }
 
@@ -131,10 +120,7 @@ class LRUDataManager {
         
         // 変更があれば保存（ライトバック）
         if (this.dirtyKeys.has(firstId)) {
-            const keys = this.dirtyKeys.get(firstId);
-            for (const key of keys) {
-                await this._save(firstId, key, data[key]);
-            }
+            await this._save(firstId, data);
             this.dirtyKeys.delete(firstId);
         }
         
@@ -147,10 +133,7 @@ class LRUDataManager {
     async flush(id) {
         if (this.dirtyKeys.has(id) && this.cache.has(id)) {
             const data = this.cache.get(id);
-            const keys = this.dirtyKeys.get(id);
-            for (const key of keys) {
-                await this._save(id, key, data[key]);
-            }
+            await this._save(id, data);
             this.dirtyKeys.delete(id);
         }
     }
