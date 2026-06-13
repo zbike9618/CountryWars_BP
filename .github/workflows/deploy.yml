@@ -5,6 +5,7 @@ on:
     branches:
       - server
       - 'f/**'
+      - 'feature/**'
 
 jobs:
   deploy:
@@ -19,9 +20,9 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --accept-routes
 
-      # 1. 【デバッグ鯖への反映】f/* ブランチの時（従来通りスクリプト実行）
+# 1. 【デバッグ鯖への反映】f/* または feature/* ブランチの時
       - name: Deploy to Debug Server via SSH
-        if: startsWith(github.ref, 'refs/heads/f/')
+        if: startsWith(github.ref, 'refs/heads/f/') || startsWith(github.ref, 'refs/heads/feature/')
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -29,7 +30,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            bash /home/minecraft/sh/reboot.sh
+            bash /home/minecraft/sh/reboot.sh ${{ github.ref_name }}
 
       # 2. 【本番鯖への反映】serverブランチの時（確実に動くssh-action内でrsyncを実行）
       - name: Deploy to Production Server via rsync
