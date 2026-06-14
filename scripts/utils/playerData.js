@@ -6,7 +6,32 @@ import { sendToDiscord } from "./discord.js";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
+
+// ===== 起動時プリロード =====
+// アドオンリロード時やワールド起動時に、既にオンラインの全プレイヤーのデータを
+// APIから取得してキャッシュに乗せる（これがないとリロード後に get() が undefined を返す）
+system.run(async () => {
+    const players = world.getAllPlayers();
+    if (players.length === 0) return;
+
+    console.warn(`[Dypro] 起動時プリロード: ${players.length} 人のプレイヤーデータを読み込みます...`);
+    const countryIds = new Set();
+
+    for (const player of players) {
+        await playerDatas.preload(player.id);
+        const data = playerDatas.get(player.id);
+        if (data?.country) countryIds.add(data.country);
+    }
+
+    for (const countryId of countryIds) {
+        await countryDatas.preload(countryId);
+    }
+
+    console.warn(`[Dypro] 起動時プリロード完了。（プレイヤー: ${players.length} 人, 国: ${countryIds.size} 国）`);
+});
+
 world.afterEvents.playerSpawn.subscribe(ev => {
+
     const player = ev.player;
     const initialSpawn = ev.initialSpawn;
 
