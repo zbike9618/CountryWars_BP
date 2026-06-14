@@ -63,6 +63,23 @@ class LRUDataManager {
     }
 
     /**
+     * キャッシュから同期的にデータを取得する。
+     * キャッシュミス時は undefined を返す（APIへの問い合わせは行わない）。
+     * Dypro.get() から呼ばれる。事前に preload() でキャッシュに載せておくこと。
+     * @param {string} id ユーザーIDまたは国ID
+     */
+    getSync(id) {
+        if (this.cache.has(id)) {
+            const data = this.cache.get(id);
+            // LRU更新
+            this.cache.delete(id);
+            this.cache.set(id, data);
+            return data;
+        }
+        return undefined; // キャッシュミス
+    }
+
+    /**
      * オブジェクト全体をセット（または上書き）する。
      */
     async setAll(id, data) {

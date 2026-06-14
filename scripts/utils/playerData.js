@@ -9,41 +9,49 @@ const countryDatas = new Dypro("country");
 world.afterEvents.playerSpawn.subscribe(ev => {
     const player = ev.player;
     const initialSpawn = ev.initialSpawn;
-    if (initialSpawn && !player.getDynamicProperty("initial")) {
-        const playerData =
-        {
-            id: player.id,
-            name: player.name,
-            country: undefined,
-            money: config.initialMoney,
-            job: undefined,//levelはこのの中にobjectとして入れる
-            permission: "",
-            secondname: {
-                before: ["一般的な"],
-                after: ["鯖民"],
-                now: [0, 0]
-            },
-            stock: {},
-            chattype: "world"
-        }
-        playerDatas.set(player.id, playerData);
-        DoInitialSpawn(player);//初期スポーンメッセージ等 
-        player.setDynamicProperty("initial", true);
-        sendToDiscord(`§a${player.name}はサーバーに初参加です！`)
-    }
-    if (initialSpawn) {
-        const playerData = playerDatas.get(player.id)
-        const countryData = countryDatas.get(playerData.country)
-        if (!countryData || countryData.warcountry.length == 0) {
-            player.removeTag("cw:duringwar")
-        }
-        else {
-            player.addTag("cw:duringwar")
-        }
 
+    (async () => {
+        // ログイン時にAPIからキャッシュへプリロード（これ以降は同期的なget()が使える）
+        await playerDatas.preload(player.id);
 
-    }
+        if (initialSpawn && !player.getDynamicProperty("initial")) {
+            const playerData =
+            {
+                id: player.id,
+                name: player.name,
+                country: undefined,
+                money: config.initialMoney,
+                job: undefined,//levelはこのの中にobjectとして入れる
+                permission: "",
+                secondname: {
+                    before: ["一般的な"],
+                    after: ["鯖民"],
+                    now: [0, 0]
+                },
+                stock: {},
+                chattype: "world"
+            }
+            playerDatas.set(player.id, playerData);
+            DoInitialSpawn(player);//初期スポーンメッセージ等 
+            player.setDynamicProperty("initial", true);
+            sendToDiscord(`§a${player.name}はサーバーに初参加です！`)
+        }
+        if (initialSpawn) {
+            const playerData = playerDatas.get(player.id);
+            if (playerData?.country) {
+                await countryDatas.preload(playerData.country);
+            }
+            const countryData = countryDatas.get(playerData?.country);
+            if (!countryData || countryData.warcountry.length == 0) {
+                player.removeTag("cw:duringwar")
+            }
+            else {
+                player.addTag("cw:duringwar")
+            }
+        }
+    })();
 })
+
 
 world.afterEvents.playerLeave.subscribe(ev => {
     const playerId = ev.playerId;

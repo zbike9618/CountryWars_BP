@@ -64,12 +64,16 @@ export class Dypro {
         this.dirtyKeys.add(path);
     }
 
-    async get(path) {
-        // 外部APIから取得する対象
+    /**
+     * キャッシュから同期的にデータを取得する。
+     * player/country は事先に preload() でキャッシュに載せておく必要がある。
+     */
+    get(path) {
+        // 外部API対象はキャッシュから同期取得
         if (this.name === "player") {
-            return await PlayerDataStore.get(path);
+            return PlayerDataStore.getSync(path);
         } else if (this.name === "country") {
-            return await CountryDataStore.get(path);
+            return CountryDataStore.getSync(path);
         }
 
         // キャッシュから取得（ページヒット）
@@ -92,6 +96,19 @@ export class Dypro {
         }
 
         return data;
+    }
+
+    /**
+     * player/country のデータを非同期でAPIからキャッシュに読み込む。
+     * ログイン時など、get()の前に必ず呼び出すこと。
+     * @param {string} path player.id または country.id
+     */
+    async preload(path) {
+        if (this.name === "player") {
+            await PlayerDataStore.get(path); // 内部でAPIから取得しキャッシュに載せる
+        } else if (this.name === "country") {
+            await CountryDataStore.get(path);
+        }
     }
 
     delete(path) {
