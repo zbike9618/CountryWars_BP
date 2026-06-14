@@ -163,6 +163,16 @@ class LRUDataManager {
             await this.flush(id);
         }
     }
+
+    /**
+     * キャッシュ内の全てのデータを、変更の有無に関わらず強制的にAPIへ保存する。
+     */
+    async forceSaveAll() {
+        for (const [id, data] of this.cache.entries()) {
+            await this._save(id, data);
+        }
+        this.dirtyKeys.clear();
+    }
 }
 
 // PlayerData はオンライン人数を考慮して多めにキャッシュ（例: 50人分）

@@ -157,8 +157,8 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             }
 
             // 2. player / country の LRU キャッシュを外部DB（API）へ書き出し
-            await PlayerDataStore.flushAll();
-            await CountryDataStore.flushAll();
+            await PlayerDataStore.forceSaveAll();
+            await CountryDataStore.forceSaveAll();
 
             notify("§a[システム] 強制保存が完了しました！");
         } catch (e) {
