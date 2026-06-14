@@ -135,3 +135,35 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         })();
     }
 })
+
+// ===== 強制サーバー保存 =====
+// 実行コマンド: /scriptevent cw:save
+system.afterEvents.scriptEventReceive.subscribe(ev => {
+    if (ev.id !== "cw:save") return;
+
+    const player = ev.sourceEntity;
+    const notify = (msg) => {
+        if (player) player.sendMessage(msg);
+        console.warn(msg);
+    };
+
+    notify("§e[システム] 強制保存を開始します...");
+
+    (async () => {
+        try {
+            // 1. Dypro インスタンス（ワールドのダイナミックプロパティ側）を全て書き出し
+            for (const instance of Dypro.instances) {
+                instance.flushAll();
+            }
+
+            // 2. player / country の LRU キャッシュを外部DB（API）へ書き出し
+            await PlayerDataStore.flushAll();
+            await CountryDataStore.flushAll();
+
+            notify("§a[システム] 強制保存が完了しました！");
+        } catch (e) {
+            notify(`§c[システム] 強制保存中にエラーが発生しました: ${e}`);
+            console.error("[cw:save] エラー:", e);
+        }
+    })();
+});
