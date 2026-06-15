@@ -166,4 +166,4 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             console.error("[cw:save] エラー:", e);
         }
     })();
-});
+});
