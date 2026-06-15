@@ -386,10 +386,25 @@ class Information {
         form.title({ translate: "cw.scform.information" })
         form.textField({ translate: "cw.mcform.WriteCountryNameLabel" }, "Press Name", { defaultValue: countryData.name })//国名
         form.textField({ translate: "cw.scform.information.description" }, "Write Description", { defaultValue: countryData.description })//国名
+        
+        const showPeaceToggle = !countryData.isPeace;
+        if (showPeaceToggle) {
+            form.toggle("平和主義にする (※一度有効にすると元に戻せません)", { defaultValue: false });
+        }
+
         const res = await form.show(player)
         if (res.canceled) return;
         countryData.name = res.formValues[0]
         countryData.description = res.formValues[1]
+
+        if (showPeaceToggle) {
+            const isPeaceToggle = res.formValues[2];
+            if (isPeaceToggle) {
+                countryData.isPeace = true;
+                player.sendMessage("§a[システム] 国を平和主義に変更しました。");
+            }
+        }
+
         countryDatas.set(countryData.id, countryData)
     }
 }
