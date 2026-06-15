@@ -3,7 +3,7 @@ import { DiscordRelay } from "../../utils/chat.js";
 import * as server from "@minecraft/server";
 const { world, system } = server;
 const playerDatas = new Dypro("player");
-import { blacklist, opWhiteList } from "./import.js";
+import { blacklist, opWhiteList, creativeWhiteList } from "./import.js";
 import { Ban } from "./ban.js";
 
 world.afterEvents.playerSpawn.subscribe(ev => {
