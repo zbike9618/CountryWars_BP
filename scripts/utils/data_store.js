@@ -94,7 +94,7 @@ class LRUDataManager {
         } else {
             this.cache.delete(id);
         }
-        
+
         this.cache.set(id, data);
 
         if (!this.dirtyKeys.has(id)) {
@@ -120,7 +120,7 @@ class LRUDataManager {
      */
     async setProperty(id, key, value) {
         const data = await this.get(id); // キャッシュに載せる
-        
+
         data[key] = value;
 
         if (!this.dirtyKeys.has(id)) {
@@ -134,17 +134,17 @@ class LRUDataManager {
      */
     async evict() {
         if (this.cache.size === 0) return;
-        
+
         // Mapの最初の要素（最も古くアクセスされた要素）を取得
         const firstId = this.cache.keys().next().value;
         const data = this.cache.get(firstId);
-        
+
         // 変更があれば保存（ライトバック）
         if (this.dirtyKeys.has(firstId)) {
             await this._save(firstId, data);
             this.dirtyKeys.delete(firstId);
         }
-        
+
         this.cache.delete(firstId);
     }
 
@@ -180,7 +180,7 @@ class LRUDataManager {
 }
 
 // PlayerData はオンライン人数を考慮して多めにキャッシュ（例: 50人分）
-export const PlayerDataStore = new LRUDataManager(50, "user");
+export const PlayerDataStore = new LRUDataManager(30, "user");
 
 // CountryData はアクティブな国数を考慮してキャッシュ（例: 20国分）
 export const CountryDataStore = new LRUDataManager(20, "country");
