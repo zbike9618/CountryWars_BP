@@ -1,5 +1,5 @@
 import * as server from "@minecraft/server";
-import { PlayerDataStore, CountryDataStore } from "./data_store.js";
+import { PlayerDataStore, CountryDataStore, PlayerMarketDataStore } from "./data_store.js";
 const { world, system } = server;
 
 export class Dypro {
@@ -50,6 +50,10 @@ export class Dypro {
             await CountryDataStore.setAll(path, data);
             world.setDynamicProperty(fullPath, "{}");
             return;
+        } else if (this.name === "playermarket") {
+            await PlayerMarketDataStore.setAll(path, data);
+            world.setDynamicProperty(fullPath, "{}");
+            return;
         }
 
         // 以降はLRUキャッシュ管理での保存
@@ -69,11 +73,19 @@ export class Dypro {
      * player/country は事先に preload() でキャッシュに載せておく必要がある。
      */
     get(path) {
-        // 外部API対象はキャッシュから同期取得
+        // 外部API対象はキャッシュから取得。キャッシュにあれば同期的に返し、なければ非同期で取得（Promiseを返す）
         if (this.name === "player") {
-            return PlayerDataStore.getSync(path);
+            const data = PlayerDataStore.getSync(path);
+            if (data !== undefined) return data;
+            return PlayerDataStore.get(path);
         } else if (this.name === "country") {
-            return CountryDataStore.getSync(path);
+            const data = CountryDataStore.getSync(path);
+            if (data !== undefined) return data;
+            return CountryDataStore.get(path);
+        } else if (this.name === "playermarket") {
+            const data = PlayerMarketDataStore.getSync(path);
+            if (data !== undefined) return data;
+            return PlayerMarketDataStore.get(path);
         }
 
         // キャッシュから取得（ページヒット）
@@ -108,15 +120,27 @@ export class Dypro {
             await PlayerDataStore.get(path); // 内部でAPIから取得しキャッシュに載せる
         } else if (this.name === "country") {
             await CountryDataStore.get(path);
+        } else if (this.name === "playermarket") {
+            await PlayerMarketDataStore.get(path);
         }
     }
 
     delete(path) {
         const fullPath = `${this.name}.${path}`;
 
-        if (this.name === "player" || this.name === "country") {
+        if (this.name === "player" || this.name === "country" || this.name === "playermarket") {
             world.setDynamicProperty(fullPath, undefined);
             // 外部DBの削除ロジックが将来あればここに追加
+            if (this.name === "player") {
+                PlayerDataStore.cache.delete(path);
+                PlayerDataStore.dirtyKeys.delete(path);
+            } else if (this.name === "country") {
+                CountryDataStore.cache.delete(path);
+                CountryDataStore.dirtyKeys.delete(path);
+            } else if (this.name === "playermarket") {
+                PlayerMarketDataStore.cache.delete(path);
+                PlayerMarketDataStore.dirtyKeys.delete(path);
+            }
         }
 
         // キャッシュから削除

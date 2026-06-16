@@ -1,7 +1,7 @@
 import { Util } from "../utils/util";
 import { world, system } from "@minecraft/server";
 import { Dypro } from "../utils/dypro";
-import { PlayerDataStore, CountryDataStore } from "../utils/data_store"
+import { PlayerDataStore, CountryDataStore, PlayerMarketDataStore } from "../utils/data_store"
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 
@@ -122,9 +122,10 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
                 dypro.flushAll();
             }
 
-            // playerとcountryのデータを外部DBに書き出し
+            // playerとcountryとplayermarketのデータを外部DBに書き出し
             await PlayerDataStore.flushAll();
             await CountryDataStore.flushAll();
+            await PlayerMarketDataStore.flushAll();
 
 
             if (player) {
@@ -156,9 +157,10 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
                 instance.flushAll();
             }
 
-            // 2. player / country の LRU キャッシュを外部DB（API）へ書き出し
+            // 2. player / country / playermarket の LRU キャッシュを外部DB（API）へ書き出し
             await PlayerDataStore.flushAll();
             await CountryDataStore.flushAll();
+            await PlayerMarketDataStore.flushAll();
 
             notify("§a[システム] 強制保存が完了しました！");
         } catch (e) {

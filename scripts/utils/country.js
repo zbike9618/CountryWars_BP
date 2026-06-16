@@ -16,7 +16,7 @@ const chunkDatas = new Dypro("chunk");
 export class Country {
 
     static async makeForm(player) {
-        const playerData = playerDatas.get(player.id);
+        const playerData = await playerDatas.get(player.id);
         if (playerData.country) {
             player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
             return;
@@ -336,10 +336,10 @@ class Information {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.information" })
         const dp = countryData.diplomacy;
-        const allyNames = (dp?.ally || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const enemyNames = (dp?.enemy || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-        const warNames = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+        const allyNames = (await Promise.all((dp?.ally || []).map(async id => (await countryDatas.get(id))?.name || "Unknown"))).join(", ") || "なし";
+        const friendNames = (await Promise.all((dp?.friend || []).map(async id => (await countryDatas.get(id))?.name || "Unknown"))).join(", ") || "なし";
+        const enemyNames = (await Promise.all((dp?.enemy || []).map(async id => (await countryDatas.get(id))?.name || "Unknown"))).join(", ") || "なし";
+        const warNames = (await Promise.all((countryData.warcountry || []).map(async id => (await countryDatas.get(id))?.name || "Unknown"))).join(", ") || "なし";
         const protection = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
         form.body({
             rawtext: [
@@ -347,8 +347,8 @@ class Information {
                     translate: "cw.scform.informations", with: [
                         `${countryData.name}`,
                         `${countryData.description}`,
-                        `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                        `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                        `${(await playerDatas.get(countryData.owner))?.name || "Unknown"}`,
+                        `${(await Promise.all(countryData.players.filter(id => id != countryData.owner).map(async id => (await playerDatas.get(id))?.name || "Unknown"))).join(", ")}`,
                         `${countryData.money}`,
                         `${countryData.chunkAmount}`,
                         `${countryData.tax.consumption}`,
@@ -430,7 +430,7 @@ class Permission {
     static async permissionSet(player, countryData) {
 
         const players = countryData.players.filter(playerId => playerId != player.id && playerId != countryData.owner)
-        const playersname = players.map(playerId => playerDatas.get(playerId)?.name || "Unknown")
+        const playersname = await Promise.all(players.map(async playerId => (await playerDatas.get(playerId))?.name || "Unknown"))
         if (players.length == 0) {
             const form = new MessageFormData()
             form.title({ translate: "cw.scform.permission.set" })
@@ -611,17 +611,18 @@ class Member {
         }
         const form = new ModalFormData()
         form.title({ translate: "cw.scform.member.kick" })
-        form.dropdown({ translate: "cw.form.playerchoise" }, players.map(playerId => playerDatas.get(playerId).name))
+        const playersnames = await Promise.all(players.map(async playerId => (await playerDatas.get(playerId)).name))
+        form.dropdown({ translate: "cw.form.playerchoise" }, playersnames)
         const res = await form.show(player)
         if (res.canceled) return;
         const playerId = players[res.formValues[0]]
-        const playerData = playerDatas.get(playerId)
+        const playerData = await playerDatas.get(playerId)
         playerData.country = undefined
         playerData.permission = ""
         playerDatas.set(playerId, playerData)
         countryData.players.splice(countryData.players.indexOf(playerId), 1)
         countryDatas.set(countryData.id, countryData)
-        player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerDatas.get(playerId).name] })
+        player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerData.name] })
         const data = `world.getEntity('${playerId}').sendMessage({ translate: "cw.scform.member.kicked", with: ["${countryData.name}"] })`
         sendDataForPlayers(data, playerId)
     }
@@ -639,13 +640,14 @@ class Member {
 
         const form = new ModalFormData();
         form.title({ translate: "cw.scform.member.transfer.title" });
-        form.dropdown({ translate: "cw.scform.member.transfer.select" }, members.map(id => playerDatas.get(id)?.name || "Unknown"));
+        const memberNames = await Promise.all(members.map(async id => (await playerDatas.get(id))?.name || "Unknown"));
+        form.dropdown({ translate: "cw.scform.member.transfer.select" }, memberNames);
 
         const res = await form.show(player);
         if (res.canceled) return;
 
         const newOwnerId = members[res.formValues[0]];
-        const newOwnerName = playerDatas.get(newOwnerId)?.name || "Unknown";
+        const newOwnerName = (await playerDatas.get(newOwnerId))?.name || "Unknown";
 
         const confirmForm = new MessageFormData();
         confirmForm.title({ translate: "cw.scform.member.transfer.title" });
@@ -657,8 +659,8 @@ class Member {
         if (confirmRes.canceled || confirmRes.selection === 1) return;
 
         // 譲位処理
-        const oldOwnerData = playerDatas.get(player.id);
-        const newOwnerData = playerDatas.get(newOwnerId);
+        const oldOwnerData = await playerDatas.get(player.id);
+        const newOwnerData = await playerDatas.get(newOwnerId);
 
         oldOwnerData.permission = ""; // 旧国王は権限なしに
         newOwnerData.permission = "国王"; // 新国王に国王権限
@@ -677,7 +679,8 @@ class Money {
     static async money(player, countryData) {
         const form = new ActionFormData()
         form.title({ translate: "cw.scform.money" })
-        form.body({ translate: "cw.scform.money.title", with: [`${playerDatas.get(player.id).money}`, `${countryData.money}`] })
+        const myMoney = (await playerDatas.get(player.id)).money;
+        form.body({ translate: "cw.scform.money.title", with: [`${myMoney}`, `${countryData.money}`] })
         if (hasPermission(player, "money_deposit")) {
             form.button({ translate: "cw.scform.money.deposit" })
         }
@@ -694,7 +697,7 @@ class Money {
         }
     }
     static async deposit(player, countryData) {
-        const playerMoney = playerDatas.get(player.id).money;
+        const playerMoney = (await playerDatas.get(player.id)).money;
         const form = new ModalFormData()
         form.title({ translate: "cw.scform.money.deposit" })
         form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
@@ -705,7 +708,7 @@ class Money {
 
         const isEnough = await this.enoughmoney(player, money, "deposit")
         if (isEnough === true) {
-            const playerData = playerDatas.get(player.id)
+            const playerData = await playerDatas.get(player.id)
             playerData.money -= money
             playerDatas.set(player.id, playerData)
             countryData.money += money
@@ -717,7 +720,7 @@ class Money {
         }
     }
     static async withdraw(player, countryData) {
-        const playerMoney = playerDatas.get(player.id).money;
+        const playerMoney = (await playerDatas.get(player.id)).money;
         const form = new ModalFormData()
         form.title({ translate: "cw.scform.money.withdraw" })
         form.textField({ translate: "cw.scform.money.title", with: [`${playerMoney}`, `${countryData.money}`] }, "Press Number")
@@ -728,7 +731,7 @@ class Money {
 
         const isEnough = await this.enoughmoney(player, money, "withdraw")
         if (isEnough === true) {
-            const playerData = playerDatas.get(player.id)
+            const playerData = await playerDatas.get(player.id)
             playerData.money += money
             playerDatas.set(player.id, playerData)
             countryData.money -= money
@@ -745,12 +748,12 @@ class Money {
         let body = "";
 
         if (type == "deposit") {
-            current = playerDatas.get(player.id).money;
+            current = (await playerDatas.get(player.id)).money;
             title = "cw.scform.money.withdraw";
             body = "cw.scform.money.deposit.noenough"; // Added check for country money
         }
         else if (type == "withdraw") {
-            current = countryDatas.get(playerDatas.get(player.id).country).money;
+            current = (await countryDatas.get((await playerDatas.get(player.id)).country)).money;
             title = "cw.scform.money.withdraw";
             body = "cw.scform.money.withdraw.countrynomoney"; // Added check for country money
         }

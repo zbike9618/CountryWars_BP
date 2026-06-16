@@ -1,4 +1,4 @@
-import { saveUserDypro, getUserDypro, saveCountryDypro, getCountryDypro } from "./dypro_api.js";
+import { saveUserDypro, getUserDypro, saveCountryDypro, getCountryDypro, savePlayerMarketDypro, getPlayerMarketDypro } from "./dypro_api.js";
 
 /**
  * LRUキャッシュを用いたデータマネージャー（ページング方式）
@@ -8,7 +8,7 @@ import { saveUserDypro, getUserDypro, saveCountryDypro, getCountryDypro } from "
 class LRUDataManager {
     /**
      * @param {number} maxSize キャッシュ（メモリ）に保持できる最大数
-     * @param {"user"|"country"} type データの種類
+     * @param {"user"|"country"|"playermarket"} type データの種類
      */
     constructor(maxSize, type) {
         this.maxSize = maxSize;
@@ -21,8 +21,10 @@ class LRUDataManager {
         let dyproData;
         if (this.type === "user") {
             dyproData = await getUserDypro(id);
-        } else {
+        } else if (this.type === "country") {
             dyproData = await getCountryDypro(id);
+        } else {
+            dyproData = await getPlayerMarketDypro(id);
         }
 
         // 新しいAPI仕様ではオブジェクト全体が返ってくる
@@ -32,8 +34,10 @@ class LRUDataManager {
     async _save(id, dataObject) {
         if (this.type === "user") {
             await saveUserDypro(id, dataObject);
-        } else {
+        } else if (this.type === "country") {
             await saveCountryDypro(id, dataObject);
+        } else {
+            await savePlayerMarketDypro(id, dataObject);
         }
     }
 
@@ -180,3 +184,6 @@ export const PlayerDataStore = new LRUDataManager(50, "user");
 
 // CountryData はアクティブな国数を考慮してキャッシュ（例: 20国分）
 export const CountryDataStore = new LRUDataManager(20, "country");
+
+// PlayerMarketData はアクティブなマーケットページ数を考慮してキャッシュ（例: 20ページ分）
+export const PlayerMarketDataStore = new LRUDataManager(20, "playermarket");

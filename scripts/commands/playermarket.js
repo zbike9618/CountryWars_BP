@@ -91,14 +91,14 @@ async function showPlayerMarket(player) {
     }
 }
 async function buyForm(player, { slot, page }) {
-    const data = marketDatas.get(`${page}`)[slot];
-    const buyerData = playerDatas.get(player.id);
+    const data = (await marketDatas.get(`${page}`))[slot];
+    const buyerData = await playerDatas.get(player.id);
     const countryId = buyerData?.country;
 
     // 消費税 (Consumption Tax) の計算 (購入者ベース)
     let taxRate = 0;
     if (countryId) {
-        const countryData = countryDatas.get(countryId);
+        const countryData = await countryDatas.get(countryId);
         if (countryData) {
             taxRate = countryData.tax.consumption || 0;
         }
@@ -140,7 +140,7 @@ async function buyForm(player, { slot, page }) {
         return;
     }
 
-    const sellerName = playerDatas.get(data.player)?.name || "Unknown";
+    const sellerName = (await playerDatas.get(data.player))?.name || "Unknown";
     const description = data.description || "---";
     const buyerMoney = buyerData.money.toString();
 
@@ -241,7 +241,7 @@ async function sellFormS(player, item, maxamount) {
     const durComp = item.getComponent("minecraft:durability");
     const durability = durComp ? durComp.damage : 0;
 
-    playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2], durability })
+    await playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2], durability })
     const comp = player.getComponent("minecraft:inventory");
     const inv = comp.container;
     for (let i = 0; i < inv.size; i++) {
@@ -285,7 +285,7 @@ async function editForm(player) {
     const datas = []
     for (const page of marketDatas.idList) {
         let slot = 0;
-        for (const data of marketDatas.get(`${page}`)) {
+        for (const data of await marketDatas.get(`${page}`)) {
 
             if (data.player == player.id) {
                 form.button({ translate: Util.langChangeItemName(data.itemId) }, itemIdToPath[data.itemId])
@@ -299,7 +299,7 @@ async function editForm(player) {
     editForm2(player, { page: datas[res.selection].page, slot: datas[res.selection].slot })
 }
 async function editForm2(player, { page, slot }) {
-    const marketData = marketDatas.get(`${page}`)[slot];
+    const marketData = (await marketDatas.get(`${page}`))[slot];
     const form = new ModalFormData()
     form.title({ translate: "cw.playermarket.sell" })
     form.toggle({ translate: "cw.playermarket.edit.toggle" })
@@ -317,7 +317,7 @@ async function editForm2(player, { page, slot }) {
                 tempStack = new server.ItemStack(itemId);
             } catch (e) {
                 player.sendMessage("§c警告: このアイテムは無効な識別子を持っているため、アイテムを返却できません。出品データのみを削除します。");
-                playerMarketSystem.delete({ slot, page })
+                await playerMarketSystem.delete({ slot, page })
                 return;
             }
             const AmountMax = tempStack.maxAmount;
@@ -373,7 +373,7 @@ async function editForm2(player, { page, slot }) {
                 }
             }
         }
-        playerMarketSystem.delete({ slot, page })
+        await playerMarketSystem.delete({ slot, page })
         return;
     }
     const price = Number(res.formValues[1]);
@@ -392,7 +392,7 @@ async function editForm2(player, { page, slot }) {
     }
     marketData.price.push(Number(res.formValues[1]))
     marketData.description = res.formValues[2]
-    playerMarketSystem.edit(marketData, { page, slot })
+    await playerMarketSystem.edit(marketData, { page, slot })
 }
 async function showHistoryForm(player) {
     const pmlogDatas = new Dypro("pmlog");
