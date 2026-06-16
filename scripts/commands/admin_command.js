@@ -1,7 +1,8 @@
 import { Util } from "../utils/util";
 import { world, system } from "@minecraft/server";
 import { Dypro } from "../utils/dypro";
-import { PlayerDataStore, CountryDataStore, PlayerMarketDataStore } from "../utils/data_store"
+import { PlayerDataStore, CountryDataStore } from "../utils/data_store";
+import { getUserDypro, getCountryDypro } from "../utils/dypro_api";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 
@@ -168,4 +169,43 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             console.error("[cw:save] エラー:", e);
         }
     })();
+});
+
+// ===== 外部DBデータ取得コマンド =====
+system.afterEvents.scriptEventReceive.subscribe(ev => {
+    // プレイヤーデータを取得するコマンド
+    if (ev.id === "cw:getplayerdata") {
+        const targetId = ev.message.trim(); // 送信されたメッセージ（ID）を取得
+        if (!targetId) {
+            ev.sourceEntity?.sendMessage("§c対象のIDを指定してください。");
+            return;
+        }
+
+        ev.sourceEntity?.sendMessage(`§e[システム] プレイヤーデータ(${targetId})を取得中...`);
+
+        // 非同期（裏側）でデータを取得して表示する
+        (async () => {
+            const data = await getUserDypro(targetId);
+            // 取得したデータを文字列（JSON形式）にしてチャットに表示します
+            ev.sourceEntity?.sendMessage(`§a[プレイヤーデータ: ${targetId}]\n${JSON.stringify(data, null, 2)}`);
+        })();
+    }
+
+    // 国データを取得するコマンド
+    if (ev.id === "cw:getcountrydata") {
+        const targetId = ev.message.trim(); // 送信されたメッセージ（ID）を取得
+        if (!targetId) {
+            ev.sourceEntity?.sendMessage("§c対象のIDを指定してください。");
+            return;
+        }
+
+        ev.sourceEntity?.sendMessage(`§e[システム] 国データ(${targetId})を取得中...`);
+
+        // 非同期（裏側）でデータを取得して表示する
+        (async () => {
+            const data = await getCountryDypro(targetId);
+            // 取得したデータを文字列（JSON形式）にしてチャットに表示します
+            ev.sourceEntity?.sendMessage(`§a[国データ: ${targetId}]\n${JSON.stringify(data, null, 2)}`);
+        })();
+    }
 });
