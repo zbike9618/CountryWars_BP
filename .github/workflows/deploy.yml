@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - server
-      - 'feature/**'
+      - 'f/**'
 
 jobs:
   deploy:
@@ -19,9 +19,9 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --accept-routes
 
-      # 1. 【デバッグ鯖への反映】feature/* ブランチの時（従来通りスクリプト実行）
+      # 1. 【デバッグ鯖への反映】f/* ブランチの時（従来通りスクリプト実行）
       - name: Deploy to Debug Server via SSH
-        if: startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/f/')
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_IP }}
