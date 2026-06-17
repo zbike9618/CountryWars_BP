@@ -138,3 +138,49 @@ export async function getPlayerMarketDypro(page) {
     }
     return [];
 }
+
+/**
+ * 外部DBにマーケットのdyproデータを保存
+ * @param {string} page - ページID（"0", "1" など）
+ * @param {string} key - プロパティのキー名
+ * @param {any} value - 保存する値
+ */
+export async function savePlayerMarketDypro(page, key, value) {
+    const req = new HttpRequest(`${SERVER_URL}/dypro/playermarket`);
+    req.method = HttpRequestMethod.Post;
+    req.headers = [
+        new HttpHeader("Content-Type", "application/json"),
+        new HttpHeader("Authorization", `Bearer ${API_TOKEN}`)
+    ];
+    req.body = JSON.stringify({ id: page, key: key, value: value });
+
+    try {
+        const res = await http.request(req);
+        if (res.status !== 200) console.warn(`[Dypro API] マーケットデータの保存に失敗: ${res.status}`);
+    } catch (e) {
+        console.error(`[Dypro API] 通信エラー: ${e}`);
+    }
+}
+
+/**
+ * 外部DBからマーケットの全dyproデータを取得
+ * @param {string} page - ページID
+ * @returns {Promise<Array<{key: string, value: string}>>} - {key, value} の配列
+ */
+export async function getPlayerMarketDypro(page) {
+    const req = new HttpRequest(`${SERVER_URL}/dypro/playermarket/${page}`);
+    req.method = HttpRequestMethod.Get;
+    req.headers = [
+        new HttpHeader("Authorization", `Bearer ${API_TOKEN}`)
+    ];
+
+    try {
+        const res = await http.request(req);
+        if (res.status === 200) {
+            return JSON.parse(res.body);
+        }
+    } catch (e) {
+        console.error(`[Dypro API] 通信エラー: ${e}`);
+    }
+    return [];
+}
