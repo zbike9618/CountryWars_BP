@@ -29,7 +29,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            bash /home/minecraft/sh/reboot.sh
+            bash /home/minecraft/sh/reboot.sh ${{ github.ref_name }}
 
       # 2. 【本番鯖への反映】serverブランチの時（確実に動くssh-action内でrsyncを実行）
       - name: Deploy to Production Server via rsync
