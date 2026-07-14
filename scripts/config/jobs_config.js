@@ -14,51 +14,80 @@ export class JobsConfig {
 export class JOB_CONFIG {
     static miner = {
         blockRewards: {
-            "minecraft:stone": 1,
-            "minecraft:deepslate": 1.5,
-            "minecraft:andesite": 1.2,
-            "minecraft:granite": 1.2,
-            "minecraft:diorite": 1.2,
-            "minecraft:coal_ore": 6,
-            "minecraft:iron_ore": 12,
-            "minecraft:gold_ore": 16,
-            "minecraft:diamond_ore": 20,
-            "minecraft:emerald_ore": 25,
-            "minecraft:deepslate_coal_ore": 8,
-            "minecraft:deepslate_iron_ore": 15,
-            "minecraft:deepslate_gold_ore": 18,
-            "minecraft:deepslate_diamond_ore": 22,
-            "minecraft:deepslate_emerald_ore": 30
+            "minecraft:stone": 2,
+            "minecraft:deepslate": 3,
+
+            "minecraft:andesite": 2.5,
+            "minecraft:granite": 2.5,
+            "minecraft:diorite": 2.5,
+
+            "minecraft:coal_ore": 15,
+            "minecraft:iron_ore": 20,
+            "minecraft:copper_ore": 20,
+            "minecraft:lapis_ore": 20,
+            "minecraft:redstone_ore": 20,
+
+            "minecraft:gold_ore": 25,
+            "minecraft:diamond_ore": 30,
+            "minecraft:emerald_ore": 30,
+
+            "minecraft:deepslate_coal_ore": 22.5,
+            "minecraft:deepslate_iron_ore": 30,
+            "minecraft:deepslate_copper_ore": 30,
+            "minecraft:deepslate_lapis_ore": 30,
+            "minecraft:deepslate_redstone_ore": 30,
+
+            "minecraft:deepslate_gold_ore": 37.5,
+            "minecraft:deepslate_diamond_ore": 45,
+            "minecraft:deepslate_emerald_ore": 45
         }
     };
     static hunter = {
         mobRewards: {
-            "minecraft:zombie": 1.5,
-            "minecraft:skeleton": 1.5,
+            "minecraft:zombie": 2,
+            "minecraft:skeleton": 2,
             "minecraft:creeper": 1.5,
-            "minecraft:spider": 0.7,
-            "minecraft:enderman": 2.5,
-            "minecraft:witch": 2.0,
+            "minecraft:spider": 1,
+            "minecraft:cave_spider": 1.5,
+
+            "minecraft:enderman": 5,
+            "minecraft:witch": 4,
             "minecraft:slime": 0.01,
             "minecraft:blaze": 1.5,
             "minecraft:drowned": 1.0,
-            "minecraft:wither_skeleton": 3.0,
-            "minecraft:wither": 50.0,
-            "minecraft:ghast": 2.5,
-            "minecraft:piglin": 1.5,
+
+            "minecraft:wither_skeleton": 4,
+            "minecraft:ghast": 3,
+            "minecraft:piglin": 3,
             "minecraft:zombie_pigman": 0.5,
-            "minecraft:hoglin": 2.0,
-            "minecraft:zoglin": 2.0,
-            "minecraft:ender_dragon": 100.0,
-            "minecraft:shulker": 3.0,
-            "minecraft:bogged": 1.5,
+            "minecraft:hoglin": 3,
+            "minecraft:zoglin": 3,
+
+            "minecraft:shulker": 5,
+            "minecraft:bogged": 3,
             "minecraft:magma_cube": 1.5,
-            "minecraft:cave_spider": 1.0,
-            "minecraft:warden": 50,
+
             "minecraft:phantom": 1.5,
             "minecraft:silverfish": 0.02,
-            "minecraft:piglin_brute": 3
+            "minecraft:endermite": 10,
 
+            "minecraft:guardian": 3,
+
+            "minecraft:pillager": 3,
+            "minecraft:vindicator": 3,
+            "minecraft:evoker": 4,
+            "minecraft:ravager": 50,
+            "minecraft:vex": 10,
+
+            "minecraft:breeze": 4,
+            "minecraft:stray": 3,
+            "minecraft:husk": 3,
+
+            "minecraft:wither": 500,
+            "minecraft:warden": 200,
+            "minecraft:ender_dragon": 500,
+            "minecraft:piglin_brute": 100,
+            "minecraft:elder_guardian": 1000
         }
     };
     static lumberjack = {

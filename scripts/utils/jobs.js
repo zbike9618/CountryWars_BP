@@ -56,7 +56,7 @@ export class Jobs {
 * ブロック破壊時の処理
 */
 world.afterEvents.playerBreakBlock.subscribe(ev => {
-    const { player, brokenBlockPermutation } = ev;
+    const { player, brokenBlockPermutation, itemStackBeforeBreak } = ev;
     const blockId = brokenBlockPermutation.type.id;
 
     for (const jobId of ["miner", "lumberjack", "farmer", "netherdigger"]) { // ← 制限！
@@ -64,6 +64,11 @@ world.afterEvents.playerBreakBlock.subscribe(ev => {
 
         const job = JOB_CONFIG[jobId];
         if (!job || !job.blockRewards) continue;
+
+        if (jobId === "miner") {
+            const enchantable = itemStackBeforeBreak?.getComponent("minecraft:enchantable");
+            if (enchantable?.hasEnchantment("silk_touch")) continue; // シルクタッチ採掘は報酬なし
+        }
 
         const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
         if (rewardInfo) {
