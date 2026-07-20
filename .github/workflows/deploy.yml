@@ -48,3 +48,32 @@ jobs:
             cd /root/cw_bp
             git fetch origin server
             git reset --hard origin/server
+
+      # 3. 【アップデート告知】serverブランチの時、コミットメッセージをDiscordへ流す
+      #    コミットメッセージは改行・引用符を含むため base64 で受け渡してシェル解釈を回避する
+      - name: Prepare announcement message
+        if: github.ref == 'refs/heads/server'
+        id: msg
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: echo "b64=$(printf '%s' "$COMMIT_MSG" | base64 -w0)" >> $GITHUB_OUTPUT
+
+      - name: Announce update to Discord
+        if: github.ref == 'refs/heads/server'
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          MSG_B64: ${{ steps.msg.outputs.b64 }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          envs: MSG_B64
+          script: |
+            set -e
+            source /home/minecraft/S3/discord_chat/.env
+            MSG=$(echo "$MSG_B64" | base64 -d)
+            curl -sS -X POST http://localhost:3000/announce \
+              -H "Authorization: Bearer $API_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-raw "$(jq -n --arg m "$MSG" '{message:$m}')"
