@@ -84,7 +84,7 @@ export class JOB_CONFIG {
             "minecraft:husk": 3,
 
             "minecraft:wither": 500,
-            "minecraft:warden": 200,
+            "minecraft:warden": 100,
             "minecraft:ender_dragon": 500,
             "minecraft:piglin_brute": 100,
             "minecraft:elder_guardian": 1000
