@@ -154,7 +154,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
     (async () => {
         try {
             // 1. Dypro インスタンス（ワールドのダイナミックプロパティ側）を全て書き出し
-            for (const instance of Dypro.instances) {
+            for (const instance of Dypro.registry.values()) {
                 instance.flushAll();
             }
 

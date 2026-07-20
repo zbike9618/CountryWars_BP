@@ -3,15 +3,44 @@ import { PlayerDataStore, CountryDataStore, PlayerMarketDataStore } from "./data
 const { world, system } = server;
 
 export class Dypro {
-    static instances = [];
+    /**
+     * name -> インスタンス のレジストリ。
+     * 同じ name の Dypro は必ず同一インスタンス（＝同一キャッシュ）を共有する。
+     * ※ 以前は name ごとに複数インスタンスが生成され、それぞれが独立したキャッシュを
+     *   持っていたため、片方の書き込みがもう片方から見えない不整合が起きていた。
+     */
+    static registry = new Map();
 
-    constructor(name, maxSize = 25) {
+    /**
+     * name ごとの既定キャッシュサイズ。
+     * 件数が多いデータ（chunk等）が小さすぎるとevictが多発し、
+     * キャッシュ無しより遅くなるため種別ごとに調整する。
+     */
+    static DEFAULT_SIZES = {
+        chunk: 512,
+        chest: 256,
+        shortPlayer: 64,
+        sendDataQueue: 64,
+        pmlog: 32
+    };
+
+    constructor(name, maxSize = undefined) {
+        // 同名のインスタンスが既にあればそれを返す（キャッシュを共有するため）
+        const existing = Dypro.registry.get(name);
+        if (existing) {
+            // 明示的に大きいサイズが指定された場合のみ引き上げる
+            if (maxSize !== undefined && maxSize > existing.maxSize) {
+                existing.maxSize = maxSize;
+            }
+            return existing;
+        }
+
         this.name = name;
         this.limit = 32000; // 安全のため少し余裕を持たせる
         this.cache = new Map(); // path -> data
         this.dirtyKeys = new Set(); // path
-        this.maxSize = maxSize;
-        Dypro.instances.push(this);
+        this.maxSize = maxSize ?? Dypro.DEFAULT_SIZES[name] ?? 25;
+        Dypro.registry.set(name, this);
     }
 
     get idList() {
@@ -37,21 +66,26 @@ export class Dypro {
         return Array.from(idList);
     }
 
+    /**
+     * この Dypro が外部DB（API）を使う種別なら、対応する DataStore を返す。
+     * それ以外（chunk / chest 等、ワールドの動的プロパティのみで完結するもの）は null。
+     * @returns {typeof PlayerDataStore | null}
+     */
+    _externalStore() {
+        if (this.name === "player") return PlayerDataStore;
+        if (this.name === "country") return CountryDataStore;
+        if (this.name === "playermarket") return PlayerMarketDataStore;
+        return null;
+    }
+
     async set(path, data) {
         const fullPath = `${this.name}.${path}`;
 
         // 外部APIへ保存する対象
-        if (this.name === "player") {
-            await PlayerDataStore.setAll(path, data);
+        const store = this._externalStore();
+        if (store) {
+            await store.setAll(path, data);
             // IDリストのためにスタブを保存（これがないと idList で取得できなくなる）
-            world.setDynamicProperty(fullPath, "{}");
-            return;
-        } else if (this.name === "country") {
-            await CountryDataStore.setAll(path, data);
-            world.setDynamicProperty(fullPath, "{}");
-            return;
-        } else if (this.name === "playermarket") {
-            await PlayerMarketDataStore.setAll(path, data);
             world.setDynamicProperty(fullPath, "{}");
             return;
         }
@@ -73,19 +107,17 @@ export class Dypro {
      * player/country は事先に preload() でキャッシュに載せておく必要がある。
      */
     get(path) {
-        // 外部API対象はキャッシュから取得。キャッシュにあれば同期的に返し、なければ非同期で取得（Promiseを返す）
-        if (this.name === "player") {
-            const data = PlayerDataStore.getSync(path);
+        // 外部API対象はキャッシュから同期取得する。
+        // キャッシュミス時は「次回のために裏でAPIから読み込みつつ」、
+        // 今回はワールド側の同期値を返す。
+        // ※ ここでPromiseを返すと、同期的なオブジェクトを前提にしている
+        //   大多数の呼び出し側が静かに undefined を掴むため絶対に返さない。
+        const store = this._externalStore();
+        if (store) {
+            const data = store.getSync(path);
             if (data !== undefined) return data;
-            return PlayerDataStore.get(path);
-        } else if (this.name === "country") {
-            const data = CountryDataStore.getSync(path);
-            if (data !== undefined) return data;
-            return CountryDataStore.get(path);
-        } else if (this.name === "playermarket") {
-            const data = PlayerMarketDataStore.getSync(path);
-            if (data !== undefined) return data;
-            return PlayerMarketDataStore.get(path);
+            store.get(path); // fire-and-forget（次回以降はキャッシュヒットする）
+            return this._getFromWorld(path);
         }
 
         // キャッシュから取得（ページヒット）
@@ -116,31 +148,20 @@ export class Dypro {
      * @param {string} path player.id または country.id
      */
     async preload(path) {
-        if (this.name === "player") {
-            await PlayerDataStore.get(path); // 内部でAPIから取得しキャッシュに載せる
-        } else if (this.name === "country") {
-            await CountryDataStore.get(path);
-        } else if (this.name === "playermarket") {
-            await PlayerMarketDataStore.get(path);
+        const store = this._externalStore();
+        if (store) {
+            await store.get(path); // 内部でAPIから取得しキャッシュに載せる
         }
     }
 
     delete(path) {
         const fullPath = `${this.name}.${path}`;
 
-        if (this.name === "player" || this.name === "country" || this.name === "playermarket") {
+        const store = this._externalStore();
+        if (store) {
             world.setDynamicProperty(fullPath, undefined);
-            // 外部DBの削除ロジックが将来あればここに追加
-            if (this.name === "player") {
-                PlayerDataStore.cache.delete(path);
-                PlayerDataStore.dirtyKeys.delete(path);
-            } else if (this.name === "country") {
-                CountryDataStore.cache.delete(path);
-                CountryDataStore.dirtyKeys.delete(path);
-            } else if (this.name === "playermarket") {
-                PlayerMarketDataStore.cache.delete(path);
-                PlayerMarketDataStore.dirtyKeys.delete(path);
-            }
+            // キャッシュと外部DBの両方から削除する
+            store.remove(path);
         }
 
         // キャッシュから削除
@@ -255,7 +276,7 @@ export class Dypro {
 
 // 1分ごと（1200 ticks）にすべての Dypro インスタンスの変更を保存する（オートセーブ）
 system.runInterval(() => {
-    for (const instance of Dypro.instances) {
+    for (const instance of Dypro.registry.values()) {
         instance.flushAll();
     }
 }, 1200);

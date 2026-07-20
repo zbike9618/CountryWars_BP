@@ -95,19 +95,18 @@ export async function getCountryDypro(countryId) {
 }
 
 /**
- * 外部DBにマーケットのdyproデータを保存
+ * 外部DBにマーケットのdyproデータを一括保存
  * @param {string} page - ページID（"0", "1" など）
- * @param {string} key - プロパティのキー名
- * @param {any} value - 保存する値
+ * @param {object} dataObject - 保存するデータ全体（JSONオブジェクト）
  */
-export async function savePlayerMarketDypro(page, key, value) {
+export async function savePlayerMarketDypro(page, dataObject) {
     const req = new HttpRequest(`${SERVER_URL}/dypro/playermarket`);
     req.method = HttpRequestMethod.Post;
     req.headers = [
         new HttpHeader("Content-Type", "application/json"),
         new HttpHeader("Authorization", `Bearer ${API_TOKEN}`)
     ];
-    req.body = JSON.stringify({ id: page, key: key, value: value });
+    req.body = JSON.stringify({ id: page, data: dataObject });
 
     try {
         const res = await http.request(req);
@@ -120,7 +119,7 @@ export async function savePlayerMarketDypro(page, key, value) {
 /**
  * 外部DBからマーケットの全dyproデータを取得
  * @param {string} page - ページID
- * @returns {Promise<Array<{key: string, value: string}>>} - {key, value} の配列
+ * @returns {Promise<object>} - { key: value, ... } のオブジェクト
  */
 export async function getPlayerMarketDypro(page) {
     const req = new HttpRequest(`${SERVER_URL}/dypro/playermarket/${page}`);
@@ -137,5 +136,49 @@ export async function getPlayerMarketDypro(page) {
     } catch (e) {
         console.error(`[Dypro API] 通信エラー: ${e}`);
     }
-    return [];
+    return {};
+}
+
+/**
+ * 外部DBからユーザーのdyproデータを削除
+ * @param {string} userId - プレイヤーのUUIDや名前
+ */
+export async function deleteUserDypro(userId) {
+    await deleteDypro(`user/${userId}`, "ユーザー");
+}
+
+/**
+ * 外部DBから国のdyproデータを削除
+ * @param {string} countryId - 国ID
+ */
+export async function deleteCountryDypro(countryId) {
+    await deleteDypro(`country/${countryId}`, "国");
+}
+
+/**
+ * 外部DBからマーケットのdyproデータを削除
+ * @param {string} page - ページID
+ */
+export async function deletePlayerMarketDypro(page) {
+    await deleteDypro(`playermarket/${page}`, "マーケット");
+}
+
+/**
+ * DELETE リクエストの共通処理
+ * @param {string} pathSegment - "user/xxx" のようなパス
+ * @param {string} label - ログ表示用のラベル
+ */
+async function deleteDypro(pathSegment, label) {
+    const req = new HttpRequest(`${SERVER_URL}/dypro/${pathSegment}`);
+    req.method = HttpRequestMethod.Delete;
+    req.headers = [
+        new HttpHeader("Authorization", `Bearer ${API_TOKEN}`)
+    ];
+
+    try {
+        const res = await http.request(req);
+        if (res.status !== 200) console.warn(`[Dypro API] ${label}データの削除に失敗: ${res.status}`);
+    } catch (e) {
+        console.error(`[Dypro API] 通信エラー: ${e}`);
+    }
 }

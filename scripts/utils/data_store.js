@@ -1,13 +1,20 @@
-import { saveUserDypro, getUserDypro, saveCountryDypro, getCountryDypro, savePlayerMarketDypro, getPlayerMarketDypro } from "./dypro_api.js";
+import {
+    saveUserDypro, getUserDypro, deleteUserDypro,
+    saveCountryDypro, getCountryDypro, deleteCountryDypro,
+    savePlayerMarketDypro, getPlayerMarketDypro, deletePlayerMarketDypro
+} from "./dypro_api.js";
 
 /**
  * LRUキャッシュを用いたデータマネージャー（ページング方式）
  * メモリにデータを保持し、最大保持数（ページ数）を超えたら最も古くアクセスされた
  * データをAPI（外部DB）へ保存（ページアウト）してメモリを解放します。
  *
- * APIの仕様:
- *   GET  -> Array<{ key: string, value: string }> （正規化形式）
- *   POST -> { id, key, value }  （キーごとに1行保存）
+ * APIの仕様（server.js の3テーブルすべてで統一されている一括形式）:
+ *   GET    -> { key: value, ... } （データ全体のオブジェクト）
+ *   POST   -> { id, data }        （id単位で全体を上書き保存）
+ *   DELETE -> id単位で行ごと削除
+ *
+ * ※ POSTがid単位の全体上書きのため、dirtyはキー単位ではなくid単位で管理する。
  */
 class LRUDataManager {
     /**
@@ -17,55 +24,54 @@ class LRUDataManager {
     constructor(maxSize, type) {
         this.maxSize = maxSize;
         this.type = type;
-        this.cache = new Map();      // id -> data object (Mapは挿入順を保持するためLRUに最適)
-        this.dirtyKeys = new Map();  // id -> Set of dirty keys（変更があったキー）
+        this.cache = new Map();     // id -> data object (Mapは挿入順を保持するためLRUに最適)
+        this.dirtyIds = new Set();  // 変更があったid
     }
 
     /**
-     * APIからデータ行配列 Array<{key, value}> を取得し、オブジェクト形式に変換して返す。
-     * value は JSON.parse を試み、失敗した場合は文字列のままとする。
+     * APIからデータ全体のオブジェクトを取得する。
+     * 想定外の型（配列・null等）が返った場合は空オブジェクトとして扱う。
      */
     async _fetch(id) {
-        let rows;
+        let data;
         if (this.type === "user") {
-            rows = await getUserDypro(id);
+            data = await getUserDypro(id);
         } else if (this.type === "country") {
-            rows = await getCountryDypro(id);
+            data = await getCountryDypro(id);
         } else {
-            rows = await getPlayerMarketDypro(id);
+            data = await getPlayerMarketDypro(id);
         }
 
-        if (!Array.isArray(rows) || rows.length === 0) return {};
-
-        const obj = {};
-        for (const row of rows) {
-            try {
-                obj[row.key] = JSON.parse(row.value);
-            } catch {
-                obj[row.key] = row.value;
-            }
-        }
-        return obj;
+        if (typeof data !== "object" || data === null || Array.isArray(data)) return {};
+        return data;
     }
 
     /**
-     * オブジェクトの各プロパティをキーごとに個別送信する（正規化形式）。
-     * dirtyKeys が指定されている場合はそのキーのみ保存し、未指定時は全キーを保存する。
+     * データ全体をid単位で一括保存する（APIが全体上書きのため部分保存はしない）。
      * @param {string} id
      * @param {object} dataObject
-     * @param {Set<string>|null} [keysToSave=null]
      */
-    async _save(id, dataObject, keysToSave = null) {
-        const keys = keysToSave ? Array.from(keysToSave) : Object.keys(dataObject);
-        for (const key of keys) {
-            const value = JSON.stringify(dataObject[key]);
-            if (this.type === "user") {
-                await saveUserDypro(id, key, value);
-            } else if (this.type === "country") {
-                await saveCountryDypro(id, key, value);
-            } else {
-                await savePlayerMarketDypro(id, key, value);
-            }
+    async _save(id, dataObject) {
+        if (this.type === "user") {
+            await saveUserDypro(id, dataObject);
+        } else if (this.type === "country") {
+            await saveCountryDypro(id, dataObject);
+        } else {
+            await savePlayerMarketDypro(id, dataObject);
+        }
+    }
+
+    /**
+     * 外部DBからid単位で削除する。
+     * @param {string} id
+     */
+    async _delete(id) {
+        if (this.type === "user") {
+            await deleteUserDypro(id);
+        } else if (this.type === "country") {
+            await deleteCountryDypro(id);
+        } else {
+            await deletePlayerMarketDypro(id);
         }
     }
 
@@ -123,14 +129,7 @@ class LRUDataManager {
         }
 
         this.cache.set(id, data);
-
-        if (!this.dirtyKeys.has(id)) {
-            this.dirtyKeys.set(id, new Set());
-        }
-        // 全てのキーをdirtyとしてマーク
-        for (const key of Object.keys(data)) {
-            this.dirtyKeys.get(id).add(key);
-        }
+        this.dirtyIds.add(id);
     }
 
     /**
@@ -150,10 +149,7 @@ class LRUDataManager {
 
         data[key] = value;
 
-        if (!this.dirtyKeys.has(id)) {
-            this.dirtyKeys.set(id, new Set());
-        }
-        this.dirtyKeys.get(id).add(key);
+        this.dirtyIds.add(id);
     }
 
     /**
@@ -166,23 +162,22 @@ class LRUDataManager {
         const firstId = this.cache.keys().next().value;
         const data = this.cache.get(firstId);
 
-        // 変更があれば保存（ライトバック・dirty なキーのみ送信）
-        if (this.dirtyKeys.has(firstId)) {
-            await this._save(firstId, data, this.dirtyKeys.get(firstId));
-            this.dirtyKeys.delete(firstId);
+        // 変更があれば保存（ライトバック）
+        if (this.dirtyIds.has(firstId)) {
+            await this._save(firstId, data);
+            this.dirtyIds.delete(firstId);
         }
 
         this.cache.delete(firstId);
     }
 
     /**
-     * 特定のIDの変更をAPIへ明示的に保存する（dirty なキーのみ）。
+     * 特定のIDの変更をAPIへ明示的に保存する。
      */
     async flush(id) {
-        if (this.dirtyKeys.has(id) && this.cache.has(id)) {
-            const data = this.cache.get(id);
-            await this._save(id, data, this.dirtyKeys.get(id));
-            this.dirtyKeys.delete(id);
+        if (this.dirtyIds.has(id) && this.cache.has(id)) {
+            await this._save(id, this.cache.get(id));
+            this.dirtyIds.delete(id);
         }
     }
 
@@ -190,7 +185,7 @@ class LRUDataManager {
      * 全ての変更をAPIへ明示的に保存する。（サーバー終了時・定期保存用）
      */
     async flushAll() {
-        for (const id of [...this.dirtyKeys.keys()]) {
+        for (const id of [...this.dirtyIds]) {
             await this.flush(id);
         }
     }
@@ -202,7 +197,16 @@ class LRUDataManager {
         for (const [id, data] of this.cache.entries()) {
             await this._save(id, data);
         }
-        this.dirtyKeys.clear();
+        this.dirtyIds.clear();
+    }
+
+    /**
+     * キャッシュと外部DBの両方からデータを削除する。
+     */
+    async remove(id) {
+        this.cache.delete(id);
+        this.dirtyIds.delete(id);
+        await this._delete(id);
     }
 }
 

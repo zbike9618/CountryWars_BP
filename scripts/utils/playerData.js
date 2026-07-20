@@ -56,8 +56,8 @@ world.afterEvents.playerSpawn.subscribe(ev => {
                 stock: {},
                 chattype: "world"
             }
-            playerDatas.set(player.id, playerData);
-            DoInitialSpawn(player);//初期スポーンメッセージ等 
+            await playerDatas.set(player.id, playerData);
+            DoInitialSpawn(player);//初期スポーンメッセージ等
             player.setDynamicProperty("initial", true);
             sendToDiscord(`§a${player.name}はサーバーに初参加です！`)
         }
