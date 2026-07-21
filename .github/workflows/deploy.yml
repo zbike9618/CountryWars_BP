@@ -77,3 +77,26 @@ jobs:
               -H "Authorization: Bearer $API_TOKEN" \
               -H "Content-Type: application/json" \
               --data-raw "$(jq -n --arg m "$MSG" '{message:$m}')"
+
+      # 4. 【HP告知】serverブランチの時、コミットメッセージの見出しを news API へ投稿する
+      #    api.gozakura.org は公開エンドポイントなので Actions ランナーから直接 curl する
+      #    コミットに [skip notice] を含めるとスキップ（Discord側の挙動と揃える）
+      - name: Announce update to HP (news API)
+        if: github.ref == 'refs/heads/server'
+        env:
+          MSG_B64: ${{ steps.msg.outputs.b64 }}
+          GOZAKURA_API_TOKEN: ${{ secrets.GOZAKURA_API_TOKEN }}
+        run: |
+          set -e
+          MSG=$(echo "$MSG_B64" | base64 -d)
+          if echo "$MSG" | grep -qi '\[skip notice\]'; then
+            echo "[skip notice] を検出したため HP 告知をスキップします"
+            exit 0
+          fi
+          TITLE=$(echo "$MSG" | head -n1)
+          DATE=$(TZ=Asia/Tokyo date +%Y/%m/%d)
+          curl -sS -X POST https://api.gozakura.org/api/news \
+            -H "Authorization: Bearer $GOZAKURA_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-raw "$(jq -n --arg d "$DATE" --arg t "$TITLE" '{date:$d, text:$t, link:null}')"
+          echo "HP告知を投稿しました: $TITLE"
