@@ -244,8 +244,13 @@ export class Dypro {
 
         // 通常保存（または古い形式）
         let data = world.getDynamicProperty(fullPath);
-        if (data === undefined) {
-            data = world.getDynamicProperty(`${this.name}#${path}`);
+        // fullPath が未定義、または外部DB化で置かれた "{}" スタブの場合も、
+        // 旧形式(name#path)に実データが残っていれば拾う（既存プレイヤーの移行漏れ対策）。
+        // ※ これがないと、一度 set() で "{}" 化されたプレイヤーは migrate で移行スキップされ、
+        //    preload を通らない get() 経路（chat.js 等）で secondname 等を復元できずクラッシュする
+        if (data === undefined || data === "{}") {
+            const legacy = world.getDynamicProperty(`${this.name}#${path}`);
+            if (legacy !== undefined) data = legacy;
         }
 
         if (data === undefined || data === "{}") return undefined;

@@ -50,7 +50,7 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         world.clearDynamicProperties();
         for (const player of world.getAllPlayers()) {
             player.clearDynamicProperties();
-            player.runCommand(`kick @s ${Data.kickMessages.allreset || "初期化のため\nもう一度入りなおしてください"}`);
+            player.runCommand(`kick @s 初期化のため\nもう一度入りなおしてください`);
 
         }
     }
@@ -58,14 +58,14 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
         const playerData = playerDatas.get(ev.sourceEntity.id);
         if (!playerData) {
             ev.sourceEntity?.clearDynamicProperties();
-            ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+            ev.sourceEntity?.runCommand(`kick @s 初期化のため\nもう一度入りなおしてください`);
         } else {
             ev.sourceEntity?.sendMessage(`§cプレイヤーデータが破損していないため実行できません。`);
         }
     }
     if (ev.id == "cw:force_initial") {
         ev.sourceEntity?.clearDynamicProperties();
-        ev.sourceEntity?.runCommand(`kick @s ${Data.kickMessages.initial || "初期化のため\nもう一度入りなおしてください"}`);
+        ev.sourceEntity?.runCommand(`kick @s 初期化のため\nもう一度入りなおしてください`);
     }
     if (ev.id === "cw:migrate") {
         const player = ev.sourceEntity;
