@@ -284,4 +284,12 @@ system.runInterval(() => {
     for (const instance of Dypro.registry.values()) {
         instance.flushAll();
     }
+
+    // 外部DB（user/country/playermarket）側も定期的にAPIへ保存する。
+    // これまでcw:save(手動)かLRUキャッシュのevict時にしか保存されず、
+    // 実運用規模（同接15人/国15〜25/marketページ5）ではmaxSize(30/20/20)を
+    // 下回りevictがほぼ発生しないため、手動save以外ではSQLiteに反映されないままだった。
+    PlayerDataStore.flushAll().catch(e => console.error("[Dypro] PlayerDataStore flushAll失敗:", e));
+    CountryDataStore.flushAll().catch(e => console.error("[Dypro] CountryDataStore flushAll失敗:", e));
+    PlayerMarketDataStore.flushAll().catch(e => console.error("[Dypro] PlayerMarketDataStore flushAll失敗:", e));
 }, 1200);
