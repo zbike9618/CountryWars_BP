@@ -217,11 +217,11 @@ class LRUDataManager {
     }
 }
 
-// PlayerData はオンライン人数を考慮して多めにキャッシュ（例: 30人分）
-export const PlayerDataStore = new LRUDataManager(30, "user");
+// PlayerData は実運用の同接人数(最大15人)+バッファでキャッシュ（過剰だとevictが起きずキャッシュが肥大化するため実規模に合わせる）
+export const PlayerDataStore = new LRUDataManager(18, "user");
 
-// CountryData はアクティブな国数を考慮してキャッシュ（例: 20国分）
-export const CountryDataStore = new LRUDataManager(20, "country");
+// CountryData は実運用の国数(15〜25国)+バッファでキャッシュ
+export const CountryDataStore = new LRUDataManager(28, "country");
 
-// PlayerMarketData はアクティブなマーケットページ数を考慮してキャッシュ（例: 20ページ分）
-export const PlayerMarketDataStore = new LRUDataManager(20, "playermarket");
+// PlayerMarketData は実運用のマーケットページ数(現在5ページ)+バッファでキャッシュ
+export const PlayerMarketDataStore = new LRUDataManager(8, "playermarket");
