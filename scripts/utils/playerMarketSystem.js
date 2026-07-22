@@ -197,14 +197,14 @@ export class playerMarketSystem {
         const form = new ChestFormData("large")
         form.setTitle({ translate: "cw.playermarket.title" })
         const marketData = await marketDatas.get(`${page}`) || [];
-        if (await marketDatas.get(`${page - 1}`)) {
+        if (page > 0 && ((await marketDatas.get(`${page - 1}`))?.length > 0)) {
             form.setButton(0, {
                 iconPath: "textures/ui/arrow_dark_left_stretch",
                 name: "Undo", lore: ["<Click here>"],
                 editedName: true
             })
         }
-        if (await marketDatas.get(`${page + 1}`)) {
+        if ((await marketDatas.get(`${page + 1}`))?.length > 0) {
             form.setButton(8, {
                 iconPath: "textures/ui/arrow_dark_right_stretch",
                 name: "Next", lore: ["<Click here>"],

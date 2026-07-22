@@ -29,8 +29,11 @@ class LRUDataManager {
     }
 
     /**
-     * APIからデータ全体のオブジェクトを取得する。
-     * 想定外の型（配列・null等）が返った場合は空オブジェクトとして扱う。
+     * APIからデータ全体を取得する。
+     * user/countryは想定外の型（配列・null等）が返った場合は空オブジェクトとして扱う。
+     * playermarketは1ページ分の出品リストが配列で保存される仕様のため、
+     * オブジェクト向けの型チェック（Array.isArrayを弾く）を適用してはいけない
+     * （適用すると出品リストが常に{}へ潰れ、marketData.push(...)がTypeErrorになる）。
      */
     async _fetch(id) {
         let data;
@@ -40,6 +43,10 @@ class LRUDataManager {
             data = await getCountryDypro(id);
         } else {
             data = await getPlayerMarketDypro(id);
+        }
+
+        if (this.type === "playermarket") {
+            return Array.isArray(data) ? data : [];
         }
 
         if (typeof data !== "object" || data === null || Array.isArray(data)) return {};
