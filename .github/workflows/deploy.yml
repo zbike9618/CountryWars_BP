@@ -78,10 +78,10 @@ jobs:
               -H "Content-Type: application/json" \
               --data-raw "$(jq -n --arg m "$MSG" '{message:$m}')"
 
-      # 4. 【HP告知】serverブランチの時、コミットメッセージの見出しを news API へ投稿する
+      # 4. 【HP告知】serverブランチの時、コミットメッセージ全文(タイトル+本文)を update API へ投稿する
       #    api.gozakura.org は公開エンドポイントなので Actions ランナーから直接 curl する
-      #    コミットに [skip notice] を含めるとスキップ（Discord側の挙動と揃える）
-      - name: Announce update to HP (news API)
+      #    news/bugsとは別の updates テーブル（title/body分離）を使う。コミットに [skip notice] を含めるとスキップ（Discord側の挙動と揃える）
+      - name: Announce update to HP (updates API)
         if: github.ref == 'refs/heads/server'
         env:
           MSG_B64: ${{ steps.msg.outputs.b64 }}
@@ -94,9 +94,10 @@ jobs:
             exit 0
           fi
           TITLE=$(echo "$MSG" | head -n1)
+          BODY=$(echo "$MSG" | tail -n +2 | sed '/./,$!d')
           DATE=$(TZ=Asia/Tokyo date +%Y/%m/%d)
-          curl -sS -X POST https://api.gozakura.org/api/news \
+          curl -sS -X POST https://api.gozakura.org/api/updates \
             -H "Authorization: Bearer $GOZAKURA_API_TOKEN" \
             -H "Content-Type: application/json" \
-            --data-raw "$(jq -n --arg d "$DATE" --arg t "$TITLE" '{date:$d, text:$t, link:null}')"
+            --data-raw "$(jq -n --arg d "$DATE" --arg t "$TITLE" --arg b "$BODY" '{date:$d, title:$t, body:($b|if length==0 then null else . end), link:null}')"
           echo "HP告知を投稿しました: $TITLE"
