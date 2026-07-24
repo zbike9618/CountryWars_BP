@@ -10,7 +10,7 @@
         "assume_symmetry": false,
         "priority": 1,
         "pattern": [
-            "XX"
+            "X"
         ],
         "key": {
             "X": {
@@ -24,7 +24,7 @@
         ],
         "result": {
             "item": "cw:sbr",
-            "count": 1
+            "count": 4
         }
     }
 }
