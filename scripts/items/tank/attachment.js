@@ -2,7 +2,7 @@ import * as server from "@minecraft/server";
 import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
 import Config from "../../config/config.js";
 
-const { world } = server;
+const { world, system } = server;
 
 /**
  * タンクのアタッチメント用デフォルトデータを動的に生成
@@ -26,6 +26,28 @@ world.afterEvents.itemUse.subscribe((ev) => {
         showTankConfigMenu(player, tank);
     }
 });
+
+// レンチを持った瞬間にロアを付与
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        const inventory = player.getComponent("inventory");
+        if (!inventory?.container) continue;
+
+        const container = inventory.container;
+        const selectedSlot = player.selectedSlotIndex;
+        const item = container.getItem(selectedSlot);
+
+        if (item?.typeId === "cw:wrench") {
+            const targetLore = "§r§7[戦車に向けて スニーク + 使用]";
+            const currentLore = item.getLore();
+            if (!currentLore.includes(targetLore)) {
+                const filteredLore = currentLore.filter(l => !l.includes("戦車に向けて"));
+                item.setLore([...filteredLore, targetLore]);
+                container.setItem(selectedSlot, item);
+            }
+        }
+    }
+}, 5);
 
 /**
  * タンクのアタッチメント設定メニューを表示
@@ -60,10 +82,18 @@ async function showTankConfigMenu(player, tank) {
         }
     }
 
-    const { canceled, selection: slotIndex } = await form.show(player);
+    // 戦車解体ボタンを追加
+    form.button({ translate: "cw.tank_config.dismantle" });
+
+    const { canceled, selection } = await form.show(player);
     if (canceled) return;
 
-    showAttachmentSelection(player, tank, slotIndex);
+    if (selection === attachmentIds.length) {
+        dismantleTank(player, tank);
+        return;
+    }
+
+    showAttachmentSelection(player, tank, selection);
 }
 
 /**
@@ -183,3 +213,86 @@ export function getAttachment(tank) {
     }
     return returnData;
 }
+
+/**
+ * タンクを解体し、HPとアタッチメントデータをitemdyproに保存したタンクアイテムをドロップ
+ * @param {server.Player} player 
+ * @param {server.Entity} tank 
+ */
+function dismantleTank(player, tank) {
+    if (!tank?.isValid) return;
+
+    const healthComp = tank.getComponent("minecraft:health");
+    const hp = healthComp ? healthComp.currentValue : 200;
+    const tankData = tank.getDynamicProperty("tankData") ?? getDefaultTankData();
+
+    const itemStack = new server.ItemStack("cw:tank_item", 1);
+
+    // itemdypro に HP と アタッチメントデータを追加
+    const dyproData = { hp, tankData };
+    itemStack.setDynamicProperty("itemdypro", JSON.stringify(dyproData));
+    itemStack.setDynamicProperty("hp", hp);
+    itemStack.setDynamicProperty("tankData", tankData);
+
+    const dimension = tank.dimension;
+    const location = tank.location;
+
+    tank.remove();
+    dimension.spawnItem(itemStack, location);
+
+    player.sendMessage("§a戦車を解体しました。§r");
+}
+
+// 設置時に戦車アイテムから保存データを復元するためのマップ
+const pendingTankPlacements = new Map();
+
+world.beforeEvents.itemUseOn.subscribe((ev) => {
+    const { itemStack, source: player } = ev;
+    if (itemStack?.typeId !== "cw:tank_item") return;
+
+    let hp;
+    let tankData;
+
+    const itemdyproRaw = itemStack.getDynamicProperty("itemdypro");
+    if (typeof itemdyproRaw === "string") {
+        try {
+            const parsed = JSON.parse(itemdyproRaw);
+            hp = parsed.hp;
+            tankData = parsed.tankData;
+        } catch (e) {}
+    }
+
+    if (hp === undefined) hp = itemStack.getDynamicProperty("hp");
+    if (tankData === undefined) tankData = itemStack.getDynamicProperty("tankData");
+
+    if (hp !== undefined || tankData !== undefined) {
+        pendingTankPlacements.set(player.id, { hp, tankData, time: Date.now() });
+    }
+});
+
+world.afterEvents.entitySpawn.subscribe((ev) => {
+    const { entity } = ev;
+    if (entity?.typeId !== "cw:tank") return;
+
+    for (const player of world.getAllPlayers()) {
+        const pending = pendingTankPlacements.get(player.id);
+        if (pending && (Date.now() - pending.time < 3000)) {
+            if (pending.tankData) {
+                entity.setDynamicProperty("tankData", pending.tankData);
+                updateTankProperties(entity);
+            }
+            if (pending.hp !== undefined) {
+                const targetHp = pending.hp;
+                system.runTimeout(() => {
+                    if (!entity.isValid) return;
+                    const healthComp = entity.getComponent("minecraft:health");
+                    if (healthComp) {
+                        healthComp.setCurrentValue(Math.min(targetHp, healthComp.effectiveMax));
+                    }
+                }, 1);
+            }
+            pendingTankPlacements.delete(player.id);
+            break;
+        }
+    }
+});
