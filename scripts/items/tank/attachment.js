@@ -290,7 +290,7 @@ world.beforeEvents.itemUseOn.subscribe((ev) => {
     });
 });
 
-world.afterEvents.itemUseOn.subscribe((ev) => {
+world.afterEvents.itemStartUseOn.subscribe((ev) => {
     const { itemStack, source: player, block } = ev;
     if (itemStack?.typeId !== "cw:tank_item") return;
 
