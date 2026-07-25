@@ -246,13 +246,18 @@ function dismantleTank(player, tank) {
     player.sendMessage("§a戦車を解体しました。§r");
 }
 
-// 設置時に戦車アイテムから保存データを復元するためのキャッシュマップ
-const playerTankDataCache = new Map();
 
-// 戦車アイテム(cw:tank_item)のDynamicProperty(itemdypro)からデータを抽出するヘルパー
-function extractTankItemData(itemStack) {
-    if (!itemStack || itemStack.typeId !== "cw:tank_item") return null;
 
+world.afterEvents.itemUse.subscribe((ev) => {
+    const { itemStack, source: player } = ev;
+    if (itemStack?.typeId !== "cw:tank_item") return;
+
+    // ブロックを視線方向から取得
+    const blockResult = player.getBlockFromViewDirection({ maxDistance: 5 });
+    if (!blockResult) return;
+    const block = blockResult.block;
+
+    // itemdyproから直接データ取得
     let hp;
     let tankData;
 
@@ -264,39 +269,8 @@ function extractTankItemData(itemStack) {
             tankData = parsed.tankData;
         } catch (e) { }
     }
-
     if (hp === undefined) hp = itemStack.getDynamicProperty("hp");
     if (tankData === undefined) tankData = itemStack.getDynamicProperty("tankData");
-
-    // データなしでも「普通の戦車アイテム」としてキャッシュを返す(hp/tankDataはundefined)
-    return { hp, tankData };
-}
-
-// スクリプトで戦車をスポーンさせる（entity_placerの代わり）
-world.beforeEvents.itemUseOn.subscribe((ev) => {
-    const { itemStack, source: player, block, blockFace } = ev;
-    if (itemStack?.typeId !== "cw:tank_item") return;
-
-    // デフォルトのentity_placer動作をキャンセル（entity_placerは削除済みだがcancel明示）
-    ev.cancel = true;
-
-    // アイテムのデータを取得してキャッシュ
-    const data = extractTankItemData(itemStack);
-    playerTankDataCache.set(player.id, {
-        ...data,
-        block,
-        blockFace,
-        itemAmount: itemStack.amount,
-    });
-});
-
-world.afterEvents.itemStartUseOn.subscribe((ev) => {
-    const { itemStack, source: player, block } = ev;
-    if (itemStack?.typeId !== "cw:tank_item") return;
-
-    const cached = playerTankDataCache.get(player.id);
-    if (!cached) return;
-    playerTankDataCache.delete(player.id);
 
     // 設置先のブロック上面座標にスポーン
     const spawnLocation = {
@@ -310,14 +284,14 @@ world.afterEvents.itemStartUseOn.subscribe((ev) => {
         if (!tank) return;
 
         // アタッチメントデータ復元
-        if (cached.tankData) {
-            tank.setDynamicProperty("tankData", cached.tankData);
+        if (tankData) {
+            tank.setDynamicProperty("tankData", tankData);
             updateTankProperties(tank);
         }
 
-        // HP復元（setPropertyによるmaxHP確定後に設定）
-        if (cached.hp !== undefined) {
-            const targetHp = cached.hp;
+        // HP復元（maxHP確定後に設定）
+        if (hp !== undefined) {
+            const targetHp = hp;
             system.runTimeout(() => {
                 if (!tank.isValid) return;
                 const healthComp = tank.getComponent("minecraft:health");
