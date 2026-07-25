@@ -8,9 +8,9 @@
             "crafting_table"
         ],
         "pattern": [
-            "XXX",
+            "CXC",
             "XTX",
-            "XXX"
+            "CXC"
         ],
         "key": {
             "T": {
@@ -18,6 +18,9 @@
             },
             "X": {
                 "item": "minecraft:coal_block"
+            },
+            "C": {
+                "item": "minecraft:coal"
             }
         },
         "unlock": [
