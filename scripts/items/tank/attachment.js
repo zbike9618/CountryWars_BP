@@ -268,78 +268,78 @@ function extractTankItemData(itemStack) {
     if (hp === undefined) hp = itemStack.getDynamicProperty("hp");
     if (tankData === undefined) tankData = itemStack.getDynamicProperty("tankData");
 
-    if (hp !== undefined || tankData !== undefined) {
-        return { hp, tankData, timestamp: Date.now() };
-    }
-    return null;
+    // データなしでも「普通の戦車アイテム」としてキャッシュを返す(hp/tankDataはundefined)
+    return { hp, tankData };
 }
 
-// 手持ち時・使用時に戦車アイテムのデータ(itemdypro)を常にキャッシュ
-system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
-        const inventory = player.getComponent("inventory");
-        if (!inventory?.container) continue;
-
-        const item = inventory.container.getItem(player.selectedSlotIndex);
-        const data = extractTankItemData(item);
-        if (data) {
-            playerTankDataCache.set(player.id, data);
-        }
-    }
-}, 3);
-
+// スクリプトで戦車をスポーンさせる（entity_placerの代わり）
 world.beforeEvents.itemUseOn.subscribe((ev) => {
-    const { itemStack, source: player } = ev;
+    const { itemStack, source: player, block, blockFace } = ev;
+    if (itemStack?.typeId !== "cw:tank_item") return;
+
+    // デフォルトのentity_placer動作をキャンセル（entity_placerは削除済みだがcancel明示）
+    ev.cancel = true;
+
+    // アイテムのデータを取得してキャッシュ
     const data = extractTankItemData(itemStack);
-    if (data && player) {
-        playerTankDataCache.set(player.id, data);
-    }
+    playerTankDataCache.set(player.id, {
+        ...data,
+        block,
+        blockFace,
+        itemAmount: itemStack.amount,
+    });
 });
 
-// 戦車エンティティがスポーンした際(出すとき)、itemdyproデータを取得してエンティティに反映
-world.afterEvents.entitySpawn.subscribe((ev) => {
-    const { entity } = ev;
-    if (entity?.typeId !== "cw:tank") return;
+world.afterEvents.itemUseOn.subscribe((ev) => {
+    const { itemStack, source: player, block } = ev;
+    if (itemStack?.typeId !== "cw:tank_item") return;
 
-    // スポーン位置の近く(15ブロック以内)にいるプレイヤーからキャッシュされた戦車データを取得
-    const location = entity.location;
-    const dimensionId = entity.dimension.id;
+    const cached = playerTankDataCache.get(player.id);
+    if (!cached) return;
+    playerTankDataCache.delete(player.id);
 
-    let targetPlayer = null;
-    let latestTime = 0;
+    // 設置先のブロック上面座標にスポーン
+    const spawnLocation = {
+        x: block.x + 0.5,
+        y: block.y + 1,
+        z: block.z + 0.5,
+    };
 
-    for (const player of world.getAllPlayers()) {
-        const cache = playerTankDataCache.get(player.id);
-        if (cache && (Date.now() - cache.timestamp < 10000)) {
-            if (player.dimension.id === dimensionId) {
-                const dx = player.location.x - location.x;
-                const dy = player.location.y - location.y;
-                const dz = player.location.z - location.z;
-                const distSq = dx * dx + dy * dy + dz * dz;
-                if (distSq <= 225 && cache.timestamp > latestTime) {
-                    latestTime = cache.timestamp;
-                    targetPlayer = player;
-                }
-            }
+    system.run(() => {
+        const tank = player.dimension.spawnEntity("cw:tank", spawnLocation);
+        if (!tank) return;
+
+        // アタッチメントデータ復元
+        if (cached.tankData) {
+            tank.setDynamicProperty("tankData", cached.tankData);
+            updateTankProperties(tank);
         }
-    }
 
-    if (targetPlayer) {
-        const cache = playerTankDataCache.get(targetPlayer.id);
-        if (cache.tankData) {
-            entity.setDynamicProperty("tankData", cache.tankData);
-            updateTankProperties(entity);
-        }
-        if (cache.hp !== undefined) {
-            const targetHp = cache.hp;
+        // HP復元（setPropertyによるmaxHP確定後に設定）
+        if (cached.hp !== undefined) {
+            const targetHp = cached.hp;
             system.runTimeout(() => {
-                if (!entity.isValid) return;
-                const healthComp = entity.getComponent("minecraft:health");
+                if (!tank.isValid) return;
+                const healthComp = tank.getComponent("minecraft:health");
                 if (healthComp) {
                     healthComp.setCurrentValue(Math.min(targetHp, healthComp.effectiveMax));
                 }
-            }, 1);
+            }, 2);
         }
-        playerTankDataCache.delete(targetPlayer.id);
-    }
+
+        // インベントリからアイテムを1個消費
+        const inventory = player.getComponent("inventory");
+        if (!inventory?.container) return;
+        const container = inventory.container;
+        const slot = player.selectedSlotIndex;
+        const current = container.getItem(slot);
+        if (current?.typeId === "cw:tank_item") {
+            if (current.amount > 1) {
+                current.amount -= 1;
+                container.setItem(slot, current);
+            } else {
+                container.setItem(slot, undefined);
+            }
+        }
+    });
 });
