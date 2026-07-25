@@ -221,7 +221,10 @@ export function getAttachment(tank) {
  */
 function dismantleTank(player, tank) {
     if (!tank?.isValid) return;
-
+    if (tank.getComponent("minecraft:rideable")?.getRiders().length > 0) {
+        player.sendMessage("§c戦車に乗っているときは解体できません§r");
+        return;
+    }
     const healthComp = tank.getComponent("minecraft:health");
     const hp = healthComp ? healthComp.currentValue : 200;
     const tankData = tank.getDynamicProperty("tankData") ?? getDefaultTankData();
@@ -243,12 +246,12 @@ function dismantleTank(player, tank) {
     player.sendMessage("§a戦車を解体しました。§r");
 }
 
-// 設置時に戦車アイテムから保存データを復元するためのマップ
-const pendingTankPlacements = new Map();
+// 設置時に戦車アイテムから保存データを復元するためのキャッシュマップ
+const playerTankDataCache = new Map();
 
-world.beforeEvents.itemUseOn.subscribe((ev) => {
-    const { itemStack, source: player } = ev;
-    if (itemStack?.typeId !== "cw:tank_item") return;
+// 戦車アイテム(cw:tank_item)のDynamicProperty(itemdypro)からデータを抽出するヘルパー
+function extractTankItemData(itemStack) {
+    if (!itemStack || itemStack.typeId !== "cw:tank_item") return null;
 
     let hp;
     let tankData;
@@ -259,40 +262,84 @@ world.beforeEvents.itemUseOn.subscribe((ev) => {
             const parsed = JSON.parse(itemdyproRaw);
             hp = parsed.hp;
             tankData = parsed.tankData;
-        } catch (e) {}
+        } catch (e) { }
     }
 
     if (hp === undefined) hp = itemStack.getDynamicProperty("hp");
     if (tankData === undefined) tankData = itemStack.getDynamicProperty("tankData");
 
     if (hp !== undefined || tankData !== undefined) {
-        pendingTankPlacements.set(player.id, { hp, tankData, time: Date.now() });
+        return { hp, tankData, timestamp: Date.now() };
+    }
+    return null;
+}
+
+// 手持ち時・使用時に戦車アイテムのデータ(itemdypro)を常にキャッシュ
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        const inventory = player.getComponent("inventory");
+        if (!inventory?.container) continue;
+
+        const item = inventory.container.getItem(player.selectedSlotIndex);
+        const data = extractTankItemData(item);
+        if (data) {
+            playerTankDataCache.set(player.id, data);
+        }
+    }
+}, 3);
+
+world.beforeEvents.itemUseOn.subscribe((ev) => {
+    const { itemStack, source: player } = ev;
+    const data = extractTankItemData(itemStack);
+    if (data && player) {
+        playerTankDataCache.set(player.id, data);
     }
 });
 
+// 戦車エンティティがスポーンした際(出すとき)、itemdyproデータを取得してエンティティに反映
 world.afterEvents.entitySpawn.subscribe((ev) => {
     const { entity } = ev;
     if (entity?.typeId !== "cw:tank") return;
 
+    // スポーン位置の近く(15ブロック以内)にいるプレイヤーからキャッシュされた戦車データを取得
+    const location = entity.location;
+    const dimensionId = entity.dimension.id;
+
+    let targetPlayer = null;
+    let latestTime = 0;
+
     for (const player of world.getAllPlayers()) {
-        const pending = pendingTankPlacements.get(player.id);
-        if (pending && (Date.now() - pending.time < 3000)) {
-            if (pending.tankData) {
-                entity.setDynamicProperty("tankData", pending.tankData);
-                updateTankProperties(entity);
+        const cache = playerTankDataCache.get(player.id);
+        if (cache && (Date.now() - cache.timestamp < 10000)) {
+            if (player.dimension.id === dimensionId) {
+                const dx = player.location.x - location.x;
+                const dy = player.location.y - location.y;
+                const dz = player.location.z - location.z;
+                const distSq = dx * dx + dy * dy + dz * dz;
+                if (distSq <= 225 && cache.timestamp > latestTime) {
+                    latestTime = cache.timestamp;
+                    targetPlayer = player;
+                }
             }
-            if (pending.hp !== undefined) {
-                const targetHp = pending.hp;
-                system.runTimeout(() => {
-                    if (!entity.isValid) return;
-                    const healthComp = entity.getComponent("minecraft:health");
-                    if (healthComp) {
-                        healthComp.setCurrentValue(Math.min(targetHp, healthComp.effectiveMax));
-                    }
-                }, 1);
-            }
-            pendingTankPlacements.delete(player.id);
-            break;
         }
+    }
+
+    if (targetPlayer) {
+        const cache = playerTankDataCache.get(targetPlayer.id);
+        if (cache.tankData) {
+            entity.setDynamicProperty("tankData", cache.tankData);
+            updateTankProperties(entity);
+        }
+        if (cache.hp !== undefined) {
+            const targetHp = cache.hp;
+            system.runTimeout(() => {
+                if (!entity.isValid) return;
+                const healthComp = entity.getComponent("minecraft:health");
+                if (healthComp) {
+                    healthComp.setCurrentValue(Math.min(targetHp, healthComp.effectiveMax));
+                }
+            }, 1);
+        }
+        playerTankDataCache.delete(targetPlayer.id);
     }
 });
