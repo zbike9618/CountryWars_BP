@@ -53,9 +53,7 @@
                     9
                 ]
             },
-            "minecraft:custom_components": [
-                "cw:interact"
-            ]
+            "cw:interact": {}
         },
         "permutations": [
             {

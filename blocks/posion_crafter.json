@@ -1,0 +1,82 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:block": {
+    "description": {
+      "identifier": "cw:potion_Crafter",
+      "menu_category": {
+        "category": "nature"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "item_specific_speeds": [
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:wooden_tier')"
+            },
+            "destroy_speed": 80
+          },
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:stone_tier')"
+            },
+            "destroy_speed": 60
+          },
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:iron_tier')"
+            },
+            "destroy_speed": 40
+          },
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:golden_tier')"
+            },
+            "destroy_speed": 10
+          },
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:diamond_tier')"
+            },
+            "destroy_speed": 20
+          },
+          {
+            "item": {
+              "tags": "q.all_tags('minecraft:is_axe', 'minecraft:netherite_tier')"
+            },
+            "destroy_speed": 10
+          }
+        ],
+        "seconds_to_destroy": 100
+      },
+      "minecraft:material_instances": {
+        "up": {
+          "texture": "potion_crafter_top",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "potion_crafter_side",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "potion_crafter_front",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "potion_crafter_back",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "potion_crafter_side",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "potion_crafter_bottom",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:map_color": "#000000",
+      "cw:interact": {}
+    }
+  }
+}
