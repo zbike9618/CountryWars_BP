@@ -2,7 +2,7 @@
   "format_version": "1.26.0",
   "minecraft:block": {
     "description": {
-      "identifier": "cw:potion_Crafter",
+      "identifier": "cw:potion_crafter",
       "menu_category": {
         "category": "nature"
       }
