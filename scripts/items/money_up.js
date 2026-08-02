@@ -84,7 +84,7 @@ system.runInterval(() => {
         // アクションバーに通知（他のアクションバーと競合する可能性があるので軽量に）
         // 期限切れ間際（60秒以下）に警告
         if (remainingSec <= 60 && remainingSec > 0) {
-            player.onScreenDisplay.setActionBar(`§c⚡ MoneyUp §e残り ${secs}秒！`);
+            player.onScreenDisplay.setActionBar(`§cMoneyUp §e残り ${secs}秒！`);
         }
     }
 }, 200); // 10秒ごと
