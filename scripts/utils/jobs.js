@@ -3,6 +3,7 @@ import { system, world } from "@minecraft/server";
 import { Util } from "../utils/util";
 import { default as config } from "../config/config.js";
 import { JobsConfig, JOB_CONFIG } from "../config/jobs_config.js";
+import { isMoneyUpActive } from "../items/money_up.js";
 function sendActionBar(player, rawtexts) {
     player.onScreenDisplay.setActionBar(rawtexts);
 }
@@ -72,14 +73,16 @@ world.afterEvents.playerBreakBlock.subscribe(ev => {
 
         const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
         if (rewardInfo) {
-            const reward = rewardInfo[1];
+            const baseReward = rewardInfo[1];
+            const multiplier = isMoneyUpActive(player) ? 5 : 1;
+            const reward = Math.floor(baseReward * multiplier);
             Util.addMoney(player, reward);
             const score = Util.getMoney(player);
             sendActionBar(player, [
                 {
                     translate: `cw.jobs.reward.actionbar.${jobId}`,
                     with: [
-                        `${reward}`,
+                        multiplier > 1 ? `${reward} §6(×${multiplier})§a` : `${reward}`,
                         `${score}`
                     ]
                 }
@@ -105,14 +108,16 @@ world.afterEvents.playerPlaceBlock.subscribe(ev => {
 
         const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
         if (rewardInfo) {
-            const reward = rewardInfo[1];
+            const baseReward = rewardInfo[1];
+            const multiplier = isMoneyUpActive(player) ? 5 : 1;
+            const reward = Math.floor(baseReward * multiplier);
             Util.addMoney(player, reward);
             const score = Util.getMoney(player);
             sendActionBar(player, [
                 {
                     translate: `cw.jobs.reward.actionbar.${jobId}`,
                     with: [
-                        `${reward}`,
+                        multiplier > 1 ? `${reward} §6(×${multiplier})§a` : `${reward}`,
                         `${score}`
                     ]
                 }
@@ -138,15 +143,17 @@ world.afterEvents.entityDie.subscribe(ev => {
         const job = JOB_CONFIG[jobId];
         if (!job || !job.mobRewards) continue;
 
-        const reward = job.mobRewards[mobId];
-        if (reward !== undefined) {
+        const baseReward = job.mobRewards[mobId];
+        if (baseReward !== undefined) {
+            const multiplier = isMoneyUpActive(killer) ? 5 : 1;
+            const reward = Math.floor(baseReward * multiplier);
             Util.addMoney(killer, reward);
             const score = Util.getMoney(killer);
             sendActionBar(killer, [
                 {
                     translate: `cw.jobs.reward.actionbar.${jobId}`,
                     with: [
-                        `${reward}`,
+                        multiplier > 1 ? `${reward} §6(×${multiplier})§a` : `${reward}`,
                         `${score}`
                     ]
                 }
