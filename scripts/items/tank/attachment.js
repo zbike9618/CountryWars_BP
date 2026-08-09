@@ -133,7 +133,9 @@ async function showAttachmentSelection(player, tank, attachmentSlotIndex) {
         const selected = availableTemplates[selectionIndex - 1];
         const templateItem = container.getItem(selected.slot);
 
-        if (templateItem) {
+        // フォーム表示中にインベントリが変化している可能性があるため、
+        // スロットの中身が選択したテンプレートと一致するか再検証してから消費する
+        if (templateItem && templateItem.typeId === selected.typeId) {
             attachmentIds[attachmentSlotIndex] = selected.typeId;
             if (templateItem.amount > 1) {
                 templateItem.amount -= 1;
@@ -141,6 +143,10 @@ async function showAttachmentSelection(player, tank, attachmentSlotIndex) {
             } else {
                 container.setItem(selected.slot, undefined);
             }
+        } else {
+            player.sendMessage("§cインベントリの状態が変わったため、装着をキャンセルしました");
+            showTankConfigMenu(player, tank);
+            return;
         }
     }
 
