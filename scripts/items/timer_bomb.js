@@ -26,11 +26,11 @@ system.runInterval(() => {
 
 world.beforeEvents.playerBreakBlock.subscribe((ev) => {
     if (ev.block.typeId === "cw:timer_bomb") {
-        const key = getCoordKey(ev.block.location, ev.dimension.id);
+        const key = getCoordKey(ev.block.location, ev.block.dimension.id);
         if (bombtime.has(key)) {
             bombtime.delete(key);
             const location = ev.block.location;
-            const dimension = ev.dimension;
+            const dimension = ev.block.dimension;
             // 起動中に壊された場合は即座に爆発
             system.run(() => {
                 dimension.setBlockType(location, "minecraft:air");
