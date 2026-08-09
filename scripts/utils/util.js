@@ -7,11 +7,14 @@ const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 export class Util {
     static getAllPlayerIdsSorted() {
-        return playerDatas.idList.sort((a, b) => {
-            const nameA = playerDatas.get(a)?.name || "";
-            const nameB = playerDatas.get(b)?.name || "";
-            return this.compareStrings(nameA, nameB);
-        });
+        // ソートのコンパレータ内でDynamic Propertyを都度読み直すとO(n log n)回の
+        // 読み取り+JSON.parseが発生し重くなるため、先に名前を1回だけ取得してソートする
+        const idsWithNames = playerDatas.idList.map(id => ({
+            id,
+            name: playerDatas.get(id)?.name || ""
+        }));
+        idsWithNames.sort((a, b) => this.compareStrings(a.name, b.name));
+        return idsWithNames.map(item => item.id);
     }
     static compareStrings(a, b) {
         const order = Data.wordOrder;
