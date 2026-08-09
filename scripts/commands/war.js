@@ -146,7 +146,7 @@ async function declareForm(player, countryData) {
             DiscordRelay.send(`<@&1480588916863275038>`);
 
             for (const player of world.getAllPlayers()) {
-                player.playSound("mob.enderdragon.growl")
+                player.playSound("mob.enderdragon.growl", { volume: 0.5 })
             }
             for (const player of Util.GetCountryPlayer(enemyData)) {
                 player.onScreenDisplay.setTitle({ translate: `cw.warform.declared`, with: [countryData.name] })

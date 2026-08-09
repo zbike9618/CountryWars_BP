@@ -29,7 +29,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            bash /home/minecraft/sh/reboot.sh
+            bash /home/minecraft/sh/reboot.sh ${{ github.ref_name }}
 
       # 2. 【本番鯖への反映】serverブランチの時（確実に動くssh-action内でrsyncを実行）
       - name: Deploy to Production Server via rsync
@@ -48,3 +48,56 @@ jobs:
             cd /root/cw_bp
             git fetch origin server
             git reset --hard origin/server
+
+      # 3. 【アップデート告知】serverブランチの時、コミットメッセージをDiscordへ流す
+      #    コミットメッセージは改行・引用符を含むため base64 で受け渡してシェル解釈を回避する
+      - name: Prepare announcement message
+        if: github.ref == 'refs/heads/server'
+        id: msg
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: echo "b64=$(printf '%s' "$COMMIT_MSG" | base64 -w0)" >> $GITHUB_OUTPUT
+
+      - name: Announce update to Discord
+        if: github.ref == 'refs/heads/server'
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          MSG_B64: ${{ steps.msg.outputs.b64 }}
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: root
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          envs: MSG_B64
+          script: |
+            set -e
+            source /home/minecraft/S3/discord_chat/.env
+            MSG=$(echo "$MSG_B64" | base64 -d)
+            curl -sS -X POST http://localhost:3000/announce \
+              -H "Authorization: Bearer $API_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data-raw "$(jq -n --arg m "$MSG" '{message:$m}')"
+
+      # 4. 【HP告知】serverブランチの時、コミットメッセージ全文(タイトル+本文)を update API へ投稿する
+      #    api.gozakura.org は公開エンドポイントなので Actions ランナーから直接 curl する
+      #    news/bugsとは別の updates テーブル（title/body分離）を使う。コミットに [skip notice] を含めるとスキップ（Discord側の挙動と揃える）
+      - name: Announce update to HP (updates API)
+        if: github.ref == 'refs/heads/server'
+        env:
+          MSG_B64: ${{ steps.msg.outputs.b64 }}
+          GOZAKURA_API_TOKEN: ${{ secrets.GOZAKURA_API_TOKEN }}
+        run: |
+          set -e
+          MSG=$(echo "$MSG_B64" | base64 -d)
+          if echo "$MSG" | grep -qi '\[skip notice\]'; then
+            echo "[skip notice] を検出したため HP 告知をスキップします"
+            exit 0
+          fi
+          TITLE=$(echo "$MSG" | head -n1)
+          BODY=$(echo "$MSG" | tail -n +2 | sed '/./,$!d')
+          DATE=$(TZ=Asia/Tokyo date +%Y/%m/%d)
+          curl -sS -X POST https://api.gozakura.org/api/updates \
+            -H "Authorization: Bearer $GOZAKURA_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-raw "$(jq -n --arg d "$DATE" --arg t "$TITLE" --arg b "$BODY" '{date:$d, title:$t, body:($b|if length==0 then null else . end), link:null}')"
+          echo "HP告知を投稿しました: $TITLE"
