@@ -15,7 +15,6 @@ import "./landmine.js";
 import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
-import "./money_up.js"
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
