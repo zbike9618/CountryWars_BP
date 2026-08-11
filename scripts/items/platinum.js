@@ -14,7 +14,7 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         reduceAmount += 1;
     }
     if (armorSlot.getEquipment("Feet")?.typeId == "cw:platinum_boots") {
-        reduceAmount += 0.5;
+        reduceAmount += 1;
     }
     if (armorSlot.getEquipment("Legs")?.typeId == "cw:platinum_leggings") {
         reduceAmount += 2;
@@ -54,7 +54,7 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
     const totalDefense = armorSlot.totalArmor + armorSlot.totalToughness
 
     // 削る耐久値の計算（防御力の5倍）
-    const reduce = Math.max(1, Math.floor(totalDefense / 3));
+    const reduce = Math.max(1, Math.floor(totalDefense));
 
     const armorSlots = ["Head", "Chest", "Legs", "Feet"];
     for (const slot of armorSlots) {
