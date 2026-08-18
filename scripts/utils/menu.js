@@ -439,6 +439,22 @@ function parseCommaArray(str, asNumbers = false) {
 }
 
 /**
+ * JSON文字列を配列として解析・検証
+ * @param {string} str
+ * @param {(value: any) => boolean} validateElement
+ * @returns {any[] | undefined}
+ */
+function parseJsonArray(str, validateElement = () => true) {
+    try {
+        const parsed = JSON.parse(str);
+        if (!Array.isArray(parsed) || !parsed.every(validateElement)) return undefined;
+        return parsed;
+    } catch {
+        return undefined;
+    }
+}
+
+/**
  * 国データ管理 — 国選択
  */
 async function CountryDataAdmin(player) {
@@ -664,18 +680,75 @@ async function CountryDataEditMembers(player, countryData) {
             return;
         }
         const d = countryDatas.get(countryData.id) || countryData;
-        d.owner = String(res.formValues[0]).trim() || d.owner;
-        d.players = parseCommaArray(res.formValues[1]);
-        d.warcountry = parseCommaArray(res.formValues[2], true);
-        try {
-            d.robbedChunkAmount = JSON.parse(res.formValues[3]);
-        } catch {
-            player.sendMessage("§c[管理] robbedChunkAmount のJSONが不正です。変更をスキップします。");
+        const newOwner = String(res.formValues[0]).trim() || d.owner;
+        const newPlayers = [...new Set(parseCommaArray(res.formValues[1]))];
+
+        if (!newPlayers.includes(newOwner)) {
+            player.sendMessage("§c[管理] owner は players に含めてください。");
+            CountryDataView(player, d);
+            return;
         }
-        try {
-            d.stock = JSON.parse(res.formValues[4]);
-        } catch {
-            player.sendMessage("§c[管理] stock のJSONが不正です。変更をスキップします。");
+
+        const newPlayerData = new Map();
+        for (const playerId of newPlayers) {
+            const pData = playerDatas.get(playerId);
+            if (!pData) {
+                player.sendMessage(`§c[管理] プレイヤーID ${playerId} のデータが存在しません。`);
+                CountryDataView(player, d);
+                return;
+            }
+            if (pData.country !== undefined && String(pData.country) !== String(d.id)) {
+                player.sendMessage(`§c[管理] ${pData.name ?? playerId} は別の国に所属しています。`);
+                CountryDataView(player, d);
+                return;
+            }
+            newPlayerData.set(playerId, pData);
+        }
+
+        const oldPlayers = Array.isArray(d.players) ? d.players : [];
+        for (const playerId of oldPlayers) {
+            if (newPlayers.includes(playerId)) continue;
+            const pData = playerDatas.get(playerId);
+            if (pData && String(pData.country) === String(d.id)) {
+                pData.country = undefined;
+                pData.permission = "";
+                playerDatas.set(playerId, pData);
+            }
+        }
+
+        for (const playerId of newPlayers) {
+            const pData = newPlayerData.get(playerId);
+            const wasMember = oldPlayers.includes(playerId);
+            pData.country = d.id;
+            if (playerId === newOwner) {
+                pData.permission = "国王";
+            } else if (!wasMember || pData.permission === "国王") {
+                pData.permission = "";
+            }
+            playerDatas.set(playerId, pData);
+        }
+
+        d.owner = newOwner;
+        d.players = newPlayers;
+        d.warcountry = parseCommaArray(res.formValues[2], true);
+
+        const robbedChunkAmount = parseJsonArray(res.formValues[3]);
+        if (robbedChunkAmount === undefined) {
+            player.sendMessage("§c[管理] robbedChunkAmount はJSON配列で入力してください。変更をスキップします。");
+        } else {
+            d.robbedChunkAmount = robbedChunkAmount;
+        }
+
+        const stock = parseJsonArray(res.formValues[4], entry =>
+            entry !== null &&
+            typeof entry === "object" &&
+            Number.isFinite(entry.price) &&
+            Number.isFinite(entry.date)
+        );
+        if (stock === undefined) {
+            player.sendMessage("§c[管理] stock はprice/dateが数値の要素を持つJSON配列で入力してください。変更をスキップします。");
+        } else {
+            d.stock = stock;
         }
         countryDatas.set(d.id, d);
         player.sendMessage(`§a[管理] ${d.name} のメンバーデータを更新しました。`);
