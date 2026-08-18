@@ -108,13 +108,6 @@ export class Country {
 
     }
     static delete(countryData) {
-        const players = countryData.players;
-        for (const playerId of players) {
-            const playerData = playerDatas.get(playerId);
-            playerData.country = undefined;
-            playerData.permission = "";
-            playerDatas.set(playerId, playerData);
-        }
         //戦争中なら戦争を終わらせる
         if (countryData.warcountry.length > 0) {
             for (const warcountryId of countryData.warcountry) {
@@ -123,6 +116,14 @@ export class Country {
                 War.finish(warcountryData, countryData, "force");
             }
         }
+        const players = countryData.players;
+        for (const playerId of players) {
+            const playerData = playerDatas.get(playerId);
+            playerData.country = undefined;
+            playerData.permission = "";
+            playerDatas.set(playerId, playerData);
+        }
+
         //chunkも消す
         const chunkIds = chunkDatas.idList;
         for (const chunkId of chunkIds) {
