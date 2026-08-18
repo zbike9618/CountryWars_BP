@@ -326,7 +326,7 @@ export class Chunk {
     static getConnectedChunks(startChunkId, countryId) {
         const connected = new Set();
         const queue = [startChunkId];
-        
+
         const parts = startChunkId.split("_");
         let odim, ox, oz;
         if (parts.length === 2) {
@@ -338,21 +338,21 @@ export class Chunk {
             ox = Number(parts[1]);
             oz = Number(parts[2]);
         }
-    
+
         connected.add(startChunkId);
-        
+
         let head = 0;
-        while(head < queue.length) {
+        while (head < queue.length) {
             const currentId = queue[head++];
             const cParts = currentId.split("_");
             let cx, cz;
             if (cParts.length === 2) { cx = Number(cParts[0]); cz = Number(cParts[1]); }
             else { cx = Number(cParts[1]); cz = Number(cParts[2]); }
-            
+
             const neighbors = [
-                [cx+1, cz], [cx-1, cz], [cx, cz+1], [cx, cz-1]
+                [cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1]
             ];
-            
+
             for (const [nx, nz] of neighbors) {
                 const nId = odim === "minecraft:overworld" ? `${nx}_${nz}` : `${odim}_${nx}_${nz}`;
                 if (!connected.has(nId)) {
@@ -383,30 +383,30 @@ export class Chunk {
                 player.sendMessage("§cエラー: 国のデータが見つかりません。");
                 return;
             }
-        
+
             const playerData = playerDatas.get(player.id);
             if (!playerData || playerData.country !== countryData.id) {
                 player.sendMessage({ translate: "cw.plotchunk.notyourcountry" });
                 return;
             }
-        
+
             if (countryData.owner !== player.id && !hasPermission(player, "chunk_edit")) {
                 player.sendMessage({ translate: "cw.plotchunk.nopermission" });
                 return;
             }
-        
+
             const form = new ModalFormData();
             form.title({ translate: "cw.plotchunk.form.title" });
-            
+
             const options = [
                 { translate: "cw.plotchunk.form.option.default" },
                 { translate: "cw.plotchunk.form.option.citizen" },
                 { translate: "cw.plotchunk.form.option.chunk_edit" },
                 { translate: "cw.plotchunk.form.option.ally" }
             ];
-        
+
             const currentSetting = chunkData.setting || {};
-        
+
             form.dropdown({ translate: "cw.plotchunk.form.label.break" }, options, { defaultValueIndex: currentSetting.break_block || 0 });
             form.dropdown({ translate: "cw.plotchunk.form.label.place" }, options, { defaultValueIndex: currentSetting.place_block || 0 });
             form.dropdown({ translate: "cw.plotchunk.form.label.interact" }, options, { defaultValueIndex: currentSetting.interact || 0 });
@@ -414,10 +414,10 @@ export class Chunk {
             form.dropdown({ translate: "cw.plotchunk.form.label.attack_entity" }, options, { defaultValueIndex: currentSetting.attack_entity || 0 });
             form.toggle({ translate: "cw.plotchunk.form.toggle.delete" }, { defaultValue: false });
             form.toggle({ translate: "cw.plotchunk.form.toggle.apply_connected" }, { defaultValue: false });
-        
+
             const res = await form.show(player);
             if (res.canceled) return;
-        
+
             const allValues = {
                 break_block: res.formValues[0],
                 place_block: res.formValues[1],
@@ -435,12 +435,12 @@ export class Chunk {
             }
             // すべてデフォルトなら設定自体を削除扱いにする
             const isEmpty = Object.keys(newSetting).length === 0;
-        
+
             let targetChunks = [chunkId];
             if (applyToConnected) {
                 targetChunks = this.getConnectedChunks(chunkId, countryData.id);
             }
-        
+
             for (const tid of targetChunks) {
                 const tData = chunkDatas.get(tid);
                 if (tData && tData.country === countryData.id) {
@@ -546,7 +546,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
             const chunkId = Chunk.positionToChunkId(block.location, ev.dimension.id);
             const countryDataId = Chunk.checkChunk(chunkId);
 
-            if (countryDataId && (countryDataId == "admin" || (countryDataId !== "wasteland" && countryDatas.get(countryDataId).warcountry.length == 0))) {
+            if (countryDataId && (countryDataId == "admin" || (countryDataId !== "wasteland"))) {
                 if (!explodedInCountry) {
                     ev.cancel = true;
                     system.run(() => {
