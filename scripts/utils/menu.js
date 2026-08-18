@@ -7,6 +7,7 @@ import { Country } from "../utils/country";
 import { War } from "../utils/war";
 import { Chunk } from "./chunk";
 import { sendAll } from "../commands/messagebox";
+import { SerialCode } from "./serial";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 const chunkDatas = new Dypro("chunk");
@@ -21,6 +22,7 @@ export class Menu {
         form.button({ translate: "cw.menu.deletecountry" })
         form.button("チャンク一覧");
         form.button("全体アナウンス");
+        form.button("シリアルコード管理");
         form.show(player).then((response) => {
             if (response.canceled) return;
             if (response.selection === 0) {
@@ -37,6 +39,8 @@ export class Menu {
                 ChunkListCountrySelect(player);
             } else if (response.selection === 6) {
                 sendAll(player);
+            } else if (response.selection === 7) {
+                SerialCode.adminMenu(player);
             }
         });
     }
