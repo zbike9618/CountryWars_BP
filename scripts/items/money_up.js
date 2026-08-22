@@ -70,7 +70,7 @@ world.afterEvents.itemUse.subscribe((event) => {
 
     player.sendMessage(`§6§l[MoneyUp] §r§eJobs報酬が §c§l${MONEY_MULTIPLIER}倍 §r§eになりました！`);
     player.sendMessage(`§7残り時間: §a${mins}分${secs}秒`);
-    player.onScreenDisplay.setActionBar(`§6⚡ MoneyUp §a有効中 §7(残 ${mins}分${secs}秒)`);
+    player.onScreenDisplay.setActionBar(`§6 MoneyUp §a有効中 §7(残 ${mins}分${secs}秒)`);
 });
 
 // バフの状態をアクションバーに定期表示（20秒ごと）

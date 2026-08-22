@@ -27,6 +27,52 @@
 							"trader_exp": 0,
 							"max_uses": -1,
 							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:zcoin",
+									"quantity": 10
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:peace_switcher",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f戦争特需を招く危険なアイテム"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:zcoin",
+									"quantity": 1
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:bill_1000",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f何の変哲もない札"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
 						}
 					]
 				}

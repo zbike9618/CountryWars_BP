@@ -16,6 +16,8 @@ import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
 import "./money_up.js"
+import "./peace_switcher.js"
+import "./metal_detector.js"
 
 world.afterEvents.worldLoad.subscribe((event) => {
 

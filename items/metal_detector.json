@@ -1,0 +1,13 @@
+{
+  "format_version": "1.21.10",
+  "minecraft:item": {
+    "description": {
+      "identifier": "cw:metal_detector"
+    },
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": "metal_detector",
+      "minecraft:allow_off_hand": false
+    }
+  }
+}
