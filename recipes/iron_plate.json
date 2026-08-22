@@ -10,12 +10,15 @@
         "assume_symmetry": false,
         "priority": 1,
         "pattern": [
-            "XXX",
-            "XXX"
+            "YXY",
+            "YXY"
         ],
         "key": {
             "X": {
                 "item": "minecraft:iron_block"
+            },
+            "Y": {
+                "item": "minecraft:iron_ingot"
             }
         },
         "unlock": [
