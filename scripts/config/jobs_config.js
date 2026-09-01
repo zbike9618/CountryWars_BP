@@ -116,7 +116,6 @@ export class JOB_CONFIG {
             "minecraft:netherrack": 0.15,
             "minecraft:basalt": 0.5,
             "minecraft:blackstone": 0.5,
-            "minecraft:ancient_debris": 20
         }
     };
     static builder = {
