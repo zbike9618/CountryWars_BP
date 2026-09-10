@@ -12,33 +12,6 @@ import { clearChunkChestProtection } from "./chest_protection.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 export class War {
-    // Also repairs one-sided references and wars left behind by older deletions.
-    static cleanupMissingCountries(deletedId) {
-        const existing = new Set(countryDatas.idList.map(String));
-        for (const id of countryDatas.idList) {
-            const country = countryDatas.get(id);
-            if (!country) continue;
-            const wars = country.warcountry || [];
-            country.warcountry = wars.filter(enemy => existing.has(String(enemy)) && String(enemy) !== String(deletedId));
-            let changed = wars.length !== country.warcountry.length;
-            for (const key of Object.keys(country.peaceProposals || {})) {
-                if (!existing.has(String(key)) || String(key) === String(deletedId)) {
-                    delete country.peaceProposals[key];
-                    changed = true;
-                }
-            }
-            if (changed) {
-                if (!country.warcountry.length) country.wardeath = 0;
-                countryDatas.set(id, country);
-            }
-            if (changed && !country.warcountry.length) {
-                for (const playerId of country.players || []) {
-                    sendDataForPlayers(`const p = world.getEntity(${JSON.stringify(playerId)}); if (p) p.removeTag("cw:duringwar");`, playerId);
-                }
-            }
-        }
-    }
-
     /**
      * 人数バランスが取れているか確認
      * @param {number} p1 
@@ -278,8 +251,8 @@ export class War {
 
         loserData.money -= number
         winnerData.money += number
-        winnerData.warcountry = winnerData.warcountry.filter(id => String(id) !== String(loserData.id))
-        loserData.warcountry = loserData.warcountry.filter(id => String(id) !== String(winnerData.id))
+        winnerData.warcountry.splice(winnerData.warcountry.indexOf(loserData.id), 1)
+        loserData.warcountry.splice(loserData.warcountry.indexOf(winnerData.id), 1)
 
         // 敗北時の強制保護期間を全プレイヤーのデータに設定する
         for (const playerId of loserData.players) {
@@ -491,8 +464,8 @@ export class War {
         }
 
         // 戦争状態を解除
-        proposerCountry.warcountry = proposerCountry.warcountry.filter(id => String(id) !== String(targetCountry.id));
-        targetCountry.warcountry = targetCountry.warcountry.filter(id => String(id) !== String(proposerCountry.id));
+        proposerCountry.warcountry.splice(proposerCountry.warcountry.indexOf(targetCountry.id), 1);
+        targetCountry.warcountry.splice(targetCountry.warcountry.indexOf(proposerCountry.id), 1);
 
         // 講和提案を削除
         if (proposerCountry.peaceProposals) {
@@ -692,7 +665,6 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
 
 // 両国がオフラインの場合の自動戦争終了チェック
 system.runInterval(() => {
-    War.cleanupMissingCountries();
     const allCountryIds = countryDatas.idList;
     const handledPairs = new Set();
 
@@ -700,7 +672,7 @@ system.runInterval(() => {
         const countryA = countryDatas.get(idA);
         if (!countryA || !countryA.warcountry || countryA.warcountry.length === 0) continue;
 
-        for (const idB of [...countryA.warcountry]) {
+        for (const idB of countryA.warcountry) {
             // 重複チェック（対戦カードごとに1回だけ処理）
             const pairKey = idA < idB ? `${idA}_${idB}` : `${idB}_${idA}`;
             if (handledPairs.has(pairKey)) continue;
@@ -745,15 +717,10 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
     const hitEntity = ev.hurtEntity;
     if (!player || player.typeId !== "minecraft:player") return
     if (!hitEntity || hitEntity.typeId !== "cw:core") return
-    if (player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand)?.typeId === "minecraft:mace") {
-        ev.cancel = true;
-        return;
-    }
     if (player.isValid) {
 
         const chunkId = Chunk.positionToChunkId(hitEntity.location, hitEntity.dimension.id)
         const countryData = countryDatas.get(Chunk.checkChunk(chunkId))
-        if (!countryData) { ev.cancel = true; return; }
         if (countryData.players.includes(player.id)) {
             ev.cancel = true;
             player.sendMessage({ translate: "cw.war.attacknoown" })
