@@ -109,7 +109,7 @@ export class Country {
     }
     static delete(countryData) {
         //戦争中なら戦争を終わらせる
-        if (countryData.warcountry?.length > 0) {
+        if (countryData.warcountry.length > 0) {
             // War.finish() removes the processed country from warcountry, so
             // iterate over a copy to avoid skipping every other war.
             for (const warcountryId of [...countryData.warcountry]) {
@@ -118,11 +118,9 @@ export class Country {
                 War.finish(warcountryData, countryData, "force");
             }
         }
-        War.cleanupMissingCountries(countryData.id);
         const players = countryData.players;
         for (const playerId of players) {
             const playerData = playerDatas.get(playerId);
-            sendDataForPlayers(`const p = world.getEntity(${JSON.stringify(playerId)}); if (p) p.removeTag("cw:duringwar");`, playerId);
             playerData.country = undefined;
             playerData.permission = "";
             playerDatas.set(playerId, playerData);
