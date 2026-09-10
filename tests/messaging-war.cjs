@@ -25,7 +25,7 @@ assert.ok(!fs.readFileSync('scripts/commands/sendmessage.js','utf8').includes('r
  const responses=[{formValues:['']},{selection:2},{selection:3}];const forms=[];
  class Form { constructor(){this.buttons=[];forms.push(this)} title(){return this} textField(){return this} body(){return this} button(v){this.buttons.push(v);return this} async show(){return responses.shift()} }
  const context={ActionFormData:Form,ModalFormData:Form};vm.createContext(context);
- vm.runInContext(fs.readFileSync('scripts/utils/player_picker.js','utf8').replace(/^import .*;\n/,'').replace('export async','async')+'; globalThis.pick=selectPlayer;',context);
+ vm.runInContext(fs.readFileSync('scripts/utils/player_picker.js','utf8').replace(/^import .*;\r?\n/,'').replace('export async','async')+'; globalThis.pick=selectPlayer;',context);
  const result=await context.pick({},()=>Array.from({length:105},(_,i)=>({id:i,name:'Player'+String(i).padStart(3,'0')})));
  assert.equal(result.id,20);assert.ok(forms.every(f=>f.buttons.length<=23));
  console.log('PASS: syntax (6 files), missing/deleted country cleanup, remaining wars preserved, mace cancellation, /s removal, picker pagination (105 players).');
