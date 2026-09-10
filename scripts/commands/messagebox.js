@@ -1,3 +1,4 @@
+import { selectPlayer } from "../utils/player_picker.js";
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui"
@@ -158,24 +159,13 @@ async function recieve(player) {
 }
 
 async function send(player) {
-    const players = Util.getAllPlayerIdsSorted()//.filter(p => p != player.id)
-    const playersname = players.map(player => playerDatas.get(player)?.name || "Unknown")
-    if (players.length == 0) {
-        const form = new MessageFormData()
-        form.title({ translate: "cw.messagebox.send" })
-        form.body({ translate: "cw.form.noplayers" })
-        form.button1({ translate: "cw.form.redo" })
-        form.button2({ translate: "cw.form.cancel" })
-        const res = await form.show(player)
-        if (res.canceled) return;
-        if (res.selection == 0) {
-            openmessagebox(player)
-        }
-        return;
-    }
+    const recipient = await selectPlayer(player, () => playerDatas.idList
+        .map(id => ({ id, name: playerDatas.get(id)?.name }))
+        .filter(entry => entry.name));
+    if (!recipient) return;
     const form = new ModalFormData()
     form.title({ translate: "cw.messagebox.send" })
-    form.dropdown({ translate: "cw.form.playerchoise" }, playersname)
+    form.title({ text: "メッセージ送信: " + recipient.name })
     // 文字制限突破のため、メッセージを複数行に分割して入力可能にする
     form.textField({ translate: "cw.messagebox.send.message" }, "メッセージ (1行目)")
     form.textField("メッセージ (2行目)", "追加行 (任意)")
@@ -183,12 +173,13 @@ async function send(player) {
     const res = await form.show(player)
     if (res.canceled) return;
     // 空でない行だけ結合して1つのメッセージにする
-    const messageLines = res.formValues.slice(1)
+    const messageLines = res.formValues
         .filter(v => v && v.trim() !== "")
         .map(v => v.replace(/\\n/g, "\n")); // \nと入力しても改行になる
     if (messageLines.length === 0) return;
     const combinedMessage = messageLines.join("\n");
-    const playerId = players[res.formValues[0]];
+    const playerId = recipient.id;
+    if (!playerDatas.get(playerId)) { player.sendMessage("送信先が見つかりませんでした。"); return; }
     const message = { player: player.id, message: combinedMessage };
     const targetName = playerDatas.get(playerId)?.name || "Unknown";
     player.sendMessage({ translate: "cw.messagebox.send.success", with: [targetName] });
