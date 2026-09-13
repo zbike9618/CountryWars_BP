@@ -19,10 +19,10 @@ export class playerMarketSystem {
 
     static async sell(player, itemData) {
         let page = 0;
-        while ((await marketDatas.get(`${page}`) || []).length == 45) {
+        while ((await marketDatas.preload(`${page}`) || []).length == 45) {
             page++;
         }
-        const marketData = await marketDatas.get(`${page}`) || [];
+        const marketData = await marketDatas.preload(`${page}`) || [];
         marketData.push({
             player: player.id,
             itemId: itemData.itemId,
@@ -56,7 +56,7 @@ export class playerMarketSystem {
      * @param {{ slot: number, page: number }} { slot, page } 
      */
     static async buy(player, { slot, page }) {
-        const marketData = await marketDatas.get(`${page}`);
+        const marketData = await marketDatas.preload(`${page}`);
         const itemData = marketData[slot];
         const itemId = itemData.itemId;
         const amount = itemData.amount;
@@ -64,11 +64,11 @@ export class playerMarketSystem {
         const currentPrice = Array.isArray(itemData.price) ? itemData.price[itemData.price.length - 1] : itemData.price;
 
         // 消費税 (Consumption Tax) の計算 (購入者ベース)
-        const buyerData = await playerDatas.get(player.id);
+        const buyerData = await playerDatas.preload(player.id);
         const countryId = buyerData?.country;
         let taxRate = 0;
         if (countryId) {
-            const countryData = await countryDatas.get(countryId);
+            const countryData = await countryDatas.preload(countryId);
             if (countryData) {
                 taxRate = countryData.tax.consumption || 0;
             }
@@ -161,7 +161,7 @@ export class playerMarketSystem {
 
         // 消費税を国庫へ
         if (countryId && taxAmount > 0) {
-            const countryData = await countryDatas.get(countryId);
+            const countryData = await countryDatas.preload(countryId);
             if (countryData) {
                 countryData.money += taxAmount;
                 countryDatas.set(countryId, countryData);
@@ -196,15 +196,15 @@ export class playerMarketSystem {
     static async show(player, page = 0) {
         const form = new ChestFormData("large")
         form.setTitle({ translate: "cw.playermarket.title" })
-        const marketData = await marketDatas.get(`${page}`) || [];
-        if (page > 0 && ((await marketDatas.get(`${page - 1}`))?.length > 0)) {
+        const marketData = await marketDatas.preload(`${page}`) || [];
+        if (page > 0 && ((await marketDatas.preload(`${page - 1}`))?.length > 0)) {
             form.setButton(0, {
                 iconPath: "textures/ui/arrow_dark_left_stretch",
                 name: "Undo", lore: ["<Click here>"],
                 editedName: true
             })
         }
-        if ((await marketDatas.get(`${page + 1}`))?.length > 0) {
+        if ((await marketDatas.preload(`${page + 1}`))?.length > 0) {
             form.setButton(8, {
                 iconPath: "textures/ui/arrow_dark_right_stretch",
                 name: "Next", lore: ["<Click here>"],
@@ -236,14 +236,14 @@ export class playerMarketSystem {
                     isDiscount = true;
                 }
             }
-            const lore = [{ translate: "cw.playermarket.seller", with: [(await playerDatas.get(itemData.player))?.name || "Unknown"] }]
+            const lore = [{ translate: "cw.playermarket.seller", with: [(await playerDatas.preload(itemData.player))?.name || "Unknown"] }]
 
             // 消費税 (Consumption Tax) の計算 (閲覧者ベース)
-            const buyerData = await playerDatas.get(player.id);
+            const buyerData = await playerDatas.preload(player.id);
             const countryId = buyerData?.country;
             let taxRate = 0;
             if (countryId) {
-                const countryData = await countryDatas.get(countryId);
+                const countryData = await countryDatas.preload(countryId);
                 if (countryData) {
                     taxRate = countryData.tax.consumption || 0;
                 }
@@ -319,12 +319,12 @@ export class playerMarketSystem {
 
     }
     static async delete({ slot, page }) {
-        const marketData = await marketDatas.get(`${page}`) || [];
+        const marketData = await marketDatas.preload(`${page}`) || [];
         marketData.splice(slot, 1);
         await marketDatas.set(`${page}`, marketData);
     }
     static async edit(newData, { slot, page }) {
-        const marketData = await marketDatas.get(`${page}`) || [];
+        const marketData = await marketDatas.preload(`${page}`) || [];
         marketData[slot] = newData;
         await marketDatas.set(`${page}`, marketData);
     }

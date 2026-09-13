@@ -44,8 +44,10 @@ async function harness() {
                 getDynamicPropertyIds: () => [...properties.keys()],
                 getDynamicProperty: key => properties.get(key),
                 getDimension: () => ({ runCommand: command => messages.push(command) }),
+                sendMessage: message => messages.push(message),
                 setDynamicProperty: (key, value) => value === undefined ? properties.delete(key) : properties.set(key, value)
-            }, system, CommandPermissionLevel: { Any: 0 }
+            }, system, CommandPermissionLevel: { Any: 0 },
+            ItemStack: class { constructor(id) { this.typeId = id; this.maxAmount = 64; } }
         },
         '@minecraft/server-ui': { ActionFormData, ModalFormData: class {}, MessageFormData: class {} },
         '@minecraft/server-net': {
@@ -67,12 +69,17 @@ async function harness() {
     };
     const stubs = {
         'chat.js': { DiscordRelay: { sendTranslate: () => {} } },
-        'chest-ui.js': { ChestFormData: class {} },
+        'chest-ui.js': { ChestFormData: class extends ActionFormData {
+            setTitle(value) { return this.title(value); }
+            setButton(slot, value) { this.buttons[slot] = value; return this; }
+        } },
+        'chunk.js': { Chunk: {} },
+        'texture_config.js': { itemIdToPath: {} },
         'data.js': { Data: { permissions: [] } },
         'playerData.js': { ShortPlayerData: class {} },
         'sendData.js': { sendDataForPlayers: () => {} },
         'war.js': { War: { isProtected: () => false } },
-        'util.js': { Util: {} },
+        'util.js': { Util: { langChangeItemName: id => id } },
         'config.js': { default: { countryprice: 1000 } }
     };
     function getModule(id) {
@@ -112,6 +119,7 @@ async function harness() {
     await invokeModule.evaluate();
     const player = { isValid: true, typeId: 'minecraft:player', sendMessage: value => messages.push(value) };
     return { properties, records, requests, forms, messages, errors, state, stores, Dypro, Country,
+        market: async () => (await load('scripts/utils/playerMarketSystem.js')).playerMarketSystem,
         show: () => invokeModule.namespace.showCountryList(player) };
 }
 
@@ -295,4 +303,55 @@ test('market pages remain arrays and numeric page zero saves as string zero', as
     await h.stores.PlayerMarketDataStore.setAll(0, page);
     await h.stores.PlayerMarketDataStore.flush(0);
     assert.equal(h.requests.at(-1).payload.id, '0');
+});
+
+const listing = (itemId = 'minecraft:tnt') => ({ player: 'seller', itemId, amount: 260,
+    price: [100], description: 'saved listing', lore: '', enchants: [], durability: 0 });
+
+test('market first open after restart displays persisted listings', async () => {
+    const h = await harness();
+    h.records.set('/dypro/playermarket/0', [listing()]);
+    h.records.set('/dypro/user/seller', { name: 'Seller' });
+    h.records.set('/dypro/user/buyer', { money: 1000 });
+    const market = await h.market();
+    await market.show({ id: 'buyer' });
+    assert.equal(h.forms[0].buttons[9]?.stackAmount, 260);
+    assert.equal(h.forms[0].buttons[9].lore[0].with[0], 'Seller');
+});
+
+test('first sale after restart appends instead of replacing saved listings', async () => {
+    const h = await harness();
+    h.records.set('/dypro/playermarket/0', [listing()]);
+    const market = await h.market();
+    await market.sell({ id: 'seller', sendMessage: () => {} }, { ...listing('minecraft:stone'), price: 200 });
+    await h.stores.PlayerMarketDataStore.flushAll();
+    const saved = h.records.get('/dypro/playermarket/0');
+    assert.deepEqual(saved.map(item => item.itemId), ['minecraft:tnt', 'minecraft:stone']);
+    const restarted = await harness();
+    restarted.records.set('/dypro/playermarket/0', JSON.parse(JSON.stringify(saved)));
+    await (await restarted.market()).show({ id: 'buyer' });
+    assert.equal(restarted.forms[0].buttons[9]?.stackAmount, 260);
+    assert.equal(restarted.forms[0].buttons[10]?.stackAmount, 260);
+});
+
+test('market edit and withdrawal after restart preserve other listings', async () => {
+    const h = await harness();
+    h.records.set('/dypro/playermarket/0', [listing(), listing('minecraft:stone')]);
+    const market = await h.market();
+    await market.edit({ ...listing(), price: [100, 150] }, { page: 0, slot: 0 });
+    await h.stores.PlayerMarketDataStore.flushAll();
+    assert.equal(h.records.get('/dypro/playermarket/0').length, 2);
+    h.stores.PlayerMarketDataStore.cache.clear();
+    await market.delete({ page: 0, slot: 0 });
+    await h.stores.PlayerMarketDataStore.flushAll();
+    assert.deepEqual(h.records.get('/dypro/playermarket/0').map(item => item.itemId), ['minecraft:stone']);
+});
+
+test('market read failure cannot become an empty page overwrite', async () => {
+    const h = await harness();
+    h.records.set('/dypro/playermarket/0', [listing()]);
+    h.state.status = 500;
+    await assert.rejects((await h.market()).sell({ id: 'seller', sendMessage: () => {} }, { ...listing(), price: 100 }), /500/);
+    assert.equal(h.stores.PlayerMarketDataStore.dirtyIds.size, 0);
+    assert.equal(h.records.get('/dypro/playermarket/0').length, 1);
 });

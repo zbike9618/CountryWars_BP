@@ -54,7 +54,10 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
-        showPlayerMarket(player);
+        showPlayerMarket(player).catch(e => {
+            console.error("[PlayerMarket] 操作失敗:", e);
+            if (player.isValid) player.sendMessage("§cマーケットの操作に失敗しました。少し待ってから再実行してください。");
+        });
     })
 
 
@@ -78,27 +81,27 @@ async function showPlayerMarket(player) {
     if (res.selection === 0) {
         const loc = await playerMarketSystem.show(player)
         if (loc == "none") return;
-        buyForm(player, loc)
+        await buyForm(player, loc)
     }
     if (res.selection === 1) {
-        sellForm(player)
+        await sellForm(player)
     }
     if (res.selection === 2) {
-        editForm(player)
+        await editForm(player)
     }
     if (res.selection === 3) {
-        showHistoryForm(player)
+        await showHistoryForm(player)
     }
 }
 async function buyForm(player, { slot, page }) {
-    const data = (await marketDatas.get(`${page}`))[slot];
-    const buyerData = await playerDatas.get(player.id);
+    const data = (await marketDatas.preload(`${page}`))[slot];
+    const buyerData = await playerDatas.preload(player.id);
     const countryId = buyerData?.country;
 
     // 消費税 (Consumption Tax) の計算 (購入者ベース)
     let taxRate = 0;
     if (countryId) {
-        const countryData = await countryDatas.get(countryId);
+        const countryData = await countryDatas.preload(countryId);
         if (countryData) {
             taxRate = countryData.tax.consumption || 0;
         }
@@ -135,12 +138,12 @@ async function buyForm(player, { slot, page }) {
         if (res.selection == 0) {
             const loc = await playerMarketSystem.show(player, page)
             if (loc == "none") return;
-            buyForm(player, loc)
+            await buyForm(player, loc)
         }
         return;
     }
 
-    const sellerName = (await playerDatas.get(data.player))?.name || "Unknown";
+    const sellerName = (await playerDatas.preload(data.player))?.name || "Unknown";
     const description = data.description || "---";
     const buyerMoney = buyerData.money.toString();
 
@@ -197,7 +200,7 @@ async function sellForm(player) {
         if (item.typeId !== items[resItem.selection].typeId) continue;
         amount += item.amount;
     }
-    sellFormS(player, item, amount)
+    await sellFormS(player, item, amount)
 
 }
 /**
@@ -224,7 +227,7 @@ async function sellFormS(player, item, maxamount) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            sellFormS(player, item, maxamount)
+            await sellFormS(player, item, maxamount)
         }
         return;
     }
@@ -285,7 +288,7 @@ async function editForm(player) {
     const datas = []
     for (const page of marketDatas.idList) {
         let slot = 0;
-        for (const data of await marketDatas.get(`${page}`)) {
+        for (const data of await marketDatas.preload(`${page}`)) {
 
             if (data.player == player.id) {
                 form.button({ translate: Util.langChangeItemName(data.itemId) }, itemIdToPath[data.itemId])
@@ -296,10 +299,10 @@ async function editForm(player) {
     }
     const res = await form.show(player)
     if (res.canceled) return;
-    editForm2(player, { page: datas[res.selection].page, slot: datas[res.selection].slot })
+    await editForm2(player, { page: datas[res.selection].page, slot: datas[res.selection].slot })
 }
 async function editForm2(player, { page, slot }) {
-    const marketData = (await marketDatas.get(`${page}`))[slot];
+    const marketData = (await marketDatas.preload(`${page}`))[slot];
     const form = new ModalFormData()
     form.title({ translate: "cw.playermarket.sell" })
     form.toggle({ translate: "cw.playermarket.edit.toggle" })
@@ -386,7 +389,7 @@ async function editForm2(player, { page, slot }) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            editForm2(player, { page, slot })
+            await editForm2(player, { page, slot })
         }
         return
     }
