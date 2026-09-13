@@ -63,6 +63,13 @@ export class Dypro {
             idList.add(key);
         }
 
+        // 過去の保存失敗で残った country.NaN / country.undefined 等は
+        // 国のIDとして扱わない。元のプロパティは調査・復旧用に残す。
+        if (this.name === "country") {
+            return Array.from(idList).map(String).filter(id =>
+                /^(0|[1-9]\d*)$/.test(id) && Number.isSafeInteger(Number(id))
+            );
+        }
         return Array.from(idList);
     }
 

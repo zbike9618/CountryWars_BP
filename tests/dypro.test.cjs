@@ -43,6 +43,7 @@ async function harness() {
             world: {
                 getDynamicPropertyIds: () => [...properties.keys()],
                 getDynamicProperty: key => properties.get(key),
+                getDimension: () => ({ runCommand: command => messages.push(command) }),
                 setDynamicProperty: (key, value) => value === undefined ? properties.delete(key) : properties.set(key, value)
             }, system, CommandPermissionLevel: { Any: 0 }
         },
@@ -65,10 +66,14 @@ async function harness() {
         }
     };
     const stubs = {
-        'country.js': { Country: {} },
+        'chat.js': { DiscordRelay: { sendTranslate: () => {} } },
+        'chest-ui.js': { ChestFormData: class {} },
+        'data.js': { Data: { permissions: [] } },
+        'playerData.js': { ShortPlayerData: class {} },
+        'sendData.js': { sendDataForPlayers: () => {} },
         'war.js': { War: { isProtected: () => false } },
         'util.js': { Util: {} },
-        'config.js': { default: {} }
+        'config.js': { default: { countryprice: 1000 } }
     };
     function getModule(id) {
         if (modules.has(id)) return modules.get(id);
@@ -96,6 +101,7 @@ async function harness() {
     await load('scripts/commands/countrylist.js');
     const stores = await load('scripts/utils/data_store.js');
     const { Dypro } = await load('scripts/utils/dypro.js');
+    const { Country } = await load('scripts/utils/country.js');
     const countryModule = modules.get(path.join(root, 'scripts/commands/countrylist.js'));
     // Expose the command's completion to tests without changing its production exports.
     const invokeModule = new vm.SourceTextModule(
@@ -105,9 +111,63 @@ async function harness() {
     await invokeModule.link(linker);
     await invokeModule.evaluate();
     const player = { isValid: true, typeId: 'minecraft:player', sendMessage: value => messages.push(value) };
-    return { properties, records, requests, forms, messages, errors, state, stores, Dypro,
+    return { properties, records, requests, forms, messages, errors, state, stores, Dypro, Country,
         show: () => invokeModule.namespace.showCountryList(player) };
 }
+
+test('creation ignores poisoned legacy IDs, assigns membership and appears in /cl', async () => {
+    const h = await harness();
+    for (const id of ['NaN', 'undefined', 'null', 'metadata']) h.properties.set(`country.${id}`, '{}');
+    h.properties.set('country#8', '{}');
+    h.records.set('/dypro/country/8', { id: 8, name: 'Existing' });
+    h.records.set('/dypro/user/founder', { id: 'founder', name: 'Founder', country: null, money: 5000 });
+    const player = { id: 'founder', sendMessage: message => h.messages.push(message) };
+    const id = await h.Country.make(player, { countryName: 'New country', isPeace: true });
+    assert.equal(id, 9);
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').country, 9);
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').permission, '国王');
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').money, 4000);
+    assert.equal(h.properties.get('country.9'), '{}');
+    assert.equal(h.properties.has('country.NaN'), true, 'legacy data remains available for recovery');
+    await h.show();
+    assert.deepEqual(h.forms[0].buttons, ['Existing', 'New country']);
+    await h.stores.CountryDataStore.flushAll();
+    await h.stores.PlayerDataStore.flushAll();
+    assert.equal(h.records.get('/dypro/country/9').owner, 'founder');
+    assert.equal(h.records.get('/dypro/user/founder').country, 9);
+});
+
+test('failed country save does not charge or change player membership', async () => {
+    const h = await harness();
+    await h.stores.PlayerDataStore.setAll('founder', { money: 5000, country: null });
+    h.stores.CountryDataStore.setAll = async () => { throw new Error('save failed'); };
+    await assert.rejects(h.Country.make({ id: 'founder' }, { countryName: 'Failed' }), /save failed/);
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').money, 5000);
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').country, null);
+    assert.equal(h.messages.length, 0);
+});
+
+test('simultaneous creations use different IDs and reject repeated creation by one player', async () => {
+    const h = await harness();
+    const players = ['one', 'two'].map(id => ({ id, sendMessage: message => h.messages.push(message) }));
+    for (const player of players) await h.stores.PlayerDataStore.setAll(player.id, { money: 5000 });
+    const ids = await Promise.all(players.map((player, index) => h.Country.make(player, { countryName: `Country ${index}` })));
+    assert.deepEqual(ids, [1, 2]);
+    await h.Country.make(players[0], { countryName: 'Duplicate' });
+    assert.equal(h.stores.PlayerDataStore.getSync('one').money, 4000);
+    assert.equal(new h.Dypro('country').idList.length, 2);
+});
+
+test('country name uniqueness checks wait for cold DB data before charging', async () => {
+    const h = await harness();
+    h.properties.set('country.8', '{}');
+    h.records.set('/dypro/country/8', { id: 8, name: 'Existing' });
+    await h.stores.PlayerDataStore.setAll('founder', { money: 5000 });
+    await h.Country.make({ id: 'founder', sendMessage: message => h.messages.push(message) }, { countryName: 'Existing' });
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').money, 5000);
+    assert.equal(h.stores.PlayerDataStore.getSync('founder').country, undefined);
+    assert.equal(new h.Dypro('country').idList.length, 1);
+});
 
 test('numeric and string IDs share cache, dirty state, flush and delete', async () => {
     const h = await harness();

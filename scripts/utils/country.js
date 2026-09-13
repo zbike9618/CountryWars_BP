@@ -14,9 +14,19 @@ const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 const chunkDatas = new Dypro("chunk");
 export class Country {
+    static creationQueue = Promise.resolve();
 
     static async makeForm(player) {
-        const playerData = await playerDatas.get(player.id);
+        try {
+            await this._makeForm(player);
+        } catch (e) {
+            console.error("[Country] 建国失敗:", e);
+            if (player.isValid) player.sendMessage("§c建国できませんでした。少し待ってから再実行してください。");
+        }
+    }
+
+    static async _makeForm(player) {
+        const playerData = await playerDatas.preload(player.id);
         if (playerData.country) {
             player.sendMessage({ translate: "cw.mcform.alreadyCountry" })
             return;
@@ -35,11 +45,7 @@ export class Country {
 
         const res = await form.show(player)
         if (res.canceled) return;
-        if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(res.formValues[0])) {
-            player.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
-            return;
-        }
-        this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
+        await this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] });
 
     }
     //constructurはなし
@@ -49,8 +55,33 @@ export class Country {
      * 
      */
     static make(player, { countryName, isPeace }) {
-        const ids = countryDatas.idList.map(id => Number(id));
-        const id = (ids.length > 0 ? Math.max(...ids) : 0) + 1;
+        // 読み込み待ちの間に別の建国が同じIDを採番しないよう順番に処理する。
+        const pending = this.creationQueue.then(() => this._make(player, { countryName, isPeace }));
+        this.creationQueue = pending.catch(() => {});
+        return pending;
+    }
+
+    static async _make(player, { countryName, isPeace }) {
+        const playerData = await playerDatas.preload(player.id);
+        if (!playerData || !Number.isFinite(playerData.money)) throw new Error("プレイヤーデータが不正です");
+        if (playerData.country) {
+            player.sendMessage({ translate: "cw.mcform.alreadyCountry" });
+            return;
+        }
+        if (playerData.money < config.countryprice) {
+            player.sendMessage({ translate: "cw.mcform.notEnoughMoney", with: [String(config.countryprice), String(playerData.money)] });
+            return;
+        }
+        const ids = countryDatas.idList;
+        for (const existingId of ids) {
+            const existing = await countryDatas.preload(existingId);
+            if (existing?.name === countryName) {
+                player.sendMessage({ translate: "cw.mcform.countryalreadyexists" });
+                return;
+            }
+        }
+        const id = ids.reduce((max, value) => Math.max(max, Number(value)), 0) + 1;
+        if (!Number.isSafeInteger(id)) throw new Error("新しい国IDを割り当てられません");
         const countryData =
         {
             id,
@@ -92,19 +123,19 @@ export class Country {
 
 
         }
-        countryDatas.set(id, countryData);
-
-        // 建国費用の支払い
-        Util.addMoney(player, -config.countryprice);
-
-        const playerData = playerDatas.get(player.id);
-        playerData.country = id;
-        playerData.permission = "国王";
-        playerDatas.set(player.id, playerData);
+        // 保存を待ち、失敗した建国では課金や所属変更を進めない。
+        await countryDatas.set(id, countryData);
+        await playerDatas.set(player.id, {
+            ...playerData,
+            money: playerData.money - config.countryprice,
+            country: id,
+            permission: "国王"
+        });
         // tellrawを使うことでWebSocketがイベントとして検知できるようになります
         const countryName_2 = countryData.name;
-        world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.mcform.createMessage","with":["${countryName_2}"]}]}`);
+        world.getDimension("overworld").runCommand(`tellraw @a ${JSON.stringify({ rawtext: [{ translate: "cw.mcform.createMessage", with: [countryName_2] }] })}`);
         DiscordRelay.sendTranslate("cw.mcform.createMessage", [countryName_2]);
+        return id;
 
     }
     static delete(countryData) {
