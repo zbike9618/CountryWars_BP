@@ -116,7 +116,7 @@ export class Dypro {
         if (store) {
             const data = store.getSync(path);
             if (data !== undefined) return data;
-            store.get(path); // fire-and-forget（次回以降はキャッシュヒットする）
+            store.get(path).catch(e => console.error(`[Dypro] ${this.name}.${path} 読み込み失敗:`, e));
             return this._getFromWorld(path);
         }
 
@@ -150,8 +150,9 @@ export class Dypro {
     async preload(path) {
         const store = this._externalStore();
         if (store) {
-            await store.get(path); // 内部でAPIから取得しキャッシュに載せる
+            return await store.get(path); // 取得した値を返し、キャッシュ追い出し後も利用できる
         }
+        return this.get(path);
     }
 
     delete(path) {
@@ -161,7 +162,7 @@ export class Dypro {
         if (store) {
             world.setDynamicProperty(fullPath, undefined);
             // キャッシュと外部DBの両方から削除する
-            store.remove(path);
+            store.remove(path).catch(e => console.error(`[Dypro] ${this.name}.${path} 削除失敗:`, e));
         }
 
         // キャッシュから削除

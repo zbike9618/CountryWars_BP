@@ -20,9 +20,10 @@ export async function saveUserDypro(userId, dataObject) {
     
     try {
         const res = await http.request(req);
-        if (res.status !== 200) console.warn(`[Dypro API] ユーザーデータの保存に失敗: ${res.status}`);
+        if (res.status !== 200) throw new Error(`[Dypro API] ユーザーデータの保存に失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
 }
 
@@ -43,10 +44,11 @@ export async function getUserDypro(userId) {
         if (res.status === 200) {
             return JSON.parse(res.body); 
         }
+        throw new Error(`[Dypro API] 読み込みに失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
-    return {};
 }
 
 /**
@@ -65,9 +67,10 @@ export async function saveCountryDypro(countryId, dataObject) {
     
     try {
         const res = await http.request(req);
-        if (res.status !== 200) console.warn(`[Dypro API] 国データの保存に失敗: ${res.status}`);
+        if (res.status !== 200) throw new Error(`[Dypro API] 国データの保存に失敗: ${res.status} (id=${countryId})`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
 }
 
@@ -88,10 +91,11 @@ export async function getCountryDypro(countryId) {
         if (res.status === 200) {
             return JSON.parse(res.body);
         }
+        throw new Error(`[Dypro API] 読み込みに失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
-    return {};
 }
 
 /**
@@ -110,9 +114,10 @@ export async function savePlayerMarketDypro(page, dataObject) {
 
     try {
         const res = await http.request(req);
-        if (res.status !== 200) console.warn(`[Dypro API] マーケットデータの保存に失敗: ${res.status}`);
+        if (res.status !== 200) throw new Error(`[Dypro API] マーケットデータの保存に失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
 }
 
@@ -133,10 +138,11 @@ export async function getPlayerMarketDypro(page) {
         if (res.status === 200) {
             return JSON.parse(res.body);
         }
+        throw new Error(`[Dypro API] 読み込みに失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
-    return {};
 }
 
 /**
@@ -177,8 +183,9 @@ async function deleteDypro(pathSegment, label) {
 
     try {
         const res = await http.request(req);
-        if (res.status !== 200) console.warn(`[Dypro API] ${label}データの削除に失敗: ${res.status}`);
+        if (res.status !== 200) throw new Error(`[Dypro API] ${label}データの削除に失敗: ${res.status}`);
     } catch (e) {
-        console.error(`[Dypro API] 通信エラー: ${e}`);
+        console.error(`[Dypro API] ${req.method} 失敗: ${e}`);
+        throw e;
     }
 }

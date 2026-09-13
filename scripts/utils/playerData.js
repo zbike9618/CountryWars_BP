@@ -10,7 +10,7 @@ const countryDatas = new Dypro("country");
 // ===== 起動時プリロード =====
 // アドオンリロード時やワールド起動時に、既にオンラインの全プレイヤーのデータを
 // APIから取得してキャッシュに乗せる（これがないとリロード後に get() が undefined を返す）
-system.run(async () => {
+async function preloadOnlinePlayers() {
     const players = world.getAllPlayers();
     if (players.length === 0) return;
 
@@ -28,6 +28,9 @@ system.run(async () => {
     }
 
     console.warn(`[Dypro] 起動時プリロード完了。（プレイヤー: ${players.length} 人, 国: ${countryIds.size} 国）`);
+}
+system.run(() => {
+    preloadOnlinePlayers().catch(e => console.error("[Dypro] 起動時プリロード失敗:", e));
 });
 
 world.afterEvents.playerSpawn.subscribe(ev => {
@@ -74,7 +77,10 @@ world.afterEvents.playerSpawn.subscribe(ev => {
                 player.addTag("cw:duringwar")
             }
         }
-    })();
+    })().catch(e => {
+        console.error(`[Dypro] ${player.id} ログイン時読み込み失敗:`, e);
+        if (player.isValid) player.sendMessage("§cデータを読み込めませんでした。少し待ってから入り直してください。");
+    });
 })
 
 

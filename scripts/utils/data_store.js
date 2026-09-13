@@ -26,6 +26,7 @@ class LRUDataManager {
         this.type = type;
         this.cache = new Map();     // id -> data object (Mapは挿入順を保持するためLRUに最適)
         this.dirtyIds = new Set();  // 変更があったid
+        this.pendingLoads = new Map(); // 同じIDの取得を共有する
     }
 
     /**
@@ -87,6 +88,8 @@ class LRUDataManager {
      * @param {string} id ユーザーIDまたは国ID
      */
     async get(id) {
+        if (id === undefined || id === null || id === "") return undefined;
+        id = String(id);
         if (this.cache.has(id)) {
             // アクセスされたのでLRU更新 (削除して再挿入で末尾に移動)
             const data = this.cache.get(id);
@@ -95,14 +98,27 @@ class LRUDataManager {
             return data;
         }
 
-        // キャッシュに無い場合は取得（ページフォールト）
+        if (this.pendingLoads.has(id)) return this.pendingLoads.get(id);
+        const pending = this._load(id);
+        this.pendingLoads.set(id, pending);
+        try {
+            return await pending;
+        } finally {
+            this.pendingLoads.delete(id);
+        }
+    }
+
+    async _load(id) {
         const data = await this._fetch(id);
+        // HTTP取得中にsetAllされた新しい値を古い応答で上書きしない。
+        if (this.cache.has(id)) return this.getSync(id);
 
         // キャッシュサイズ超過時は最も古いデータを追い出す（ページアウト）
         if (this.cache.size >= this.maxSize) {
             await this.evict();
         }
 
+        if (this.cache.has(id)) return this.getSync(id);
         this.cache.set(id, data);
         return data;
     }
@@ -113,6 +129,7 @@ class LRUDataManager {
      * @param {string} id ユーザーIDまたは国ID
      */
     getSync(id) {
+        id = String(id);
         if (this.cache.has(id)) {
             const data = this.cache.get(id);
             // LRU更新
@@ -127,6 +144,11 @@ class LRUDataManager {
      * オブジェクト全体をセット（または上書き）する。
      */
     async setAll(id, data) {
+        if (id === undefined || id === null || id === "" ||
+            (typeof id === "number" && !Number.isFinite(id)) || data === undefined) {
+            throw new Error(`[Dypro] ${this.type}: 保存するIDまたはデータが不正です (id=${id})`);
+        }
+        id = String(id);
         if (!this.cache.has(id)) {
             if (this.cache.size >= this.maxSize) {
                 await this.evict();
@@ -152,6 +174,7 @@ class LRUDataManager {
      * （実際のAPIへの保存は追い出し時か、明示的なflush時に行われるため高速）
      */
     async setProperty(id, key, value) {
+        id = String(id);
         const data = await this.get(id); // キャッシュに載せる
 
         data[key] = value;
@@ -182,6 +205,7 @@ class LRUDataManager {
      * 特定のIDの変更をAPIへ明示的に保存する。
      */
     async flush(id) {
+        id = String(id);
         if (this.dirtyIds.has(id) && this.cache.has(id)) {
             await this._save(id, this.cache.get(id));
             this.dirtyIds.delete(id);
@@ -211,9 +235,10 @@ class LRUDataManager {
      * キャッシュと外部DBの両方からデータを削除する。
      */
     async remove(id) {
+        id = String(id);
+        await this._delete(id);
         this.cache.delete(id);
         this.dirtyIds.delete(id);
-        await this._delete(id);
     }
 }
 

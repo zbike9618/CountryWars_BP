@@ -47,43 +47,68 @@ server.system.beforeEvents.startup.subscribe(ev => {
     });
 });
 
-function showCountryList(player) {
+async function showCountryList(player) {
+    try {
+        await loadCountryList(player);
+    } catch (e) {
+        console.error("[CountryList] 国一覧の読み込みに失敗:", e);
+        if (player.isValid) player.sendMessage("§c国一覧を読み込めませんでした。少し待ってから再実行してください。");
+    }
+}
+
+async function loadCountryList(player) {
+    // 取得結果を直接保持する。国数がLRU容量を超えても一覧から欠落しない。
+    const countries = [];
+    for (const id of countryDatas.idList) {
+        const country = await countryDatas.preload(id);
+        if (country?.name) countries.push(country);
+    }
     const form = new ActionFormData();
     form.title({ translate: "cw.countrylist.title" });
-    if (countryDatas.idList.length === 0) {
+    if (countries.length === 0) {
         form.body({ translate: "cw.countrylist.nocountry" });
-        form.show(player);
+        await form.show(player);
         return;
     }
-    const countries = countryDatas.idList
-        .map(id => countryDatas.get(id))
-        .filter(country => country?.name);
     for (const country of countries) {
         form.button(country.name);
     }
-    form.show(player).then((response) => {
-        if (response.canceled) return;
-        const selectedCountry = countries[response.selection];
-        information(player, selectedCountry);
-    });
+    const response = await form.show(player);
+    if (response.canceled) return;
+    const selectedCountry = countries[response.selection];
+    if (selectedCountry) await information(player, selectedCountry);
 }
 
 async function information(player, countryData) {
+    const relatedIds = new Set([
+        ...(countryData.diplomacy?.ally || []),
+        ...(countryData.diplomacy?.friend || []),
+        ...(countryData.diplomacy?.enemy || []),
+        ...(countryData.warcountry || [])
+    ]);
+    const countryNames = new Map();
+    for (const id of relatedIds) {
+        countryNames.set(String(id), (await countryDatas.preload(id))?.name || "Unknown");
+    }
+    const playerNames = new Map();
+    for (const id of new Set([countryData.owner, ...countryData.players])) {
+        playerNames.set(String(id), (await playerDatas.preload(id))?.name || "Unknown");
+    }
     const form = new ActionFormData()
     form.title({ translate: "cw.scform.information" })
     const dp = countryData.diplomacy;
-    const allyNames   = (dp?.ally   || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const friendNames = (dp?.friend || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const enemyNames  = (dp?.enemy  || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
-    const warNames    = (countryData.warcountry || []).map(id => countryDatas.get(id)?.name || "Unknown").join(", ") || "なし";
+    const allyNames   = (dp?.ally   || []).map(id => countryNames.get(String(id))).join(", ") || "なし";
+    const friendNames = (dp?.friend || []).map(id => countryNames.get(String(id))).join(", ") || "なし";
+    const enemyNames  = (dp?.enemy  || []).map(id => countryNames.get(String(id))).join(", ") || "なし";
+    const warNames    = (countryData.warcountry || []).map(id => countryNames.get(String(id))).join(", ") || "なし";
     const protection  = War.isProtected(countryData) ? Util.formatTime(countryData.buildtime + (config.warProtectionPeriod * 24 * 60 * 60 * 1000) - Date.now()) : "§7なし";
     form.body({
         rawtext: [
             { translate: "cw.scform.informations", with: [
                 `${countryData.name}`,
                 `${countryData.description}`,
-                `${playerDatas.get(countryData.owner)?.name || "Unknown"}`,
-                `${countryData.players.filter(id => id != countryData.owner).map(id => playerDatas.get(id)?.name || "Unknown").join(", ")}`,
+                `${playerNames.get(String(countryData.owner))}`,
+                `${countryData.players.filter(id => id != countryData.owner).map(id => playerNames.get(String(id))).join(", ")}`,
                 `${countryData.money}`,
                 `${countryData.chunkAmount}`,
                 `${countryData.tax.consumption}`,
@@ -101,7 +126,7 @@ async function information(player, countryData) {
         ]
     })
     form.button({ translate: "cw.form.redo" })
-    form.show(player).then((res) => {
+    await form.show(player).then((res) => {
         if (res.canceled) {
             showCountryList(player)
         }

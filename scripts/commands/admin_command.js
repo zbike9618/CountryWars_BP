@@ -188,7 +188,10 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             const data = await getUserDypro(targetId);
             // 取得したデータを文字列（JSON形式）にしてチャットに表示します
             ev.sourceEntity?.sendMessage(`§a[プレイヤーデータ: ${targetId}]\n${JSON.stringify(data, null, 2)}`);
-        })();
+        })().catch(e => {
+            console.error("[Dypro] プレイヤーデータ取得失敗:", e);
+            ev.sourceEntity?.sendMessage("§cプレイヤーデータを取得できませんでした。");
+        });
     }
 
     // 国データを取得するコマンド
@@ -206,6 +209,9 @@ system.afterEvents.scriptEventReceive.subscribe(ev => {
             const data = await getCountryDypro(targetId);
             // 取得したデータを文字列（JSON形式）にしてチャットに表示します
             ev.sourceEntity?.sendMessage(`§a[国データ: ${targetId}]\n${JSON.stringify(data, null, 2)}`);
-        })();
+        })().catch(e => {
+            console.error("[Dypro] 国データ取得失敗:", e);
+            ev.sourceEntity?.sendMessage("§c国データを取得できませんでした。");
+        });
     }
 });
