@@ -1,4 +1,5 @@
 import * as server from "@minecraft/server";
+import { Util } from "../utils/util";
 const { world } = server;
 world.afterEvents.itemUse.subscribe((event) => {
     const player = event.source;
@@ -22,6 +23,12 @@ world.afterEvents.itemUse.subscribe((event) => {
                 facingLocation: playerPos,
                 checkForBlocks: false
             });
+        }
+        if (Util.reduceDurability(player, event.itemStack)) {
+            player.playSound("random.anvil_use")
+        }
+        else {
+            player.playSound("item.axe.break")
         }
 
     }
