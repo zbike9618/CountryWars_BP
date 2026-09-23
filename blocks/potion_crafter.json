@@ -63,7 +63,7 @@
           "render_method": "opaque"
         },
         "south": {
-          "texture": "potion_crafter_back",
+          "texture": "potion_crafter_side",
           "render_method": "opaque"
         },
         "west": {

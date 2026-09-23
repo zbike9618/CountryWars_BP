@@ -15,6 +15,8 @@ import "./landmine.js";
 import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
+import "./potion_crafter.js";
+
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
