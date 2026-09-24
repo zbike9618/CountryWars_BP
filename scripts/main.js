@@ -11,6 +11,7 @@ import "./utils/chat"
 import "./utils/bank"
 import "./plugin_controller"
 import "./utils/chest_protection.js"
+import "./utils/web_command.js"
 
 
 world.afterEvents.worldLoad.subscribe(() => {
