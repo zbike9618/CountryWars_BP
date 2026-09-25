@@ -4,14 +4,14 @@ import { secrets } from "@minecraft/server-admin";
 import { Ban } from "../plugins/admin/ban.js";
 
 /**
- * cw-web-api（localhost:3002）のゲーム内コマンドキューを取りに行き、実行結果を報告する。
+ * cw-web-api（localhost:3003）のゲーム内コマンドキューを取りに行き、実行結果を報告する。
  * 設計書 00 §2.3。Web からゲーム内の状態を変える操作はすべてここを通す。
  *
  * 認証トークンはリポジトリに置かず、サーバー側の
  * config/<スクリプトモジュールのuuid>/secrets.json に "CW_WEB_API_AUTH": "Bearer <GAME_TOKEN>" として置く。
  * （SecretString は文字列連結できないため "Bearer " ごと保存する）
  */
-const BASE_URL = "http://localhost:3002";
+const BASE_URL = "http://localhost:3003"; // 3002 は dypro_api.js 用
 const POLL_INTERVAL = 100; // 5秒
 
 const auth = secrets.get("CW_WEB_API_AUTH");
