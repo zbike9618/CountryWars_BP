@@ -25,15 +25,17 @@ world.afterEvents.itemUse.subscribe((event) => {
     return;
   }
 
-for (const effect of effects) {
-  const amplifier = Math.min(effect.amplifier, 3); // 4以上なら3にキャップ
+  for (const effect of effects) {
+    if (effect.typeId == "resistance") continue;
+    if (effect.typeId == "regeneration") continue;
+    const amplifier = Math.min(effect.amplifier, 3); // 4以上なら3にキャップ
 
-  player.addEffect(effect.typeId, 20000000, {
-    amplifier: amplifier,
-    showParticles: effect.isVisible,
-  });
-}
-player.addEffect("hunger", 20000000, { amplifier: 100 });
+    player.addEffect(effect.typeId, 20000000, {
+      amplifier: amplifier,
+      showParticles: effect.isVisible,
+    });
+  }
+  player.addEffect("hunger", 20000000, { amplifier: 100 });
 
 
   cooldowns.set(player.name, now);
