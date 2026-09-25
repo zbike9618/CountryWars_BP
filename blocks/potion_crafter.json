@@ -50,6 +50,10 @@
         "seconds_to_destroy": 100
       },
       "minecraft:material_instances": {
+        "*": {
+          "texture": "potion_crafter_side",
+          "render_method": "opaque"
+        },
         "up": {
           "texture": "potion_crafter_top",
           "render_method": "opaque"
