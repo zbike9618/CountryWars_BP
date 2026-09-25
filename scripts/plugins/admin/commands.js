@@ -2,6 +2,8 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Ban } from "./ban"
+import { requestBanSync } from "./ban_sync.js";
+import { PlayerNameIndex } from "../../utils/playerNameIndex.js";
 import { permList } from "./perm"
 import { opWhiteList } from "./import";
 import { CheckInventory } from "./chectInventory";
@@ -25,6 +27,22 @@ system.beforeEvents.startup.subscribe(ev => {
     }
     ev.customCommandRegistry.registerEnum("cw:timeEnum", ["day", "hour", "minute", "second"])
     ev.customCommandRegistry.registerCommand(command, DoCommand);
+
+    // オフラインのプレイヤーも名前でBANできるコマンド
+    const banOfflineCommand = {
+        name: "cw:banoffline",
+        description: "プレイヤー名を指定してbanする（オフラインでも可）",
+        permissionLevel: server.CommandPermissionLevel.Admin,
+        mandatoryParameters: [
+            { name: "name", type: server.CustomCommandParamType.String }
+        ],
+        optionalParameters: [
+            { name: "reason", type: server.CustomCommandParamType.String },
+            { name: "cw:timeEnum", type: server.CustomCommandParamType.Enum },
+            { name: "time", type: server.CustomCommandParamType.Integer }
+        ],
+    }
+    ev.customCommandRegistry.registerCommand(banOfflineCommand, DoBanOffline);
 
     // unbanコマンド
     const unbanCommand = {
@@ -79,7 +97,7 @@ function CheckInventoryC(origin, target) {
     CheckInventory(origin.sourceEntity, player)
     return {
         status: server.CustomCommandStatus.Success,
-        message: { translate: "cw.admin.checkinventory.success", with: [player.name] },
+        message: `${player.name} のインベントリを表示します`,
     }
 }
 
@@ -136,31 +154,70 @@ function DoCommand(origin, players, reason, timeEnum, time) {
         }
     }
 
-    // 引数の補完
-    const banReason = reason || "No reason provided";
-    const banTimeEnum = timeEnum || "day";
-    // 時間が未指定の場合: 単位指定があれば1、単位指定もなければ365(日)
-    const banTime = (time !== undefined) ? time : (timeEnum ? 1 : 365);
+    const options = banOptions(origin, reason, timeEnum, time);
+    if (typeof options === "string") {
+        return { status: server.CustomCommandStatus.Failure, message: options };
+    }
 
-    // BAN処理
+    // BAN処理（オンラインのプレイヤーは banById がキックする）
     system.run(() => {
-        Ban.setBan(players, banReason, banTimeEnum, banTime);
-
-        // ログイン中のプレイヤーをキック
         for (const targetPlayer of players) {
-            targetPlayer.runCommand(`kick "${targetPlayer.name}" BAN: ${banReason}`);
+            Ban.banById(targetPlayer.id, options);
         }
+        requestBanSync();
     })
 
     return {
         status: server.CustomCommandStatus.Success,
-        message: { translate: "cw.admin.ban.success", with: [`${players.length}`, banReason] },
+        message: `${players.length}人をBANしました（理由: ${options.reason}）`,
     }
+}
+
+function DoBanOffline(origin, name, reason, timeEnum, time) {
+    const options = banOptions(origin, reason, timeEnum, time);
+    if (typeof options === "string") {
+        return { status: server.CustomCommandStatus.Failure, message: options };
+    }
+    const target = PlayerNameIndex.resolve(name);
+    if (!target) {
+        return {
+            status: server.CustomCommandStatus.Failure,
+            message: `"${name}" という名前のプレイヤーは見つかりませんでした`,
+        }
+    }
+
+    system.run(() => {
+        Ban.banById(target.id, options);
+        requestBanSync();
+    });
+
+    return {
+        status: server.CustomCommandStatus.Success,
+        message: `${target.name} をBANしました（理由: ${options.reason}）`,
+    }
+}
+
+/**
+ * コマンド引数からBANのオプションを組み立てる。不正な場合はエラーメッセージを返す
+ * @returns {{ reason: string, timeEnum: string, time: number, bannedBy: string } | string}
+ */
+function banOptions(origin, reason, timeEnum, time) {
+    // 時間が未指定の場合: 単位指定があれば1、単位指定もなければ365(日)
+    const banTime = (time !== undefined) ? time : (timeEnum ? 1 : 365);
+    if (banTime <= 0) return "BAN期間は1以上を指定してください";
+    return {
+        reason: reason || "No reason provided",
+        timeEnum: timeEnum || "day",
+        time: banTime,
+        bannedBy: origin.sourceEntity?.typeId === "minecraft:player" ? origin.sourceEntity.name : "console"
+    };
 }
 
 function DoUnban(origin, name) {
     const list = Ban.getBanList();
-    const targets = list.filter(p => p.name === name);
+    // BAN後に改名した人も見つけられるよう、名前索引の解決結果も使う
+    const resolved = PlayerNameIndex.resolve(name);
+    const targets = list.filter(p => (p.name ?? "").toLowerCase() === name.toLowerCase() || p.id === resolved?.id);
 
     if (targets.length === 0) {
         return {
@@ -171,11 +228,12 @@ function DoUnban(origin, name) {
 
     system.run(() => {
         Ban.unBan(targets.map(t => t.id));
+        requestBanSync();
     });
 
     return {
         status: server.CustomCommandStatus.Success,
-        message: { translate: "cw.admin.unban.success", with: [name] },
+        message: `${name} のBANを解除しました`,
     }
 }
 
@@ -185,14 +243,14 @@ function DoBanList(origin) {
     if (list.length === 0) {
         return {
             status: server.CustomCommandStatus.Success,
-            message: { translate: "cw.admin.banlist.empty" }
+            message: "BANされているプレイヤーはいません"
         }
     }
 
     let message = "§e--- BANリスト ---§r\n";
     list.forEach(p => {
         const date = new Date(p.finishtime);
-        message += `§b${p.name}§r: ${p.reason} (解除: ${date.toLocaleString()})\n`;
+        message += `§b${p.name}§r: ${p.reason} (解除: ${date.toLocaleString()} / 残り ${Ban.formatDuration(p.finishtime - Date.now())})\n`;
     });
 
     return {

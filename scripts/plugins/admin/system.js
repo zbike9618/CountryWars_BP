@@ -26,7 +26,7 @@ world.afterEvents.playerSpawn.subscribe(ev => {
         if (finishtime > now) {
             // BAN期間中
             const remainingMs = finishtime - now;
-            const remainingStr = formatTime(remainingMs);
+            const remainingStr = Ban.formatDuration(remainingMs);
 
             // 少し遅らせてキック（スポーン直後のキックが不安定な場合があるため）
             system.run(() => {
@@ -40,20 +40,6 @@ world.afterEvents.playerSpawn.subscribe(ev => {
     }
 });
 
-function formatTime(ms) {
-    const s = Math.floor(ms / 1000) % 60;
-    const m = Math.floor(ms / (1000 * 60)) % 60;
-    const h = Math.floor(ms / (1000 * 60 * 60)) % 24;
-    const d = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-    let parts = [];
-    if (d > 0) parts.push(`${d}d`);
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0) parts.push(`${m}m`);
-    if (s > 0 || parts.length === 0) parts.push(`${s}s`);
-
-    return parts.join(" ");
-}
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
         // ゲームモードのチェック
@@ -66,8 +52,8 @@ system.runInterval(() => {
         // OP権限の不正監視
         if (player.commandPermissionLevel === server.CommandPermissionLevel.Admin) {
             if (!opWhiteList.includes(player.name)) {
-                Ban.setBan(player, "不正な権限", "day", 365);
-                player.runCommand("kick @s 不正な権限");
+                // banById がオンラインのプレイヤーをキックする
+                Ban.banById(player.id, { reason: "不正な権限", timeEnum: "day", time: 365, bannedBy: "system" });
                 world.sendMessage("kick")
 
             }
