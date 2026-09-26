@@ -104,8 +104,7 @@ system.runInterval(() => {
  * @param {number} watchDuration - 追加された trenbankai slowness の初期duration
  */
 function startRestoreWatch(player, saved, watchDuration) {
-    // 残りduration がこの値以下になったら終了とみなす
-    const endThreshold = watchDuration - 5;
+    world.sendMessage(`§b[watch] 監視スタート: watchDuration=${watchDuration}`);
 
     const tick = system.runInterval(() => {
         if (!player.isValid) {
@@ -114,13 +113,13 @@ function startRestoreWatch(player, saved, watchDuration) {
         }
         const current = player.getEffect("slowness");
 
-        // slowness が消えた、または残りdurationが初期値を大幅に下回った（終了）
-        if (!current || current.duration <= endThreshold) {
+        // slowness が完全に消えた、または残り2tick以下になった
+        if (!current || current.duration <= 2) {
             system.clearRun(tick);
-            const reason = !current ? "slowness消滅" : `dur=${current?.duration} <= threshold=${endThreshold}`;
+            const reason = !current ? "slowness消滅" : `残りdur=${current.duration}`;
             system.run(() => {
                 if (!player.isValid) return;
-                world.sendMessage(`§c[watch] 終了検知: ${reason} → 復活開始`);
+                world.sendMessage(`§c[watch] 終了検知(${reason}) → 復活開始`);
                 player.addEffect("slowness", saved.duration, {
                     amplifier: saved.amplifier,
                     showParticles: true
@@ -130,3 +129,4 @@ function startRestoreWatch(player, saved, watchDuration) {
         }
     }, 1);
 }
+
