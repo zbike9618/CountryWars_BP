@@ -12,6 +12,20 @@ function getDefaultTankData() {
     return Array(Config.tankMaxSlots).fill("unknown").join("#");
 }
 
+// 戦車の受ける最大ダメージを30に制御
+world.beforeEvents.entityHurt.subscribe((ev) => {
+    if (ev.hurtEntity?.typeId === "cw:tank" && ev.damage > 30) {
+        ev.cancel = true;
+        const hurtEntity = ev.hurtEntity;
+        const damageSource = ev.damageSource;
+        system.run(() => {
+            if (hurtEntity.isValid) {
+                hurtEntity.applyDamage(30, damageSource);
+            }
+        });
+    }
+});
+
 world.afterEvents.itemUse.subscribe((ev) => {
     const { itemStack, source: player } = ev;
 
