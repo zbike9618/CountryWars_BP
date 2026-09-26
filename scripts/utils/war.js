@@ -284,13 +284,21 @@ export class War {
                 sendDataForPlayers(data, playerId);
             }
         }
+        Util.updateCountryNameTags(loserData);
+        Util.updateCountryNameTags(winnerData);
         const cores = world.getDimension("minecraft:overworld").getEntities({ type: "cw:core" });
         for (const core of cores) {
             const chunkId = core.getDynamicProperty("core");
-            const cc = Chunk.checkChunk(chunkId)
-            const countryData = countryDatas.get(cc)
-            if (countryData.id == winnerData.id) {
-                core.remove()
+            if (!chunkId) continue;
+            const cc = Chunk.checkChunk(chunkId);
+            const country = countryDatas.get(cc);
+            if (country) {
+                if (country.warcountry.length === 0) {
+                    core.remove();
+                } else if ((country.id === winnerData.id && !country.warcountry.includes(loserData.id)) ||
+                           (country.id === loserData.id && !country.warcountry.includes(winnerData.id))) {
+                    core.remove();
+                }
             }
         }
     }
@@ -577,42 +585,114 @@ export class War {
 }
 world.afterEvents.entityDie.subscribe(ev => {
     const core = ev.deadEntity;
-    const player = ev.damageSource.damagingEntity;
-    if (player && player.typeId == "minecraft:player") {
-        if (core.typeId !== "cw:core") return;
+    if (!core || core.typeId !== "cw:core") return;
 
+    const chunkId = core.getDynamicProperty("core");
+    if (!chunkId) return;
+    const cc = Chunk.checkChunk(chunkId);
+    const countryData = countryDatas.get(cc);
+    if (!countryData) return;
 
+    const warCountries = countryData.warcountry || [];
+    if (warCountries.length === 0) return;
 
+    let attackerPlayer = null;
+    const damager = ev.damageSource?.damagingEntity;
 
-        //----------------------------------------------
-        const playerData = playerDatas.get(player.id)
-        const mineData = countryDatas.get(playerData.country)
-        const chunkId = core.getDynamicProperty("core");
-        const cc = Chunk.checkChunk(chunkId)
-        const countryData = countryDatas.get(cc);
-        if (!countryData) return;
-        if (!mineData.robbedChunkAmount[countryData.id]) {
-            mineData.robbedChunkAmount[countryData.id] = 0;
-        }
-        mineData.robbedChunkAmount[countryData.id]++;
-        countryDatas.set(mineData.id, mineData);
-        countryDatas.set(countryData.id, countryData);
-        Chunk.setChunk(chunkId, mineData)
-        clearChunkChestProtection(chunkId)
-        world.sendMessage({ translate: "cw.war.invade.success", with: [player.name, countryData.name, `${Math.floor(player.location.x)}`, `${Math.floor(player.location.z)}`] })
-
-        // 近くの領土を探して通知
-        const nearest = Chunk.getNearestChunk(chunkId, countryData.id);
-        if (nearest) {
-            player.sendMessage(`§e近くにある敵の領土の座標: §fX: ${Math.floor(nearest.x)}, Z: ${Math.floor(nearest.z)}`);
-        }
-        const newcountryData = countryDatas.get(countryData.id)
-        if (newcountryData.chunkAmount == 0) {
-            War.finish(mineData, newcountryData, "invade")
+    if (damager) {
+        if (damager.typeId === "minecraft:player") {
+            attackerPlayer = damager;
+        } else if (damager.typeId === "minecraft:arrow" || damager.typeId === "minecraft:thrown_trident") {
+            const shooter = damager.getComponent("minecraft:projectile")?.owner;
+            if (shooter && shooter.typeId === "minecraft:player") {
+                attackerPlayer = shooter;
+            }
         }
     }
-    //----------------------------------------------
-})
+
+    let mineData = null;
+    if (attackerPlayer && attackerPlayer.isValid) {
+        const pData = playerDatas.get(attackerPlayer.id);
+        if (pData && pData.country && warCountries.includes(pData.country)) {
+            mineData = countryDatas.get(pData.country);
+        } else {
+            attackerPlayer = null;
+        }
+    }
+
+    // 攻撃者が敵対国プレイヤーでない / 不明な場合、コアから最も近い敵対国プレイヤーを探す
+    if (!attackerPlayer || !mineData) {
+        const coreLoc = core.location;
+        const dimensionId = core.dimension.id;
+
+        let minDistanceSq = Infinity;
+        let candidatePlayers = [];
+
+        for (const p of world.getAllPlayers()) {
+            if (!p.isValid || p.dimension.id !== dimensionId) continue;
+            const pData = playerDatas.get(p.id);
+            if (!pData || !pData.country) continue;
+
+            if (warCountries.includes(pData.country)) {
+                const dx = p.location.x - coreLoc.x;
+                const dy = p.location.y - coreLoc.y;
+                const dz = p.location.z - coreLoc.z;
+                const distSq = dx * dx + dy * dy + dz * dz;
+
+                if (distSq < minDistanceSq - 0.001) {
+                    minDistanceSq = distSq;
+                    candidatePlayers = [p];
+                } else if (Math.abs(distSq - minDistanceSq) <= 0.001) {
+                    candidatePlayers.push(p);
+                }
+            }
+        }
+
+        if (candidatePlayers.length > 0) {
+            attackerPlayer = candidatePlayers[Math.floor(Math.random() * candidatePlayers.length)];
+            const pData = playerDatas.get(attackerPlayer.id);
+            mineData = countryDatas.get(pData.country);
+        }
+    }
+
+    // それでも見つからない場合（全員オフライン等）、敵対国の先頭の国を取得
+    if (!mineData && warCountries.length > 0) {
+        mineData = countryDatas.get(warCountries[0]);
+    }
+
+    if (!mineData) return;
+
+    if (!mineData.robbedChunkAmount[countryData.id]) {
+        mineData.robbedChunkAmount[countryData.id] = 0;
+    }
+    mineData.robbedChunkAmount[countryData.id]++;
+    countryDatas.set(mineData.id, mineData);
+    countryDatas.set(countryData.id, countryData);
+    Chunk.setChunk(chunkId, mineData);
+    clearChunkChestProtection(chunkId);
+
+    const attackerName = attackerPlayer ? attackerPlayer.name : mineData.name;
+    world.sendMessage({ translate: "cw.war.invade.success", with: [attackerName, countryData.name, `${Math.floor(core.location.x)}`, `${Math.floor(core.location.z)}`] });
+
+    if (attackerPlayer) {
+        const nearest = Chunk.getNearestChunk(chunkId, countryData.id);
+        if (nearest) {
+            attackerPlayer.sendMessage(`§e近くにある敵の領土の座標: §fX: ${Math.floor(nearest.x)}, Z: ${Math.floor(nearest.z)}`);
+        }
+    }
+
+    const newcountryData = countryDatas.get(countryData.id);
+    if (newcountryData.chunkAmount == 0) {
+        const activeWars = [...(newcountryData.warcountry || [])];
+        for (const enemyId of activeWars) {
+            const enemyCountry = countryDatas.get(enemyId);
+            const currentData = countryDatas.get(newcountryData.id);
+            if (enemyCountry && currentData) {
+                War.finish(enemyCountry, currentData, "invade");
+            }
+        }
+    }
+});
 
 
 world.afterEvents.entityDie.subscribe(ev => {
@@ -628,7 +708,11 @@ world.afterEvents.entityDie.subscribe(ev => {
                 // wardeath が 0 になったので敗北処理
                 const activeWars = [...warCountries];
                 for (const enemyId of activeWars) {
-                    War.finish(countryDatas.get(enemyId), countryData, "killall");
+                    const enemyCountry = countryDatas.get(enemyId);
+                    const currentCountry = countryDatas.get(countryData.id);
+                    if (enemyCountry && currentCountry) {
+                        War.finish(enemyCountry, currentCountry, "killall");
+                    }
                 }
             } else {
                 countryData.wardeath--;

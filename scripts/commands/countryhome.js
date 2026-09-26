@@ -1,6 +1,7 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import { Dypro } from "../utils/dypro";
+import { Util } from "../utils/util";
 
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
@@ -33,6 +34,12 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     
     system.run(() => {
+        const combatRem = Util.isCombatCooling(player);
+        if (combatRem > 0) {
+            player.sendMessage(`§c戦闘中(Combat)のため国ホームテレポートを使用できません (残り${combatRem}秒)§r`);
+            return;
+        }
+
         const playerData = playerDatas.get(player.id);
         if (!playerData.country) {
             player.sendMessage("§cあなたは国に所属していません。");
