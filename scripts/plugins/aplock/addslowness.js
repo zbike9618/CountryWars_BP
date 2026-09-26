@@ -24,12 +24,16 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
     if (!held || !held.typeId.startsWith("trenbankai:")) return;
 
     const existing = player.getEffect("slowness");
-    if (!existing) return;
+    if (!existing) {
+        system.run(() => world.sendMessage("§e[A-before] slowness なし → スキップ"));
+        return;
+    }
 
     pendingRestore.set(player.id, {
         amplifier: existing.amplifier,
         duration: existing.duration
     });
+    system.run(() => world.sendMessage(`§a[A-before] 保存: amp=${existing.amplifier} dur=${existing.duration}`));
 });
 
 // afterEvent: slowness が追加されたときのみ pendingRestore を参照
@@ -39,12 +43,17 @@ world.afterEvents.effectAdd.subscribe((ev) => {
     if (ev.effect.typeId != "slowness") return;
     if (player.typeId != "minecraft:player") return;
 
+    world.sendMessage(`§b[after] slowness 追加: amp=${ev.effect.amplifier} dur=${ev.effect.duration}`);
+
     const saved = pendingRestore.get(player.id);
-    pendingRestore.delete(player.id); // slowness が来たタイミングで削除
+    pendingRestore.delete(player.id);
 
-    if (!saved) return;
+    if (!saved) {
+        world.sendMessage("§7[after] pendingRestore なし → 監視しない");
+        return;
+    }
 
-    // 追加されたslownessの duration を記録して終了を監視
+    world.sendMessage(`§a[after] 監視開始: 復活予定 amp=${saved.amplifier} dur=${saved.duration}`);
     startRestoreWatch(player, saved, ev.effect.duration);
 });
 
@@ -67,7 +76,10 @@ system.runInterval(() => {
 
         // 既存slowness を pendingRestore に保存（beforeEventより先に実行）
         const existing = player.getEffect("slowness");
-        if (!existing) continue;
+        if (!existing) {
+            world.sendMessage("§e[B-sneak] slowness なし → スキップ");
+            continue;
+        }
 
         // まだ保存されていない場合のみセット
         if (!pendingRestore.has(player.id)) {
@@ -75,6 +87,9 @@ system.runInterval(() => {
                 amplifier: existing.amplifier,
                 duration: existing.duration
             });
+            world.sendMessage(`§a[B-sneak] 保存: amp=${existing.amplifier} dur=${existing.duration}`);
+        } else {
+            world.sendMessage("§7[B-sneak] 既に保存済み → スキップ");
         }
     }
 }, 1);
@@ -102,12 +117,15 @@ function startRestoreWatch(player, saved, watchDuration) {
         // slowness が消えた、または残りdurationが初期値を大幅に下回った（終了）
         if (!current || current.duration <= endThreshold) {
             system.clearRun(tick);
+            const reason = !current ? "slowness消滅" : `dur=${current?.duration} <= threshold=${endThreshold}`;
             system.run(() => {
                 if (!player.isValid) return;
+                world.sendMessage(`§c[watch] 終了検知: ${reason} → 復活開始`);
                 player.addEffect("slowness", saved.duration, {
                     amplifier: saved.amplifier,
                     showParticles: true
                 });
+                world.sendMessage(`§a[watch] 復活: amp=${saved.amplifier} dur=${saved.duration}`);
             });
         }
     }, 1);
