@@ -7,7 +7,7 @@ system.runInterval(() => {
             if (!comp) continue;
             const riders = comp.getRiders()
             if (riders.length == 0) continue;
-            riders[0].addEffect("resistance", 1, { amplifier: 255, showParticles: false })
+            riders[0].addEffect("resistance", 10, { amplifier: 255, showParticles: false })
         }
     }
 }, 20)
