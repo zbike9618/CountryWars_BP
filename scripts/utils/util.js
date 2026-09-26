@@ -237,4 +237,47 @@ export class Util {
         return result.trim();
     }
 
+    /**
+     * プレイヤーの nameTag を更新 ( [二つ名/国名] プレイヤー名 )
+     * @param {server.Player} player 
+     */
+    static updateNameTag(player) {
+        if (!player || !player.isValid) return;
+        const playerData = playerDatas.get(player.id);
+        if (!playerData) return;
+
+        const countryname = (playerData.country && countryDatas.get(playerData.country))?.name || "§7未所属";
+
+        let secondNameText = "";
+        if (playerData.secondname && playerData.secondname.now) {
+            const b = playerData.secondname.before?.[playerData.secondname.now[0]] || "";
+            const a = playerData.secondname.after?.[playerData.secondname.now[1]] || "";
+            secondNameText = `${b}${a}`;
+        }
+
+        player.nameTag = `[${secondNameText}§r/${countryname}§r] ${player.name}`;
+    }
+
+    /**
+     * オンライン中の全プレイヤーの nameTag を更新
+     */
+    static updateAllNameTags() {
+        for (const player of world.getAllPlayers()) {
+            this.updateNameTag(player);
+        }
+    }
+
+    /**
+     * 特定の国の所属メンバーの nameTag を更新
+     * @param {Object} countryData 
+     */
+    static updateCountryNameTags(countryData) {
+        if (!countryData || !countryData.players) return;
+        for (const player of world.getAllPlayers()) {
+            if (countryData.players.includes(player.id)) {
+                this.updateNameTag(player);
+            }
+        }
+    }
+
 }
