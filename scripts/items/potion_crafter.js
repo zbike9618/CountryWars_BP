@@ -63,55 +63,95 @@ function calculatePotion(potionData) {
     // 基本持続時間 (秒)
     const durationSec = Math.max(10, Math.min(300, Math.floor(stats.duration * 1.5)));
 
-    const effects = [];
+    const allEffects = [];
 
-    // ① パワー基準 (攻撃力・耐性)
-    if (stats.power >= 100) {
-        effects.push({ id: "strength", name: "攻撃力上昇 III", amp: 2, duration: durationSec });
-        effects.push({ id: "resistance", name: "耐性 II", amp: 1, duration: durationSec });
-    } else if (stats.power >= 60) {
-        effects.push({ id: "strength", name: "攻撃力上昇 II", amp: 1, duration: durationSec });
-    } else if (stats.power >= 30) {
-        effects.push({ id: "strength", name: "攻撃力上昇 I", amp: 0, duration: durationSec });
+    // --- ① パワー系 (Power Effects) ---
+    // レベル I (単一基本条件)
+    if (stats.power >= 20) {
+        allEffects.push({ id: "strength", name: "攻撃力上昇 I", amp: 0, duration: durationSec, score: stats.power });
+    }
+    // レベル II (複合条件: パワー + 純度 + 持続時間)
+    if (stats.power >= 60 && stats.purity >= 30 && stats.duration >= 30) {
+        allEffects.push({ id: "strength", name: "攻撃力上昇 II", amp: 1, duration: durationSec, score: stats.power + 25 });
+    }
+    if (stats.power >= 50 && stats.life >= 30 && stats.purity >= 30) {
+        allEffects.push({ id: "resistance", name: "耐性 I", amp: 0, duration: durationSec, score: stats.power + 20 });
+    }
+    // レベル III (高難易度極致条件: パワー + ライフ + 純度 + 持続時間)
+    if (stats.power >= 100 && stats.purity >= 60 && stats.life >= 40 && stats.duration >= 40) {
+        allEffects.push({ id: "strength", name: "攻撃力上昇 III", amp: 2, duration: durationSec, score: stats.power + 50 });
+    }
+    if (stats.power >= 80 && stats.life >= 60 && stats.purity >= 50) {
+        allEffects.push({ id: "resistance", name: "耐性 II", amp: 1, duration: durationSec, score: stats.power + 40 });
     }
 
-    // ② ライフ基準 (回復・吸収)
-    if (stats.life >= 100) {
-        effects.push({ id: "regeneration", name: "再生能力 III", amp: 2, duration: durationSec });
-        effects.push({ id: "instant_health", name: "即時回復 II", amp: 1, duration: 1 });
-        effects.push({ id: "absorption", name: "衝撃吸収 II", amp: 1, duration: durationSec });
-    } else if (stats.life >= 60) {
-        effects.push({ id: "regeneration", name: "再生能力 II", amp: 1, duration: durationSec });
-        effects.push({ id: "instant_health", name: "即時回復 I", amp: 0, duration: 1 });
-    } else if (stats.life >= 30) {
-        effects.push({ id: "regeneration", name: "再生能力 I", amp: 0, duration: durationSec });
+    // --- ② ライフ系 (Life Effects) ---
+    // レベル I (単一基本条件)
+    if (stats.life >= 20) {
+        allEffects.push({ id: "instant_health", name: "即時回復 I", amp: 0, duration: 1, score: stats.life });
+    }
+    // レベル II (複合条件: ライフ + 純度 / 持続時間)
+    if (stats.life >= 50 && stats.purity >= 30) {
+        allEffects.push({ id: "regeneration", name: "再生能力 I", amp: 0, duration: durationSec, score: stats.life + 20 });
+    }
+    if (stats.life >= 60 && stats.power >= 30 && stats.purity >= 40) {
+        allEffects.push({ id: "instant_health", name: "即時回復 II", amp: 1, duration: 1, score: stats.life + 25 });
+    }
+    if (stats.life >= 50 && stats.duration >= 40) {
+        allEffects.push({ id: "absorption", name: "衝撃吸収 I", amp: 0, duration: durationSec, score: stats.life + 15 });
+    }
+    // レベル III (高難易度極致条件)
+    if (stats.life >= 100 && stats.purity >= 60 && stats.duration >= 50) {
+        allEffects.push({ id: "regeneration", name: "再生能力 II", amp: 1, duration: durationSec, score: stats.life + 50 });
+    }
+    if (stats.life >= 90 && stats.power >= 50 && stats.duration >= 40) {
+        allEffects.push({ id: "absorption", name: "衝撃吸収 II", amp: 1, duration: durationSec, score: stats.life + 40 });
     }
 
-    // ③ スピード基準 (移動速度・跳躍)
-    if (stats.speed >= 100) {
-        effects.push({ id: "speed", name: "移動速度上昇 III", amp: 2, duration: durationSec });
-        effects.push({ id: "jump_boost", name: "跳躍力上昇 II", amp: 1, duration: durationSec });
-    } else if (stats.speed >= 60) {
-        effects.push({ id: "speed", name: "移動速度上昇 II", amp: 1, duration: durationSec });
-    } else if (stats.speed >= 30) {
-        effects.push({ id: "speed", name: "移動速度上昇 I", amp: 0, duration: durationSec });
+    // --- ③ スピード系 (Speed Effects) ---
+    // レベル I (単一基本条件)
+    if (stats.speed >= 20) {
+        allEffects.push({ id: "speed", name: "移動速度上昇 I", amp: 0, duration: durationSec, score: stats.speed });
+    }
+    // レベル II (複合条件: スピード + 純度 / ライフ)
+    if (stats.speed >= 60 && stats.purity >= 30 && stats.duration >= 30) {
+        allEffects.push({ id: "speed", name: "移動速度上昇 II", amp: 1, duration: durationSec, score: stats.speed + 25 });
+    }
+    if (stats.speed >= 50 && stats.life >= 30) {
+        allEffects.push({ id: "jump_boost", name: "跳躍力上昇 I", amp: 0, duration: durationSec, score: stats.speed + 15 });
+    }
+    // レベル III (高難易度極致条件)
+    if (stats.speed >= 100 && stats.purity >= 60 && stats.life >= 40) {
+        allEffects.push({ id: "speed", name: "移動速度上昇 III", amp: 2, duration: durationSec, score: stats.speed + 50 });
+    }
+    if (stats.speed >= 80 && stats.power >= 40 && stats.purity >= 40) {
+        allEffects.push({ id: "jump_boost", name: "跳躍力上昇 II", amp: 1, duration: durationSec, score: stats.speed + 40 });
     }
 
-    // ⑤ 純度・特殊基準 (耐火・暗視・透明化 または 副作用デバフ)
-    if (stats.purity >= 80) {
-        effects.push({ id: "fire_resistance", name: "耐火 I", amp: 0, duration: durationSec });
-        effects.push({ id: "night_vision", name: "暗視 I", amp: 0, duration: durationSec });
-        effects.push({ id: "invisibility", name: "透明化 I", amp: 0, duration: durationSec });
-    } else if (stats.purity >= 40) {
-        effects.push({ id: "fire_resistance", name: "耐火 I", amp: 0, duration: durationSec });
-    } else if (stats.purity < 0) {
-        if (stats.purity <= -40) {
-            effects.push({ id: "wither", name: "衰弱 II", amp: 1, duration: Math.floor(durationSec / 2) });
-            effects.push({ id: "poison", name: "毒 II", amp: 1, duration: Math.floor(durationSec / 2) });
-        } else {
-            effects.push({ id: "poison", name: "毒 I", amp: 0, duration: Math.floor(durationSec / 2) });
-        }
+    // --- ④ 純度・特殊・ユーティリティ系 (Purity & Special Effects) ---
+    // レベル I (単一基本条件)
+    if (stats.purity >= 20) {
+        allEffects.push({ id: "invisibility", name: "透明化 I", amp: 0, duration: durationSec, score: stats.purity });
     }
+    // レベル II (複合条件)
+    if (stats.purity >= 40 && stats.life >= 20) {
+        allEffects.push({ id: "fire_resistance", name: "耐火 I", amp: 0, duration: durationSec, score: stats.purity + 15 });
+    }
+    if (stats.purity >= 50 && stats.duration >= 30) {
+        allEffects.push({ id: "night_vision", name: "暗視 I", amp: 0, duration: durationSec, score: stats.purity + 10 });
+    }
+
+    // --- ⑤ デバフ (負の純度 / 不純調合) ---
+    if (stats.purity <= -20 && stats.power >= 20) {
+        allEffects.push({ id: "poison", name: "毒 I", amp: 0, duration: Math.floor(durationSec / 2), score: Math.abs(stats.purity) });
+    }
+    if (stats.purity <= -50 && stats.power >= 50) {
+        allEffects.push({ id: "wither", name: "衰弱 II", amp: 1, duration: Math.floor(durationSec / 2), score: Math.abs(stats.purity) + 30 });
+    }
+
+    // ステータス強度の高い順にソートし、上位最大2つを抽出
+    allEffects.sort((a, b) => b.score - a.score);
+    const effects = allEffects.slice(0, 2);
 
     // 総合評価ランク
     const totalScore = stats.power + stats.life + stats.speed + stats.duration + Math.abs(stats.purity);
@@ -151,10 +191,10 @@ async function _showForm(player, potionData = []) {
         `§c パワー: ${calc.stats.power}`,
         `§a ライフ: ${calc.stats.life}`,
         `§b スピード: ${calc.stats.speed}`,
-        `§e 持続時間: ${calc.durationSec}秒`,
+        `§e 持続時間: ${calc.durationSec}秒 (最大300秒)`,
         `§d 純度: ${calc.stats.purity}`,
         `§7-----------------------`,
-        `§6=== 発動予定効果 ===`
+        `§6=== 発動予定効果 (上位最大2個) ===`
     ];
 
     if (calc.effects.length === 0) {
@@ -343,7 +383,7 @@ async function _showForm(player, potionData = []) {
         } else {
             for (const ef of calc.effects) {
                 finalLore.push(`§f ・ ${ef.name}`);
-                effectPayload.push(`${ef.id}:${ef.amp}:${ef.duration}`);
+                effectPayload.push(`${ef.id}:${ef.amp}:${Math.min(300, ef.duration)}`);
             }
         }
         finalLore.push(`§7-----------------------`);
