@@ -10,52 +10,61 @@ const pendingRestore = new Map();
 const prevSneaking = new Map();
 
 // =============================================================
-// パターンA: スニーク中に trenbankai slowness が追加される場合
-// beforeEvent で既存slowness を保存
+// beforeEvent: 既存slowness を無条件に保存
+// (trenbankai チェックは afterEvent で行う)
 // =============================================================
 world.beforeEvents.effectAdd.subscribe((ev) => {
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
 
-    // スニーク中 + trenbankai: アイテム所持の場合のみ保存
-    if (!player.isSneaking) return;
-    const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
-    if (!held || !held.typeId.startsWith("trenbankai:")) return;
-
     const existing = player.getEffect("slowness");
     if (!existing) {
-        system.run(() => world.sendMessage("§e[A-before] slowness なし → スキップ"));
+        system.run(() => world.sendMessage("§e[before] 既存slowness なし → 保存スキップ"));
         return;
     }
 
+    // 既存slowness を常に保存（afterEventで必要か判断する）
     pendingRestore.set(player.id, {
         amplifier: existing.amplifier,
         duration: existing.duration
     });
-    system.run(() => world.sendMessage(`§a[A-before] 保存: amp=${existing.amplifier} dur=${existing.duration}`));
+    system.run(() => world.sendMessage(`§a[before] 保存: amp=${existing.amplifier} dur=${existing.duration}`));
 });
 
-// afterEvent: slowness が追加されたときのみ pendingRestore を参照
-// ※ slowness 以外のエフェクトでは削除しない（削除タイミングは slowness 追加時のみ）
+// =============================================================
+// afterEvent: trenbankai + スニーク確認 → 復活監視開始
+// =============================================================
 world.afterEvents.effectAdd.subscribe((ev) => {
     const player = ev.entity;
     if (ev.effect.typeId != "slowness") return;
     if (player.typeId != "minecraft:player") return;
 
-    world.sendMessage(`§b[after] slowness 追加: amp=${ev.effect.amplifier} dur=${ev.effect.duration}`);
+    world.sendMessage(`§b[after] slowness追加: amp=${ev.effect.amplifier} dur=${ev.effect.duration}`);
 
     const saved = pendingRestore.get(player.id);
     pendingRestore.delete(player.id);
 
     if (!saved) {
-        world.sendMessage("§7[after] pendingRestore なし → 監視しない");
+        world.sendMessage("§7[after] 既存slowness なかった → スキップ");
+        return;
+    }
+
+    // afterEvent 側で trenbankai + スニーク確認
+    const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
+    if (!held || !held.typeId.startsWith("trenbankai:")) {
+        world.sendMessage(`§7[after] trenbankai でない(${held?.typeId}) → スキップ`);
+        return;
+    }
+    if (!player.isSneaking) {
+        world.sendMessage("§7[after] スニーク中でない → スキップ");
         return;
     }
 
     world.sendMessage(`§a[after] 監視開始: 復活予定 amp=${saved.amplifier} dur=${saved.duration}`);
     startRestoreWatch(player, saved, ev.effect.duration);
 });
+
 
 // =============================================================
 // パターンB: ポーションでslownessを受けた後にスニーク開始する場合
@@ -114,7 +123,7 @@ function startRestoreWatch(player, saved, watchDuration) {
         const current = player.getEffect("slowness");
 
         // slowness が完全に消えた、または残り2tick以下になった
-        if (!current || current.duration <= 2) {
+        if (!current) {
             system.clearRun(tick);
             const reason = !current ? "slowness消滅" : `残りdur=${current.duration}`;
             system.run(() => {
