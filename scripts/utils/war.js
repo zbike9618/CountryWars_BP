@@ -617,34 +617,26 @@ world.afterEvents.entityDie.subscribe(ev => {
 
 world.afterEvents.entityDie.subscribe(ev => {
     const player = ev.deadEntity;
-    const damager = ev.damageSource.damagingEntity;
-    if (player && player.typeId == "minecraft:player" && damager && damager.typeId == "minecraft:player") {
-        const playerData = playerDatas.get(player.id)
-        if (!playerData.country) return;
-        const countryData = countryDatas.get(playerData.country)
-        const warCountries = countryData.warcountry
+    if (player && player.typeId == "minecraft:player") {
+        const playerData = playerDatas.get(player.id);
+        if (!playerData || !playerData.country) return;
+        const countryData = countryDatas.get(playerData.country);
+        if (!countryData) return;
+        const warCountries = countryData.warcountry;
         if (warCountries && warCountries.length > 0) {
-            const damagerData = playerDatas.get(damager.id);
-            if (!damagerData.country) return;
-
-            // 攻撃者が敵国のいずれかに所属しているか確認
-            if (warCountries.includes(damagerData.country)) {
-                if (countryData.wardeath <= 0) {
-                    // 全ての戦争を終了させる（あるいは特定の国とのみ終了させるかはルール次第だが、現状のロジックに合わせ全解除を検討）
-                    // ここでは wardeath が 0 になったので、敗北処理
-                    const activeWars = [...warCountries];
-                    for (const enemyId of activeWars) {
-                        War.finish(countryDatas.get(enemyId), countryData, "killall");
-                    }
+            if (countryData.wardeath <= 0) {
+                // wardeath が 0 になったので敗北処理
+                const activeWars = [...warCountries];
+                for (const enemyId of activeWars) {
+                    War.finish(countryDatas.get(enemyId), countryData, "killall");
                 }
-                else {
-                    countryData.wardeath--;
-                    countryDatas.set(countryData.id, countryData);
-                    world.sendMessage({
-                        translate: "cw.war.death", with: [countryData.name, `${countryData.wardeath}`]
-                    })
-                    DiscordRelay.sendTranslate("cw.war.death", [countryData.name, `${countryData.wardeath}`]);
-                }
+            } else {
+                countryData.wardeath--;
+                countryDatas.set(countryData.id, countryData);
+                world.sendMessage({
+                    translate: "cw.war.death", with: [countryData.name, `${countryData.wardeath}`]
+                });
+                DiscordRelay.sendTranslate("cw.war.death", [countryData.name, `${countryData.wardeath}`]);
             }
         }
     }
