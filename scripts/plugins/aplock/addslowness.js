@@ -6,9 +6,6 @@ const pendingRestore = new Map();
 
 // ① beforeEvent: trenbankai: + シフト時に既存slownessを保存
 world.beforeEvents.effectAdd.subscribe((ev) => {
-    system.run(() => {
-        world.sendMessage("aa")
-    })
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
@@ -25,6 +22,9 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
         amplifier: existing.amplifier,
         duration: existing.duration
     });
+    system.run(() => {
+        world.sendMessage(`${existing.amplifier} : ${existing.duration}`)
+    })
 });
 
 // ② afterEvent: 追加後に新しいamplifierを記録して復活監視を開始
@@ -47,7 +47,9 @@ world.afterEvents.effectAdd.subscribe((ev) => {
 
     const { amplifier: savedAmplifier, duration: savedDuration } = saved;
     const newAmplifier = ev.effect.amplifier;
-
+    system.run(() => {
+        world.sendMessage(`a`)
+    })
     // trenbankai slowness が終わったら元のエフェクトを復活させる
     const tick = system.runInterval(() => {
         if (!player.isValid) {
