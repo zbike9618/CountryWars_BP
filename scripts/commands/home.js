@@ -148,6 +148,11 @@ async function Sethome(player) {
 }
 
 async function home(player) {
+    const combatRem = Util.isCombatCooling(player);
+    if (combatRem > 0) {
+        player.sendMessage(`§cダメージを受けてから5秒間はhomeを使用できません (残り${combatRem}秒)§r`);
+        return;
+    }
     const homes = getHomes(player);
     if (homes.length === 0) {
         player.sendMessage({ translate: "cw.home.tp.nohome" });

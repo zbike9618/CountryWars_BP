@@ -280,4 +280,97 @@ export class Util {
         }
     }
 
+    /**
+     * プレイヤーがCombat（戦闘）状態か判定（cw:combat スコアボードを参照）
+     * @param {server.Player} player 
+     * @returns {number} 残り秒数（0の場合は制限なし）
+     */
+    static isCombatCooling(player) {
+        if (!player || !player.isValid) return 0;
+        const obj = world.scoreboard.getObjective("cw:combat");
+        if (!obj) return 0;
+        try {
+            const score = obj.getScore(player) ?? 0;
+            return score > 0 ? score : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
 }
+
+// スコアボード "cw:combat" の取得・初期化
+function getCombatObjective() {
+    let obj = world.scoreboard.getObjective("cw:combat");
+    if (!obj) {
+        obj = world.scoreboard.addObjective("cw:combat", "Combat Status");
+    }
+    return obj;
+}
+
+// 離脱時にCombat状態だったプレイヤーIDを記録
+const combatLoggedPlayers = new Set();
+
+// PvPダメージ時のみ Combat 状態(5秒)を適用
+world.afterEvents.entityHurt.subscribe((ev) => {
+    const victim = ev.hurtEntity;
+    if (!victim || victim.typeId !== "minecraft:player") return;
+
+    let attacker = ev.damageSource?.damagingEntity;
+    if (attacker && (attacker.typeId === "minecraft:arrow" || attacker.typeId === "minecraft:thrown_trident")) {
+        const owner = attacker.getComponent("minecraft:projectile")?.owner;
+        if (owner) attacker = owner;
+    }
+
+    if (attacker && attacker.typeId === "minecraft:player" && attacker.id !== victim.id) {
+        const obj = getCombatObjective();
+        obj.setScore(victim, 5);
+        obj.setScore(attacker, 5);
+    }
+});
+
+// 毎秒 (20ticks) スコアを1減算
+system.runInterval(() => {
+    const obj = world.scoreboard.getObjective("cw:combat");
+    if (!obj) return;
+
+    for (const player of world.getAllPlayers()) {
+        try {
+            const score = obj.getScore(player) ?? 0;
+            if (score > 0) {
+                obj.setScore(player, score - 1);
+            }
+        } catch (e) {}
+    }
+}, 20);
+
+// Combat中の離脱判定
+world.afterEvents.playerLeave.subscribe((ev) => {
+    const playerId = ev.playerId;
+    const obj = world.scoreboard.getObjective("cw:combat");
+    if (obj) {
+        try {
+            const score = obj.getScore(playerId) ?? 0;
+            if (score > 0) {
+                combatLoggedPlayers.add(playerId);
+            }
+        } catch (e) {}
+    }
+});
+
+// 再ログイン時に死ぬ処理
+world.afterEvents.playerSpawn.subscribe((ev) => {
+    const { player, initialSpawn } = ev;
+    if (!player || !player.isValid) return;
+
+    if (initialSpawn && combatLoggedPlayers.has(player.id)) {
+        combatLoggedPlayers.delete(player.id);
+
+        system.run(() => {
+            if (player.isValid) {
+                player.applyDamage(99999);
+                world.sendMessage(`§c[Combat Log] ${player.name} は戦闘中にログアウトしたため死亡しました§r`);
+            }
+        });
+    }
+});
