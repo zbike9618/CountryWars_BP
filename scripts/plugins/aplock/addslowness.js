@@ -1,5 +1,5 @@
 import { world, system } from "@minecraft/server";
-
+import * as server from "@minecraft/server";
 // beforeEvent → afterEvent 間で既存エフェクトを一時保管
 // key: player.id, value: { amplifier, duration, newAmplifier? }
 const pendingRestore = new Map();
@@ -12,7 +12,7 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
 
     // trenbankai: アイテムをシフトしながら使っている場合のみ対象
     if (!player.isSneaking) return;
-    const held = player.getComponent("minecraft:equippable")?.getEquipment("Mainhand");
+    const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
     if (!held || !held.typeId.startsWith("trenbankai:")) return;
 
     const existing = player.getEffect("slowness");
@@ -65,4 +65,4 @@ world.afterEvents.effectAdd.subscribe((ev) => {
         }
     }, 1);
 });
-
+
