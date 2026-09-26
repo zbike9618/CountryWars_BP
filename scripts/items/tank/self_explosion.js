@@ -77,7 +77,7 @@ world.afterEvents.itemUse.subscribe((ev) => {
 
     // 大爆発 (基本威力 12 + 自爆強化レベル * 6)
     const explosionPower = 12 + (explosionBonus * 6);
-    dimension.createExplosion(tankLoc, explosionPower, { breakBlocks: true, causesFire: true });
+    dimension.createExplosion(tank.location, explosionPower, { breakBlocks: true, causesFire: true });
 
     world.sendMessage(`§c[戦車自爆] ${player.name} の戦車が大爆発を起こしました！ (威力: ${explosionPower})§r`);
 });
