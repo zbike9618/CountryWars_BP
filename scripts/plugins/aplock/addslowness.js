@@ -1,21 +1,25 @@
 ﻿import { world, system } from "@minecraft/server";
 import * as server from "@minecraft/server";
 
-// key: player.id, value: { amplifier, duration }
-const pendingRestore = new Map();
+// 復活監視中のプレイヤー (重複watch防止)
+const watchingPlayers = new Set();
+
+// 復活addEffect実行中のプレイヤー (beforeEventループ防止)
+const restoringPlayers = new Set();
 
 // パターンB用: 前tickのスニーク状態を記録
 const prevSneaking = new Map();
 
 // =============================================================
 // beforeEvents: 既存slowness を保存 → 次tickでtrenbankai判定
-// afterEvents は Turtle Master等のポーション由来slownessに
-// 発火しない場合があるため使用しない
 // =============================================================
 world.beforeEvents.effectAdd.subscribe((ev) => {
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
+
+    // 復活処理中は再トリガーしない
+    if (restoringPlayers.has(player.id)) return;
 
     const existing = player.getEffect("slowness");
     if (!existing) {
@@ -30,7 +34,12 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
     system.run(() => {
         if (!player.isValid) return;
 
-        // trenbankai: + スニーク中かチェック
+        // 既に監視中 → 重複起動しない
+        if (watchingPlayers.has(player.id)) {
+            world.sendMessage("§7[run] 既に監視中 → スキップ");
+            return;
+        }
+
         const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
         if (!held || !held.typeId.startsWith("trenbankai:")) {
             world.sendMessage(`§7[run] trenbankai でない(${held?.typeId}) → スキップ`);
@@ -43,7 +52,7 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
 
         const newSlowness = player.getEffect("slowness");
         if (!newSlowness) {
-            world.sendMessage("§7[run] slowness が見つからない → スキップ");
+            world.sendMessage("§7[run] slowness なし → スキップ");
             return;
         }
 
@@ -54,7 +63,6 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
 
 // =============================================================
 // パターンB: ポーションでslownessを受けた後にスニーク開始する場合
-// スニーク開始の瞬間に既存slowness を保存して次tick監視
 // =============================================================
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
@@ -62,8 +70,8 @@ system.runInterval(() => {
         const nowSneaking = player.isSneaking;
         prevSneaking.set(player.id, nowSneaking);
 
-        // スニーク開始の瞬間のみ
         if (wasSneaking || !nowSneaking) continue;
+        if (watchingPlayers.has(player.id)) continue;
 
         const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
         if (!held || !held.typeId.startsWith("trenbankai:")) continue;
@@ -74,33 +82,22 @@ system.runInterval(() => {
             continue;
         }
 
-        if (!pendingRestore.has(player.id)) {
-            pendingRestore.set(player.id, {
-                amplifier: existing.amplifier,
-                duration: existing.duration
-            });
-            world.sendMessage(`§a[B-sneak] 保存: amp=${existing.amplifier} dur=${existing.duration}`);
-        }
+        world.sendMessage(`§a[B-sneak] スニーク開始検知: amp=${existing.amplifier} dur=${existing.duration}`);
+        // スニーク開始直後に slowness が変化するのを待って監視
+        const saved = { amplifier: existing.amplifier, duration: existing.duration };
+        system.run(() => {
+            if (!player.isValid || watchingPlayers.has(player.id)) return;
+            startRestoreWatch(player, saved);
+        });
     }
 }, 1);
 
-// afterEvent は Turtle Master等で slowness に発火しないケースがあるため
-// Pattern B の pendingRestore を消費する補助としてのみ使用
+// afterEvent 補助 (Pattern B pendingRestore は使わないため省略)
 world.afterEvents.effectAdd.subscribe((ev) => {
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
     if (ev.effect.typeId != "minecraft:slowness") return;
-
-    const saved = pendingRestore.get(player.id);
-    if (!saved) return;
-    pendingRestore.delete(player.id);
-
-    const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
-    if (!held || !held.typeId.startsWith("trenbankai:")) return;
-    if (!player.isSneaking) return;
-
-    world.sendMessage(`§a[after-B] 監視開始: amp=${saved.amplifier} dur=${saved.duration}`);
-    startRestoreWatch(player, saved);
+    world.sendMessage(`§b[after] slowness追加: amp=${ev.effect.amplifier} dur=${ev.effect.duration}`);
 });
 
 // =============================================================
@@ -111,22 +108,32 @@ world.afterEvents.effectAdd.subscribe((ev) => {
  * @param {{ amplifier: number, duration: number }} saved
  */
 function startRestoreWatch(player, saved) {
+    watchingPlayers.add(player.id);
     world.sendMessage("§b[watch] 監視スタート");
+
     const tick = system.runInterval(() => {
         if (!player.isValid) {
             system.clearRun(tick);
+            watchingPlayers.delete(player.id);
             return;
         }
         const current = player.getEffect("slowness");
         if (!current) {
             system.clearRun(tick);
+            watchingPlayers.delete(player.id);
+
+            // 復活フラグを立ててから addEffect
+            restoringPlayers.add(player.id);
             system.run(() => {
-                if (!player.isValid) return;
-                world.sendMessage(`§c[watch] slowness消滅 → 復活: amp=${saved.amplifier} dur=${saved.duration}`);
-                player.addEffect("slowness", saved.duration, {
-                    amplifier: saved.amplifier,
-                    showParticles: true
-                });
+                if (player.isValid) {
+                    world.sendMessage(`§c[watch] slowness消滅 → 復活: amp=${saved.amplifier} dur=${saved.duration}`);
+                    player.addEffect("slowness", saved.duration, {
+                        amplifier: saved.amplifier,
+                        showParticles: true
+                    });
+                }
+                // 次tickでフラグ解除
+                system.run(() => restoringPlayers.delete(player.id));
             });
         }
     }, 1);
