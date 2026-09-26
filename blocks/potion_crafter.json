@@ -1,5 +1,5 @@
 {
-  "format_version": "1.26.0",
+  "format_version": "1.21.0",
   "minecraft:block": {
     "description": {
       "identifier": "cw:potion_crafter",
@@ -80,7 +80,9 @@
         }
       },
       "minecraft:map_color": "#000000",
-      "cw:interact": {}
+      "minecraft:custom_components": [
+        "cw:interact"
+      ]
     }
   }
 }
