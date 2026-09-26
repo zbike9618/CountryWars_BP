@@ -37,8 +37,10 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
 // =============================================================
 world.afterEvents.effectAdd.subscribe((ev) => {
     const player = ev.entity;
-    if (ev.effect.typeId != "slowness") return;
+    world.sendMessage(`${ev.effect.typeId}`)
+    if (ev.effect.typeId != "minecraft:slowness") return;
     if (player.typeId != "minecraft:player") return;
+
 
     world.sendMessage(`§b[after] slowness追加: amp=${ev.effect.amplifier} dur=${ev.effect.duration}`);
 
