@@ -1,14 +1,19 @@
 import { world, system } from "@minecraft/server";
 
 // beforeEvent → afterEvent 間で既存エフェクトを一時保管
-// key: player.id, value: { amplifier, duration }
+// key: player.id, value: { amplifier, duration, newAmplifier? }
 const pendingRestore = new Map();
 
-// ① beforeEvent: 追加「前」の既存slownessを保存
+// ① beforeEvent: trenbankai: + シフト時に既存slownessを保存
 world.beforeEvents.effectAdd.subscribe((ev) => {
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
+
+    // trenbankai: アイテムをシフトしながら使っている場合のみ対象
+    if (!player.isSneaking) return;
+    const held = player.getComponent("minecraft:equippable")?.getEquipment("Mainhand");
+    if (!held || !held.typeId.startsWith("trenbankai:")) return;
 
     const existing = player.getEffect("slowness");
     if (!existing) return;
@@ -19,11 +24,11 @@ world.beforeEvents.effectAdd.subscribe((ev) => {
     });
 });
 
-// ② afterEvent: 追加「後」の新しいamplifierを確認
+// ② afterEvent: 追加後に新しいamplifierを記録して復活監視を開始
 world.afterEvents.effectAdd.subscribe((ev) => {
     const player = ev.entity;
 
-    // slowness 以外のエフェクトでも、Mapに残っていれば消す
+    // slowness 以外 or プレイヤー以外は Map をクリーンアップして終了
     if (ev.effect.typeId != "slowness" || player.typeId != "minecraft:player") {
         if (player.typeId === "minecraft:player") {
             pendingRestore.delete(player.id);
@@ -31,17 +36,16 @@ world.afterEvents.effectAdd.subscribe((ev) => {
         return;
     }
 
-    // slowness かつ player の場合: 必ずここでMapを削除
     const saved = pendingRestore.get(player.id);
     pendingRestore.delete(player.id);
 
-    // 新しいエフェクトが level 10 以上 (amplifier >= 9) かチェック
-    if (ev.effect.amplifier < 9) return;
+    // trenbankai 由来でない slowness はスルー
     if (!saved) return;
 
     const { amplifier: savedAmplifier, duration: savedDuration } = saved;
+    const newAmplifier = ev.effect.amplifier;
 
-    // level 10+ が終了したら元のエフェクトを復活させる
+    // trenbankai slowness が終わったら元のエフェクトを復活させる
     const tick = system.runInterval(() => {
         if (!player.isValid) {
             system.clearRun(tick);
@@ -49,8 +53,8 @@ world.afterEvents.effectAdd.subscribe((ev) => {
         }
         const current = player.getEffect("slowness");
 
-        // level 10+ が消えた or amplifier が 9 未満に下がった
-        if (!current || current.amplifier < 9) {
+        // trenbankai slowness が消えた or 別の amplifier に変わった
+        if (!current || current.amplifier !== newAmplifier) {
             system.clearRun(tick);
             system.run(() => {
                 player.addEffect("slowness", savedDuration, {
