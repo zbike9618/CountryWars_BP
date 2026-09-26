@@ -1,0 +1,157 @@
+{
+  "format_version": "1.20.60",
+  "minecraft:block": {
+    "description": {
+      "identifier": "cw:mana_rose",
+      "menu_category": {
+        "category": "nature"
+      },
+      "states": {
+        "cw:age": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    "components": {
+      "minecraft:on_random_tick": {
+        "event": "cw:try_grow"
+      },
+      "minecraft:geometry": "geometry.cw.mana_rose_0",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "mana_rose",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -4,
+          0,
+          -4
+        ],
+        "size": [
+          8,
+          4,
+          8
+        ]
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:placement_filter": {
+        "conditions": [
+          {
+            "allowed_faces": [
+              "up"
+            ],
+            "block_filter": [
+              "minecraft:grass_block",
+              "minecraft:dirt",
+              "minecraft:farmland",
+              "minecraft:podzol",
+              "minecraft:moss_block"
+            ]
+          }
+        ]
+      }
+    },
+    "events": {
+      "cw:try_grow": {
+        "sequence": [
+          {
+            "condition": "q.block_state('cw:age') < 3",
+            "randomize": [
+              {
+                "weight": 5,
+                "set_block_state": {
+                  "cw:age": "q.block_state('cw:age') + 1"
+                }
+              },
+              {
+                "weight": 95
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('cw:age') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.cw.mana_rose_0",
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              0,
+              -4
+            ],
+            "size": [
+              8,
+              4,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('cw:age') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.cw.mana_rose_1",
+          "minecraft:selection_box": {
+            "origin": [
+              -5,
+              0,
+              -5
+            ],
+            "size": [
+              10,
+              7,
+              10
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('cw:age') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.cw.mana_rose_2",
+          "minecraft:selection_box": {
+            "origin": [
+              -6,
+              0,
+              -6
+            ],
+            "size": [
+              12,
+              10,
+              12
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('cw:age') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.cw.mana_rose_3",
+          "minecraft:selection_box": {
+            "origin": [
+              -6,
+              0,
+              -6
+            ],
+            "size": [
+              12,
+              14,
+              12
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

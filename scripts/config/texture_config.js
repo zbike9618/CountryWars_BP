@@ -1041,4 +1041,5 @@ export const itemIdToPath = {
   'cw:bill_1000': 'textures/items/bill_1000',
   'cw:bill_5000': 'textures/items/bill_5000',
   'cw:bill_10000': 'textures/items/bill_10000',
+  'cw:mana_rose': 'textures/items/mana_rose'
 }
