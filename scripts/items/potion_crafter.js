@@ -263,14 +263,6 @@ async function _showForm(player, potionData = []) {
                         `§e<タップで調合台に追加>`
                     ]
                 });
-            } else {
-                invItems[i] = null;
-                form.setButton(slotIndex, {
-                    iconPath: itemIdToPath["minecraft:barrier"],
-                    name: "§7空き枠",
-                    stackAmount: 1,
-                    editedName: true
-                });
             }
         }
     }
@@ -404,7 +396,7 @@ async function _showForm(player, potionData = []) {
 }
 
 // ポーション使用時（飲用・使用時）の効果発動処理
-world.afterEvents.itemUse.subscribe((event) => {
+world.afterEvents.itemCompleteUse.subscribe((event) => {
     const player = event.source;
     const item = event.itemStack;
     if (!item) return;
