@@ -6,6 +6,9 @@ const pendingRestore = new Map();
 
 // ① beforeEvent: trenbankai: + シフト時に既存slownessを保存
 world.beforeEvents.effectAdd.subscribe((ev) => {
+    system.run(() => {
+        world.sendMessage("aa")
+    })
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
