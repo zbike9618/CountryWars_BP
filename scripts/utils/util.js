@@ -287,7 +287,7 @@ export class Util {
      */
     static isCombatCooling(player) {
         if (!player || !player.isValid) return 0;
-        const obj = world.scoreboard.getObjective("cw:combat");
+        const obj = getCombatObjective();
         if (!obj) return 0;
         try {
             const score = obj.getScore(player) ?? 0;
@@ -303,10 +303,19 @@ export class Util {
 function getCombatObjective() {
     let obj = world.scoreboard.getObjective("cw:combat");
     if (!obj) {
-        obj = world.scoreboard.addObjective("cw:combat", "Combat Status");
+        try {
+            obj = world.scoreboard.addObjective("cw:combat", "Combat Status");
+        } catch (e) {
+            obj = world.scoreboard.getObjective("cw:combat");
+        }
     }
     return obj;
 }
+
+// ワールドロード時にスコアボードを確実初期化
+world.afterEvents.worldLoad.subscribe(() => {
+    getCombatObjective();
+});
 
 // 離脱時にCombat状態だったプレイヤーIDを記録
 const combatLoggedPlayers = new Set();

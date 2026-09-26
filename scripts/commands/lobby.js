@@ -1,6 +1,7 @@
 import * as server from "@minecraft/server"
 const { world, system } = server;
 import config from "../config/config.js"
+import { Util } from "../utils/util.js"
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -34,6 +35,11 @@ function DoCommand(origin) {
     const player = origin.sourceEntity;
     //関数を実行する
     system.run(() => {
+        const combatRem = Util.isCombatCooling(player);
+        if (combatRem > 0) {
+            player.sendMessage(`§c戦闘中(Combat)のためロビーへテレポートできません (残り${combatRem}秒)§r`);
+            return;
+        }
         player.teleport(config.lobby, { dimension: world.getDimension("overworld") })
         player.sendMessage({ translate: "cw.phone.went.lobby" })
     })
