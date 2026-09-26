@@ -6,15 +6,23 @@ const pendingRestore = new Map();
 
 // ① beforeEvent: trenbankai: + シフト時に既存slownessを保存
 world.beforeEvents.effectAdd.subscribe((ev) => {
+    system.run(() => {
+        world.sendMessage(`${ev.effectType}`)
+    })
     if (ev.effectType != "slowness") return;
     const player = ev.entity;
     if (player.typeId != "minecraft:player") return;
 
     // trenbankai: アイテムをシフトしながら使っている場合のみ対象
     if (!player.isSneaking) return;
+    system.run(() => {
+        world.sendMessage(`sneak!`)
+    })
     const held = player.getComponent("minecraft:equippable")?.getEquipment(server.EquipmentSlot.Mainhand);
     if (!held || !held.typeId.startsWith("trenbankai:")) return;
-
+    system.run(() => {
+        world.sendMessage(`${held.typeId}`)
+    })
     const existing = player.getEffect("slowness");
     if (!existing) return;
 
