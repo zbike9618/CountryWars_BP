@@ -12,6 +12,20 @@ function getDefaultTankData() {
     return Array(Config.tankMaxSlots).fill("unknown").join("#");
 }
 
+// 戦車の受ける最大ダメージを30に制御
+world.beforeEvents.entityHurt.subscribe((ev) => {
+    if (ev.hurtEntity?.typeId === "cw:tank" && ev.damage > 30) {
+        ev.cancel = true;
+        const hurtEntity = ev.hurtEntity;
+        const damageSource = ev.damageSource;
+        system.run(() => {
+            if (hurtEntity.isValid) {
+                hurtEntity.applyDamage(30, damageSource);
+            }
+        });
+    }
+});
+
 world.afterEvents.itemUse.subscribe((ev) => {
     const { itemStack, source: player } = ev;
 
@@ -89,6 +103,11 @@ async function showTankConfigMenu(player, tank) {
     if (canceled) return;
 
     if (selection === attachmentIds.length) {
+        const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+        if (riders.length > 0) {
+            player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
+            return;
+        }
         dismantleTank(player, tank);
         return;
     }
@@ -221,8 +240,9 @@ export function getAttachment(tank) {
  */
 function dismantleTank(player, tank) {
     if (!tank?.isValid) return;
-    if (tank.getComponent("minecraft:rideable")?.getRiders().length > 0) {
-        player.sendMessage("§c戦車に乗っているときは解体できません§r");
+    const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+    if (riders.length > 0) {
+        player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
         return;
     }
     const healthComp = tank.getComponent("minecraft:health");

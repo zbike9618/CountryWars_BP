@@ -101,6 +101,7 @@ export class Country {
         playerData.country = id;
         playerData.permission = "国王";
         playerDatas.set(player.id, playerData);
+        Util.updateNameTag(player);
         // tellrawを使うことでWebSocketがイベントとして検知できるようになります
         const countryName_2 = countryData.name;
         world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.mcform.createMessage","with":["${countryName_2}"]}]}`);
@@ -161,6 +162,7 @@ export class Country {
             }
         }
         countryDatas.delete(countryData.id);
+        Util.updateAllNameTags();
         // tellrawを使うことでWebSocketがイベントとして検知できるようになります
         const countryName_3 = countryData.name;
         world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.scform.deleteMessage","with":["${countryName_3}"]}]}`);
@@ -176,6 +178,7 @@ export class Country {
         playerDatas.set(player.id, playerData);
         countryData.players.push(player.id);
         countryDatas.set(countryData.id, countryData);
+        Util.updateNameTag(player);
         for (const p of Util.GetCountryPlayer(countryData)) {
             const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.joinMessage", with: [${countryData.name}] })`
             sendDataForPlayers(data, player.id)
@@ -192,6 +195,7 @@ export class Country {
         playerDatas.set(player.id, playerData);
         countryData.players.splice(countryData.players.indexOf(player.id), 1);
         countryDatas.set(countryData.id, countryData);
+        Util.updateNameTag(player);
         for (const p of Util.GetCountryPlayer(countryData)) {
             const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.exitMessage", with: [${countryData.name}] })`
             sendDataForPlayers(data, player.id)
@@ -609,6 +613,8 @@ class Member {
         playerDatas.set(playerId, playerData)
         countryData.players.splice(countryData.players.indexOf(playerId), 1)
         countryDatas.set(countryData.id, countryData)
+        const kickedPlayer = world.getEntity(playerId);
+        if (kickedPlayer) Util.updateNameTag(kickedPlayer);
         player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerDatas.get(playerId).name] })
         const data = `world.getEntity('${playerId}').sendMessage({ translate: "cw.scform.member.kicked", with: ["${countryData.name}"] })`
         sendDataForPlayers(data, playerId)

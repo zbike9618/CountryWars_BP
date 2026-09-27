@@ -33,17 +33,16 @@ world.afterEvents.playerSpawn.subscribe(ev => {
     }
     if (initialSpawn) {
         const playerData = playerDatas.get(player.id)
-        const countryData = countryDatas.get(playerData.country)
+        const countryData = countryDatas.get(playerData?.country)
         if (!countryData || countryData.warcountry.length == 0) {
             player.removeTag("cw:duringwar")
         }
         else {
             player.addTag("cw:duringwar")
         }
-
-
+        Util.updateNameTag(player);
     }
-})
+});
 
 world.afterEvents.playerLeave.subscribe(ev => {
     const playerId = ev.playerId;

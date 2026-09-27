@@ -14,6 +14,18 @@ world.afterEvents.itemUse.subscribe((event) => {
 
   if (itemStack?.typeId !== "cw:end_sword") return;
 
+  // 戦車に乗っている場合はキャンセル
+  const isRidingTank = player.getComponent("minecraft:riding")?.entity?.typeId === "cw:tank" ||
+    player.dimension.getEntities({ type: "cw:tank" }).some(e => {
+      const riders = e.getComponent("minecraft:rideable")?.getRiders();
+      return riders?.some(r => r.id === player.id);
+    });
+
+  if (isRidingTank) {
+    player.sendMessage("§c戦車に乗っている間はエンドソードを使用できません§r");
+    return;
+  }
+
   const now = Date.now();
   const lastUsed = cooldowns.get(player.name) ?? 0;
   const remaining = COOLDOWN_MS - (now - lastUsed);
@@ -30,7 +42,6 @@ world.afterEvents.itemUse.subscribe((event) => {
     player.sendMessage("失敗!!!!");
     return;
   }
-
   for (const effect of effects) {
     const maxAmplifier = MAX_AMPLIFIER[effect.typeId] ?? DEFAULT_MAX_AMPLIFIER;
     const amplifier = Math.min(effect.amplifier, maxAmplifier);

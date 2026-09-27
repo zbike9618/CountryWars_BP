@@ -307,6 +307,11 @@ async function readMessage(player, selection, type) {
 
     if (res.selection == 0) {
         if (type == "tpa") {
+            const combatRem = Util.isCombatCooling(player);
+            if (combatRem > 0) {
+                player.sendMessage(`§cダメージを受けてから5秒間はtpaを使用できません (残り${combatRem}秒)§r`);
+                return;
+            }
             const target = world.getAllPlayers().find(p => p.id === selection) || world.getEntity(selection);
             if (target) {
                 player.teleport(target.location);

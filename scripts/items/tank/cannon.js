@@ -50,6 +50,7 @@ world.afterEvents.itemUse.subscribe((ev) => {
         y: dir.y * impulseDistance,
         z: dir.z * impulseDistance
     });
+
     entity.setProperty("cw:explosion_level", explosionLevel);
 
     // 特殊アタッチメント（アンチウォーター）の処理
