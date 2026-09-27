@@ -3,6 +3,7 @@ const { world, system, } = server;
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui"
 import { ShortPlayerData } from "../utils/playerData";
 import { Dypro } from "../utils/dypro";
+import { Util } from "../utils/util";
 const playerDatas = new Dypro("player");
 system.beforeEvents.startup.subscribe(ev => {
     /**
@@ -70,6 +71,11 @@ function DoCommand(origin, selector) {
  * @param {import("@minecraft/server").Player} target 
  */
 function tpaccept(player, target = undefined, type = "accept") {
+    const combatRem = Util.isCombatCooling(player);
+    if (combatRem > 0) {
+        player.sendMessage(`§cダメージを受けてから5秒間はtpaを使用できません (残り${combatRem}秒)§r`);
+        return;
+    }
     if (target) {
         tpaSend(player, target, type)
     } else {

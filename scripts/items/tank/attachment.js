@@ -103,6 +103,11 @@ async function showTankConfigMenu(player, tank) {
     if (canceled) return;
 
     if (selection === attachmentIds.length) {
+        const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+        if (riders.length > 0) {
+            player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
+            return;
+        }
         dismantleTank(player, tank);
         return;
     }
@@ -235,8 +240,9 @@ export function getAttachment(tank) {
  */
 function dismantleTank(player, tank) {
     if (!tank?.isValid) return;
-    if (tank.getComponent("minecraft:rideable")?.getRiders().length > 0) {
-        player.sendMessage("§c戦車に乗っているときは解体できません§r");
+    const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+    if (riders.length > 0) {
+        player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
         return;
     }
     const healthComp = tank.getComponent("minecraft:health");
