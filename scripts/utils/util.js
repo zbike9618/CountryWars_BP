@@ -323,7 +323,7 @@ const combatLoggedPlayers = new Set();
 // PvPダメージ時のみ Combat 状態(5秒)を適用
 world.afterEvents.entityHurt.subscribe((ev) => {
     const victim = ev.hurtEntity;
-    if (!victim || victim.typeId !== "minecraft:player") return;
+    if (!victim) return;
 
     let attacker = ev.damageSource?.damagingEntity;
     if (attacker && (attacker.typeId === "minecraft:arrow" || attacker.typeId === "minecraft:thrown_trident")) {
@@ -331,14 +331,20 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         if (owner) attacker = owner;
     }
 
-    if (attacker && attacker.typeId === "minecraft:player" && attacker.id !== victim.id) {
+    if (attacker && attacker.id !== victim.id) {
         const obj = getCombatObjective();
-        obj.setScore(victim, 5);
-        obj.setScore(attacker, 5);
+        if (victim.typeId === "minecraft:player") {
+            obj.setScore(victim, 5);
+            victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+        }
+        if (attacker.typeId === "minecraft:player") {
+            obj.setScore(attacker, 5);
+            attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+        }
     }
 });
 
-// 毎秒 (20ticks) スコアを1減算
+// 毎秒 (20ticks) スコアを1減算し、ActionBarに表示
 system.runInterval(() => {
     const obj = world.scoreboard.getObjective("cw:combat");
     if (!obj) return;
@@ -347,9 +353,15 @@ system.runInterval(() => {
         try {
             const score = obj.getScore(player) ?? 0;
             if (score > 0) {
-                obj.setScore(player, score - 1);
+                const newScore = score - 1;
+                obj.setScore(player, newScore);
+                if (newScore > 0) {
+                    player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
+                } else {
+                    player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 }, 20);
 
@@ -363,7 +375,7 @@ world.afterEvents.playerLeave.subscribe((ev) => {
             if (score > 0) {
                 combatLoggedPlayers.add(playerId);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 });
 
