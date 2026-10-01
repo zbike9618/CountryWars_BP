@@ -522,6 +522,12 @@ export class War {
                 moneyMsg
             ]
         });
+        const discordPeaceMessage = moneyAmount > 0
+            ? `§l§g【講和成立】§r ${proposerCountry.name}が${targetCountry.name}に§e¥${moneyAmount}§fを支払い、停戦しました。`
+            : moneyAmount < 0
+                ? `§l§g【講和成立】§r ${targetCountry.name}が${proposerCountry.name}に§e¥${Math.abs(moneyAmount)}§fを支払い、停戦しました。`
+                : `§l§g【講和成立】§r ${proposerCountry.name}と${targetCountry.name}が対等な条件で停戦しました。`;
+        DiscordRelay.send(discordPeaceMessage);
 
         return true;
     }
@@ -581,6 +587,7 @@ export class War {
                 { text: "§rの戦争を公平な条件で強制終了しました。" }
             ]
         });
+        DiscordRelay.send(`§6[戦争終了] §f両国のプレイヤーが不在のため、§l${country1.name}§rと§l${country2.name}§rの戦争を公平な条件で強制終了しました。`);
     }
 }
 world.afterEvents.entityDie.subscribe(ev => {
@@ -672,7 +679,9 @@ world.afterEvents.entityDie.subscribe(ev => {
     clearChunkChestProtection(chunkId);
 
     const attackerName = attackerPlayer ? attackerPlayer.name : mineData.name;
-    world.sendMessage({ translate: "cw.war.invade.success", with: [attackerName, countryData.name, `${Math.floor(core.location.x)}`, `${Math.floor(core.location.z)}`] });
+    const invadeSuccessArgs = [attackerName, countryData.name, `${Math.floor(core.location.x)}`, `${Math.floor(core.location.z)}`];
+    world.sendMessage({ translate: "cw.war.invade.success", with: invadeSuccessArgs });
+    DiscordRelay.sendTranslate("cw.war.invade.success", invadeSuccessArgs);
 
     if (attackerPlayer) {
         const nearest = Chunk.getNearestChunk(chunkId, countryData.id);
