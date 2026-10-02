@@ -19,7 +19,7 @@ system.runInterval(() => {
         const has = []
         for (let i = 0; i < inv.size; i++) {
             const item = inv.getItem(i);
-            if (item) {
+            if (item && !item.typeId.startsWith("trenbankai:")) {
                 if (item.maxAmount != 1) continue;
                 let key = item.getDynamicProperty("cw:id");
 

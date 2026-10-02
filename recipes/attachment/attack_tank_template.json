@@ -8,9 +8,9 @@
             "crafting_table"
         ],
         "pattern": [
-            "XXX",
+            "BXB",
             "XTX",
-            "XXX"
+            "BXB"
         ],
         "key": {
             "T": {
@@ -18,6 +18,9 @@
             },
             "X": {
                 "item": "cw:dynamite"
+            },
+            "B": {
+                "item": "minecraft:gunpowder"
             }
         },
         "unlock": [

@@ -72,6 +72,11 @@ world.afterEvents.worldLoad.subscribe(() => {
                     Country.delete(countryData)
                     continue;
                 }
+                //次回でほろぶ
+                if (pay > countryData.money - pay) {
+                    world.sendMessage({ translate: "cw.tax.maintenance.next_fail", with: [countryData.name] })
+                    DiscordRelay.sendTranslate("cw.tax.maintenance.next_fail", [countryData.name]);
+                }
 
                 if (pay > 0) {
                     countryData.money -= pay

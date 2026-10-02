@@ -2,7 +2,7 @@ import * as server from "@minecraft/server";
 import { ActionFormData, ModalFormData } from "@minecraft/server-ui";
 import Config from "../../config/config.js";
 
-const { world } = server;
+const { world, system } = server;
 
 /**
  * タンクのアタッチメント用デフォルトデータを動的に生成
@@ -11,6 +11,20 @@ const { world } = server;
 function getDefaultTankData() {
     return Array(Config.tankMaxSlots).fill("unknown").join("#");
 }
+
+// 戦車の受ける最大ダメージを30に制御
+world.beforeEvents.entityHurt.subscribe((ev) => {
+    if (ev.hurtEntity?.typeId === "cw:tank" && ev.damage > 30) {
+        ev.cancel = true;
+        const hurtEntity = ev.hurtEntity;
+        const damageSource = ev.damageSource;
+        system.run(() => {
+            if (hurtEntity.isValid) {
+                hurtEntity.applyDamage(30, damageSource);
+            }
+        });
+    }
+});
 
 world.afterEvents.itemUse.subscribe((ev) => {
     const { itemStack, source: player } = ev;
@@ -26,6 +40,28 @@ world.afterEvents.itemUse.subscribe((ev) => {
         showTankConfigMenu(player, tank);
     }
 });
+
+// レンチを持った瞬間にロアを付与
+system.runInterval(() => {
+    for (const player of world.getAllPlayers()) {
+        const inventory = player.getComponent("inventory");
+        if (!inventory?.container) continue;
+
+        const container = inventory.container;
+        const selectedSlot = player.selectedSlotIndex;
+        const item = container.getItem(selectedSlot);
+
+        if (item?.typeId === "cw:wrench") {
+            const targetLore = "§r§7[戦車に向けて スニーク + 使用]";
+            const currentLore = item.getLore();
+            if (!currentLore.includes(targetLore)) {
+                const filteredLore = currentLore.filter(l => !l.includes("戦車に向けて"));
+                item.setLore([...filteredLore, targetLore]);
+                container.setItem(selectedSlot, item);
+            }
+        }
+    }
+}, 5);
 
 /**
  * タンクのアタッチメント設定メニューを表示
@@ -60,10 +96,23 @@ async function showTankConfigMenu(player, tank) {
         }
     }
 
-    const { canceled, selection: slotIndex } = await form.show(player);
+    // 戦車解体ボタンを追加
+    form.button({ translate: "cw.tank_config.dismantle" });
+
+    const { canceled, selection } = await form.show(player);
     if (canceled) return;
 
-    showAttachmentSelection(player, tank, slotIndex);
+    if (selection === attachmentIds.length) {
+        const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+        if (riders.length > 0) {
+            player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
+            return;
+        }
+        dismantleTank(player, tank);
+        return;
+    }
+
+    showAttachmentSelection(player, tank, selection);
 }
 
 /**
@@ -183,3 +232,108 @@ export function getAttachment(tank) {
     }
     return returnData;
 }
+
+/**
+ * タンクを解体し、HPとアタッチメントデータをitemdyproに保存したタンクアイテムをドロップ
+ * @param {server.Player} player 
+ * @param {server.Entity} tank 
+ */
+function dismantleTank(player, tank) {
+    if (!tank?.isValid) return;
+    const riders = tank.getComponent("minecraft:rideable")?.getRiders() || [];
+    if (riders.length > 0) {
+        player.sendMessage("§c誰かが乗っているときは戦車を解体できません§r");
+        return;
+    }
+    const healthComp = tank.getComponent("minecraft:health");
+    const hp = healthComp ? healthComp.currentValue : 200;
+    const tankData = tank.getDynamicProperty("tankData") ?? getDefaultTankData();
+
+    const itemStack = new server.ItemStack("cw:tank_item", 1);
+
+    // itemdypro に HP と アタッチメントデータを追加
+    const dyproData = { hp, tankData };
+    itemStack.setDynamicProperty("itemdypro", JSON.stringify(dyproData));
+    itemStack.setDynamicProperty("hp", hp);
+    itemStack.setDynamicProperty("tankData", tankData);
+
+    const dimension = tank.dimension;
+    const location = tank.location;
+
+    tank.remove();
+    dimension.spawnItem(itemStack, location);
+
+    player.sendMessage("§a戦車を解体しました。§r");
+}
+
+
+
+world.afterEvents.itemUse.subscribe((ev) => {
+    const { itemStack, source: player } = ev;
+    if (itemStack?.typeId !== "cw:tank_item") return;
+
+    // ブロックを視線方向から取得
+    const blockResult = player.getBlockFromViewDirection({ maxDistance: 5 });
+    if (!blockResult) return;
+    const block = blockResult.block;
+
+    // itemdyproから直接データ取得
+    let hp;
+    let tankData;
+
+    const itemdyproRaw = itemStack.getDynamicProperty("itemdypro");
+    if (typeof itemdyproRaw === "string") {
+        try {
+            const parsed = JSON.parse(itemdyproRaw);
+            hp = parsed.hp;
+            tankData = parsed.tankData;
+        } catch (e) { }
+    }
+    if (hp === undefined) hp = itemStack.getDynamicProperty("hp");
+    if (tankData === undefined) tankData = itemStack.getDynamicProperty("tankData");
+
+    // 設置先のブロック上面座標にスポーン
+    const spawnLocation = {
+        x: block.x + 0.5,
+        y: block.y + 1,
+        z: block.z + 0.5,
+    };
+
+    system.run(() => {
+        const tank = player.dimension.spawnEntity("cw:tank", spawnLocation);
+        if (!tank) return;
+
+        // アタッチメントデータ復元
+        if (tankData) {
+            tank.setDynamicProperty("tankData", tankData);
+            updateTankProperties(tank);
+        }
+
+        // HP復元（maxHP確定後に設定）
+        if (hp !== undefined) {
+            const targetHp = hp;
+            system.runTimeout(() => {
+                if (!tank.isValid) return;
+                const healthComp = tank.getComponent("minecraft:health");
+                if (healthComp) {
+                    healthComp.setCurrentValue(Math.min(targetHp, healthComp.effectiveMax));
+                }
+            }, 2);
+        }
+
+        // インベントリからアイテムを1個消費
+        const inventory = player.getComponent("inventory");
+        if (!inventory?.container) return;
+        const container = inventory.container;
+        const slot = player.selectedSlotIndex;
+        const current = container.getItem(slot);
+        if (current?.typeId === "cw:tank_item") {
+            if (current.amount > 1) {
+                current.amount -= 1;
+                container.setItem(slot, current);
+            } else {
+                container.setItem(slot, undefined);
+            }
+        }
+    });
+});

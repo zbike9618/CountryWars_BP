@@ -8,9 +8,9 @@
             "crafting_table"
         ],
         "pattern": [
-            "XXX",
+            "IXI",
             "XTX",
-            "XXX"
+            "IXI"
         ],
         "key": {
             "T": {
@@ -18,6 +18,9 @@
             },
             "X": {
                 "item": "minecraft:iron_block"
+            },
+            "I": {
+                "item": "minecraft:iron_ingot"
             }
         },
         "unlock": [
