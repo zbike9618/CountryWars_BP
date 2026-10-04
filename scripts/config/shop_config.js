@@ -154,7 +154,8 @@ export default [
             { id: `cw:toyphone_blue`, price: 50 },
             { id: `cw:toyphone_red`, price: 50 },
             { id: `cw:toyphone_white`, price: 50 },
-
+            { id: `cw:anshi_goggle`, price: 5000 },
+            { id: `cw:magnet`, price: 5000 },
         ]
     }
 ];

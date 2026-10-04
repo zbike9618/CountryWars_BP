@@ -516,8 +516,10 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
     }
 })
 world.beforeEvents.explosion.subscribe((ev) => {
+    // ウィンドチャージは標準の挙動を維持し、独自爆発へ変換しない
+    if (ev.source?.typeId === "minecraft:wind_charge_projectile") return;
+
     if (ev.source && explosionMap.has(ev.source.id)) {
-        if (ev.source.typeId == "minecraft:wind_charge_projectile") return;
         const locations = explosionMap.get(ev.source.id);
         const dimension = ev.dimension;
         const blocksToDestroy = [];
