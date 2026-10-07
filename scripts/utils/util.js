@@ -237,4 +237,161 @@ export class Util {
         return result.trim();
     }
 
+    /**
+     * プレイヤーの nameTag を更新 ( [二つ名/国名] プレイヤー名 )
+     * @param {server.Player} player 
+     */
+    static updateNameTag(player) {
+        if (!player || !player.isValid) return;
+        const playerData = playerDatas.get(player.id);
+        if (!playerData) return;
+
+        const countryname = (playerData.country && countryDatas.get(playerData.country))?.name || "§7未所属";
+
+        let secondNameText = "";
+        if (playerData.secondname && playerData.secondname.now) {
+            const b = playerData.secondname.before?.[playerData.secondname.now[0]] || "";
+            const a = playerData.secondname.after?.[playerData.secondname.now[1]] || "";
+            secondNameText = `${b}${a}`;
+        }
+
+        player.nameTag = `[${secondNameText}§r/${countryname}§r] ${player.name}`;
+    }
+
+    /**
+     * オンライン中の全プレイヤーの nameTag を更新
+     */
+    static updateAllNameTags() {
+        for (const player of world.getAllPlayers()) {
+            this.updateNameTag(player);
+        }
+    }
+
+    /**
+     * 特定の国の所属メンバーの nameTag を更新
+     * @param {Object} countryData 
+     */
+    static updateCountryNameTags(countryData) {
+        if (!countryData || !countryData.players) return;
+        for (const player of world.getAllPlayers()) {
+            if (countryData.players.includes(player.id)) {
+                this.updateNameTag(player);
+            }
+        }
+    }
+
+    /**
+     * プレイヤーがCombat（戦闘）状態か判定（cw:combat スコアボードを参照）
+     * @param {server.Player} player 
+     * @returns {number} 残り秒数（0の場合は制限なし）
+     */
+    static isCombatCooling(player) {
+        if (!player || !player.isValid) return 0;
+        const obj = getCombatObjective();
+        if (!obj) return 0;
+        try {
+            const score = obj.getScore(player) ?? 0;
+            return score > 0 ? score : 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
 }
+
+// スコアボード "cw:combat" の取得・初期化
+function getCombatObjective() {
+    let obj = world.scoreboard.getObjective("cw:combat");
+    if (!obj) {
+        try {
+            obj = world.scoreboard.addObjective("cw:combat", "Combat Status");
+        } catch (e) {
+            obj = world.scoreboard.getObjective("cw:combat");
+        }
+    }
+    return obj;
+}
+
+// ワールドロード時にスコアボードを確実初期化
+world.afterEvents.worldLoad.subscribe(() => {
+    getCombatObjective();
+});
+
+// 離脱時にCombat状態だったプレイヤーIDを記録
+const combatLoggedPlayers = new Set();
+
+// PvPダメージ時のみ Combat 状態(5秒)を適用
+world.afterEvents.entityHurt.subscribe((ev) => {
+    const victim = ev.hurtEntity;
+    if (!victim) return;
+
+    let attacker = ev.damageSource?.damagingEntity;
+    if (attacker && (attacker.typeId === "minecraft:arrow" || attacker.typeId === "minecraft:thrown_trident")) {
+        const owner = attacker.getComponent("minecraft:projectile")?.owner;
+        if (owner) attacker = owner;
+    }
+
+    if (attacker && attacker.id !== victim.id) {
+        const obj = getCombatObjective();
+        if (victim.typeId === "minecraft:player") {
+            obj.setScore(victim, 5);
+            victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+        }
+        if (attacker.typeId === "minecraft:player") {
+            obj.setScore(attacker, 5);
+            attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+        }
+    }
+});
+
+// 毎秒 (20ticks) スコアを1減算し、ActionBarに表示
+system.runInterval(() => {
+    const obj = world.scoreboard.getObjective("cw:combat");
+    if (!obj) return;
+
+    for (const player of world.getAllPlayers()) {
+        try {
+            const score = obj.getScore(player) ?? 0;
+            if (score > 0) {
+                const newScore = score - 1;
+                obj.setScore(player, newScore);
+                if (newScore > 0) {
+                    player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
+                } else {
+                    player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                }
+            }
+        } catch (e) { }
+    }
+}, 20);
+
+// Combat中の離脱判定
+world.afterEvents.playerLeave.subscribe((ev) => {
+    const playerId = ev.playerId;
+    const obj = world.scoreboard.getObjective("cw:combat");
+    if (obj) {
+        try {
+            const score = obj.getScore(playerId) ?? 0;
+            if (score > 0) {
+                combatLoggedPlayers.add(playerId);
+            }
+        } catch (e) { }
+    }
+});
+
+// 再ログイン時に死ぬ処理
+world.afterEvents.playerSpawn.subscribe((ev) => {
+    const { player, initialSpawn } = ev;
+    if (!player || !player.isValid) return;
+
+    if (initialSpawn && combatLoggedPlayers.has(player.id)) {
+        combatLoggedPlayers.delete(player.id);
+
+        system.run(() => {
+            if (player.isValid) {
+                player.applyDamage(99999);
+                world.sendMessage(`§c[Combat Log] ${player.name} は戦闘中にログアウトしたため死亡しました§r`);
+            }
+        });
+    }
+});

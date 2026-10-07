@@ -516,8 +516,10 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
     }
 })
 world.beforeEvents.explosion.subscribe((ev) => {
+    // ウィンドチャージは標準の挙動を維持し、独自爆発へ変換しない
+    if (ev.source?.typeId === "minecraft:wind_charge_projectile") return;
+
     if (ev.source && explosionMap.has(ev.source.id)) {
-        if (ev.source.typeId == "minecraft:wind_charge_projectile") return;
         const locations = explosionMap.get(ev.source.id);
         const dimension = ev.dimension;
         const blocksToDestroy = [];
@@ -542,6 +544,18 @@ world.beforeEvents.explosion.subscribe((ev) => {
         let explodedInCountry = false;
         const destroyBlockLocations = [];
 
+        // 影響を受けたブロックの範囲から爆発の威力を動的に計算
+        let maxDistSq = 0;
+        const centerLoc = blocks[0].location;
+        for (const block of blocks) {
+            const dx = block.location.x - centerLoc.x;
+            const dy = block.location.y - centerLoc.y;
+            const dz = block.location.z - centerLoc.z;
+            const distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq > maxDistSq) maxDistSq = distSq;
+        }
+        const explosionPower = Math.max(4, Math.ceil(Math.sqrt(maxDistSq)));
+
         for (const block of blocks) {
             const chunkId = Chunk.positionToChunkId(block.location, ev.dimension.id);
             const countryDataId = Chunk.checkChunk(chunkId);
@@ -550,7 +564,7 @@ world.beforeEvents.explosion.subscribe((ev) => {
                 if (!explodedInCountry) {
                     ev.cancel = true;
                     system.run(() => {
-                        dimension.createExplosion(block.location, 4, {
+                        dimension.createExplosion(block.location, explosionPower, {
                             breaksBlocks: false
                         });
                     });

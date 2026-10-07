@@ -27,4 +27,5 @@ export const turnedOnPlugins = {
     "block_logger": {},
     "report_system": {},
     "transfer": {},
+    "aplock": {}
 }

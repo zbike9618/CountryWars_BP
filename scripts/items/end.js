@@ -2,11 +2,29 @@ import { world } from "@minecraft/server";
 
 const COOLDOWN_MS = 30 * 60 * 1000;
 const cooldowns = new Map();
+const DEFAULT_MAX_AMPLIFIER = 3;
+// 強すぎる効果は個別に上限を下げる (amplifier 0 = Lv1)
+const MAX_AMPLIFIER = {
+  resistance: 1, // 耐性II (被ダメ-40%)
+  regeneration: 1, // 再生II
+};
 
 world.afterEvents.itemUse.subscribe((event) => {
   const { source: player, itemStack } = event;
 
   if (itemStack?.typeId !== "cw:end_sword") return;
+
+  // 戦車に乗っている場合はキャンセル
+  const isRidingTank = player.getComponent("minecraft:riding")?.entity?.typeId === "cw:tank" ||
+    player.dimension.getEntities({ type: "cw:tank" }).some(e => {
+      const riders = e.getComponent("minecraft:rideable")?.getRiders();
+      return riders?.some(r => r.id === player.id);
+    });
+
+  if (isRidingTank) {
+    player.sendMessage("§c戦車に乗っている間はエンドソードを使用できません§r");
+    return;
+  }
 
   const now = Date.now();
   const lastUsed = cooldowns.get(player.name) ?? 0;
@@ -24,11 +42,9 @@ world.afterEvents.itemUse.subscribe((event) => {
     player.sendMessage("失敗!!!!");
     return;
   }
-
   for (const effect of effects) {
-    if (effect.typeId == "resistance") continue;
-    if (effect.typeId == "regeneration") continue;
-    const amplifier = Math.min(effect.amplifier, 3); // 4以上なら3にキャップ
+    const maxAmplifier = MAX_AMPLIFIER[effect.typeId] ?? DEFAULT_MAX_AMPLIFIER;
+    const amplifier = Math.min(effect.amplifier, maxAmplifier);
 
     player.addEffect(effect.typeId, 20000000, {
       amplifier: amplifier,
