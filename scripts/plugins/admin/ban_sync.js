@@ -12,7 +12,9 @@ const CHECK_INTERVAL = 100;     // 5秒
 const FULL_SCAN_EVERY = 12;     // 12回に1回 = 1分
 
 let dirty = true;
+const RESEND_INTERVAL_MS = 10 * 60 * 1000;
 let lastSent = null;
+let lastSentAt = 0;
 let sending = false;
 let counter = 0;
 
@@ -38,11 +40,15 @@ system.runInterval(() => {
 
     if (!webApiEnabled || sending) return;
     const payload = JSON.stringify(bans);
-    if (payload === lastSent) return;
+    // 変化が無くても10分ごとに送り直す（cw-web-api の再起動や DB の作り直しから自動で戻るように）
+    if (payload === lastSent && started - lastSentAt < RESEND_INTERVAL_MS) return;
 
     sending = true;
     webApiRequest("POST", "/ban-sync", { bans }).then(response => {
-        if (response.status === 200) lastSent = payload;
+        if (response.status === 200) {
+            lastSent = payload;
+            lastSentAt = started;
+        }
     }).catch(() => {
         // cw-web-api が落ちている場合は次回に再送
     }).finally(() => {
