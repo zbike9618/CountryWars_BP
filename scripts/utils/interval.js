@@ -64,8 +64,8 @@ world.afterEvents.worldLoad.subscribe(() => {
                 const countryData = countryDatas.get(countryId)
                 if (!countryData) continue;
 
-                // 土地の維持費
-                const pay = config.maintenance * countryData.chunkAmount
+                // 国の維持費 + 土地の維持費
+                const pay = config.countryMaintenance + config.maintenance * countryData.chunkAmount
                 if (pay > countryData.money) {
                     world.sendMessage({ translate: "cw.tax.maintenance.fail", with: [countryData.name] })
                     DiscordRelay.sendTranslate("cw.tax.maintenance.fail", [countryData.name]);
