@@ -42,7 +42,8 @@ world.afterEvents.playerSpawn.subscribe((ev) => {
 
             for (const entry of queue) {
                 // 48時間以上経過したデータはスキップ（オプション）
-                if (isExpiredQueueEntry(entry, world.getAbsoluteTime())) {
+                const nowTime = world.getAbsoluteTime();
+                if (convertTicks(nowTime).hours - convertTicks(entry.time).hours > 48) {
                     continue;
                 }
 
@@ -58,52 +59,6 @@ world.afterEvents.playerSpawn.subscribe((ev) => {
             sendDataDypro.delete(player.id);
         }, 20); // 20ticks(1s) 待ってから実行（ロード完了を確実にするため）
     }
-});
-
-/**
- * 参加時に実行されない（ゲーム内で48時間より古い）キューのデータか
- * @param {{time: number}} entry
- * @param {number} nowTime world.getAbsoluteTime()
- */
-export function isExpiredQueueEntry(entry, nowTime) {
-    return convertTicks(nowTime).hours - convertTicks(entry.time).hours > 48;
-}
-
-/**
- * 旧方式の全体アナウンスのうち、もう実行されない期限切れのものをキューから消す。
- * 旧方式ではアナウンスのたびにオフラインの全員のキューへ積んでいて、
- * 2026-10 時点でワールドの dynamic property 約6.7MBのうち約5.4MBを占めていた。
- * 期限切れの分しか消さないので、プレイヤーから見える動作は変わらない。
- */
-function* removeExpiredLegacyAnnouncements() {
-    const nowTime = world.getAbsoluteTime();
-    let removed = 0;
-    let emptied = 0;
-    for (const playerId of sendDataDypro.idList) {
-        const queue = sendDataDypro.get(playerId);
-        if (Array.isArray(queue)) {
-            const kept = queue.filter(entry =>
-                !(typeof entry?.dataM === "string" && entry.dataM.includes("[全体アナウンス]") && isExpiredQueueEntry(entry, nowTime))
-            );
-            if (kept.length < queue.length) {
-                removed += queue.length - kept.length;
-                if (kept.length === 0) {
-                    sendDataDypro.delete(playerId);
-                    emptied++;
-                } else {
-                    sendDataDypro.set(playerId, kept);
-                }
-            }
-        }
-        yield;
-    }
-    if (removed > 0) {
-        console.warn(`[sendData] 期限切れの旧アナウンス ${removed} 件をキューから削除しました（空になったキュー ${emptied} 件）`);
-    }
-}
-
-world.afterEvents.worldLoad.subscribe(() => {
-    system.runJob(removeExpiredLegacyAnnouncements());
 });
 
 /**

@@ -7,7 +7,6 @@ import { ShortPlayerData } from "../utils/playerData";
 import { Util } from "../utils/util";
 import * as Discordrelay from "../utils/discord"
 import { sendDataForPlayers } from "../utils/sendData";
-import { Announcement } from "../utils/announcement";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 system.beforeEvents.startup.subscribe(ev => {
@@ -75,8 +74,7 @@ async function openmessagebox(player) {
     const tpaRequestArray = playerData.get("tpaRequest") || []
     const invitecountryArray = playerData.get("invitecountry") || []
     const messageArray = playerData.get("message") || []
-    const announcements = Announcement.listFor(player)
-    const totalRequests = (tpaArray.length + tpaRequestArray.length + invitecountryArray.length + announcements.length + messageArray.length)
+    const totalRequests = (tpaArray.length + tpaRequestArray.length + invitecountryArray.length + messageArray.length)
     const form = new ActionFormData()
     form.title({ translate: "cw.messagebox.title" })
     form.button({ translate: "cw.messagebox.recieve", with: [`${totalRequests}`] })
@@ -110,8 +108,7 @@ async function recieve(player) {
     const tpaRequestArray = playerData.get("tpaRequest") || []
     const invitecountryArray = playerData.get("invitecountry") || []
     const messageArray = playerData.get("message") || []
-    const announcements = Announcement.listFor(player)
-    const totalRequests = (tpaArray.length + tpaRequestArray.length + invitecountryArray.length + announcements.length + messageArray.length)
+    const totalRequests = (tpaArray.length + tpaRequestArray.length + invitecountryArray.length + messageArray.length)
 
     if (totalRequests == 0) {
         const form = new MessageFormData()
@@ -141,9 +138,6 @@ async function recieve(player) {
         const name = countryData?.name || "Unknown"
         form.button({ translate: "cw.messagebox.recieve.invitecountry", with: [name] })
     }
-    for (const announcement of announcements) {
-        form.button(`§d[お知らせ] §r${announcement.senderName} §7${Announcement.formatDate(announcement.date)}`)
-    }
     for (const message of messageArray) {
         const senderName = message.senderName || playerDatas.get(message.player)?.name || "Unknown"
         form.button({ translate: "cw.messagebox.recieve.message", with: [senderName] })
@@ -158,10 +152,8 @@ async function recieve(player) {
         readMessage(player, tpaRequestArray[selection - tpaArray.length], "tpaRequest")
     } else if (selection < tpaArray.length + tpaRequestArray.length + invitecountryArray.length) {
         readMessage(player, invitecountryArray[selection - tpaArray.length - tpaRequestArray.length], "invitecountry")
-    } else if (selection < tpaArray.length + tpaRequestArray.length + invitecountryArray.length + announcements.length) {
-        readMessage(player, announcements[selection - tpaArray.length - tpaRequestArray.length - invitecountryArray.length], "announcement")
     } else {
-        readMessage(player, messageArray[selection - tpaArray.length - tpaRequestArray.length - invitecountryArray.length - announcements.length], "message")
+        readMessage(player, messageArray[selection - tpaArray.length - tpaRequestArray.length - invitecountryArray.length], "message")
     }
 }
 
@@ -236,38 +228,35 @@ export async function sendAll(player) {
     if (lines.length === 0) return;
 
     const announcement = lines.join("\n");
-    // アナウンスはワールドに1件だけ保存する。オフラインの人には次の参加時に通知される
-    const item = Announcement.add(announcement, "運営");
-    const onlinePlayers = world.getAllPlayers();
-    for (const target of onlinePlayers) {
-        target.sendMessage("§e[全体アナウンス] §f運営§7: " + announcement);
-        target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
-        Announcement.markSeen(target, item.id);
-    }
+    const players = Util.getAllPlayerIdsSorted();
 
-    player.sendMessage(`§a[Success] §fアナウンスを送信しました。オンラインの${onlinePlayers.length}人に通知し、オフラインの人には次に参加したときに通知します。`);
+    player.sendMessage(`§a[Success] §f全プレイヤー(${players.length}人)にアナウンスを送信しました。`);
+
+    for (const playerId of players) {
+        const message = { player: player.id, message: announcement, senderName: "運営" };
+        // JSON.stringifyで改行文字を正しくシリアライズする
+        const announcementJson = JSON.stringify(announcement);
+        const messageJson = JSON.stringify(message);
+        const data = `
+            const playerData = new ShortPlayerData("${playerId}");
+            const messageArray = playerData.get("message") || [];
+            messageArray.push(${messageJson});
+            playerData.set("message", messageArray);
+            const target = world.getAllPlayers().find(p => p.id === "${playerId}");
+            if (target) {
+                target.sendMessage("§e[全体アナウンス] §f運営§7: " + ${announcementJson});
+                target.sendMessage({ translate: "cw.messagebox.send.recieve", with: ["運営"] });
+            }
+        `;
+        sendDataForPlayers(data, playerId);
+
+    }
     const discord_announcement = "§e[CountryWars] §f運営からのお知らせ§7: " + announcement;
     Discordrelay.sendToDiscord(discord_announcement);
 }
 
 async function readMessage(player, selection, type) {
     const playerData = new ShortPlayerData(player.id);
-
-    if (type == "announcement") {
-        const form = new ActionFormData();
-        form.title("運営からのお知らせ");
-        form.body(`§7${Announcement.formatDate(selection.date)}  ${selection.senderName}\n§r${selection.message}`);
-        form.button("閉じる");
-        form.button("削除する");
-
-        const res = await form.show(player);
-        if (res.canceled) return;
-        if (res.selection == 1) {
-            Announcement.hide(player, selection.id);
-        }
-        recieve(player);
-        return;
-    }
 
     if (type == "message") {
         const form = new ActionFormData();
