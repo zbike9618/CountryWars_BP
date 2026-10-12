@@ -11,13 +11,16 @@ function oriId() {
     }
     return ori;
 }
+// 全員の持ち物を全マス調べるので、毎tickだとTPS低下の大きな原因になっていた（2026-10 計測でスクリプト時間の約2割）
+const SCAN_INTERVAL = 20;
 system.runInterval(() => {
     for (const player of world.getAllPlayers()) {
 
         const comp = player.getComponent("inventory");
         const inv = comp.container;
         const has = []
-        for (let i = 0; i < inv.size; i++) {
+        const size = inv.size;
+        for (let i = 0; i < size; i++) {
             const item = inv.getItem(i);
             if (item && !item.typeId.startsWith("trenbankai:")) {
                 if (item.maxAmount != 1) continue;
@@ -45,4 +48,4 @@ system.runInterval(() => {
         }
     }
 
-})
+}, SCAN_INTERVAL)
