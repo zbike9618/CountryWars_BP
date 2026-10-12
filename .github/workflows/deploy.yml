@@ -13,11 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # OAuth client（Auth Keys: Write, tag:ci）で毎回使い捨ての鍵を作る。auth key と違って期限切れにならない
+      # （以前の TAILSCALE_AUTHKEY は 2026-10-12 に90日の期限が切れてデプロイが失敗した）
+      # 192.168.11.0/24 へは CT107 nginxproxymanager の subnet router 経由で届く（v4 は --accept-routes を自分で付けるので args には書かない）
       - name: Tailscale
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v4
         with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: --accept-routes
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
 
       # 1. 【デバッグ鯖への反映】f/* ブランチの時（従来通りスクリプト実行）
       - name: Deploy to Debug Server via SSH
