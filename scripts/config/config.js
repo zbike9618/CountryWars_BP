@@ -7,6 +7,8 @@ export default {
 
     //建国するのに必要な金額
     countryprice: 1000,
+    //1国ごとにおける国の維持費
+    countryMaintenance: 100,
     //1チャンクごとにおける土地の維持費
     maintenance: 100,
     //チャンク購入の金額
