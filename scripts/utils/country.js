@@ -106,6 +106,7 @@ export class Country {
         const countryName_2 = countryData.name;
         world.getDimension("overworld").runCommand(`tellraw @a {"rawtext":[{"translate":"cw.mcform.createMessage","with":["${countryName_2}"]}]}`);
         DiscordRelay.sendTranslate("cw.mcform.createMessage", [countryName_2]);
+        player.sendMessage(`§e[維持費] §f毎日12時に、1チャンクにつき§6${config.maintenance}円§fが国庫から徴収されます。国が消滅しないよう、国庫に十分なお金を入れてください。`);
 
     }
     static delete(countryData) {
