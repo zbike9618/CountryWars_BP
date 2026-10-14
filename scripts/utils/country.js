@@ -9,6 +9,7 @@ import { Data } from "./data";
 import { ShortPlayerData } from "./playerData";
 import { sendDataForPlayers } from "./sendData";
 import { War } from "./war";
+import { validateCountryName } from "./countryName";
 import config from "../config/config.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
@@ -35,11 +36,16 @@ export class Country {
 
         const res = await form.show(player)
         if (res.canceled) return;
-        if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(res.formValues[0])) {
+        const nameCheck = validateCountryName(res.formValues[0]);
+        if (!nameCheck.ok) {
+            player.sendMessage(nameCheck.message)
+            return;
+        }
+        if (countryDatas.idList.map(id => countryDatas.get(id)?.name).includes(nameCheck.name)) {
             player.sendMessage({ translate: "cw.mcform.countryalreadyexists" })
             return;
         }
-        this.make(player, { countryName: res.formValues[0], isPeace: res.formValues[1] })
+        this.make(player, { countryName: nameCheck.name, isPeace: res.formValues[1] })
 
     }
     //constructurはなし
@@ -396,7 +402,16 @@ class Information {
         form.textField({ translate: "cw.scform.information.description" }, "Write Description", { defaultValue: countryData.description })//国名
         const res = await form.show(player)
         if (res.canceled) return;
-        countryData.name = res.formValues[0]
+        // 名前を変えたときだけ調べる（前から使っている名前のまま、説明だけ直せるようにする）
+        if (res.formValues[0] !== countryData.name) {
+            const nameCheck = validateCountryName(res.formValues[0]);
+            if (!nameCheck.ok) {
+                player.sendMessage(nameCheck.message)
+                player.sendMessage("§7国の情報は変更されていません。")
+                return;
+            }
+            countryData.name = nameCheck.name
+        }
         countryData.description = res.formValues[1]
         countryDatas.set(countryData.id, countryData)
     }
