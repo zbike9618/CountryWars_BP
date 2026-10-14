@@ -4,6 +4,7 @@ import { system, world } from "@minecraft/server";
 import { Util } from "../utils/util";
 import { Dypro } from "../utils/dypro";
 import { Country } from "../utils/country";
+import { validateCountryName } from "../utils/countryName";
 import { War } from "../utils/war";
 import { Chunk } from "./chunk";
 import { sendAll } from "../commands/messagebox";
@@ -565,7 +566,16 @@ async function CountryDataEditBasic(player, countryData) {
             return;
         }
         const d = countryDatas.get(countryData.id) || countryData;
-        d.name = String(res.formValues[0]).trim() || d.name;
+        // 名前を変えたときだけ調べる。使えない名前なら名前は変えず、ほかの項目だけ更新する
+        const newName = String(res.formValues[0]);
+        if (newName !== String(d.name ?? "")) {
+            const nameCheck = validateCountryName(newName);
+            if (nameCheck.ok) {
+                d.name = nameCheck.name;
+            } else {
+                player.sendMessage(`${nameCheck.message} §7(名前は変更せず、ほかの項目だけ更新します)`);
+            }
+        }
         d.description = String(res.formValues[1]);
         d.money = Number(res.formValues[2]) || 0;
         d.isPeace = Boolean(res.formValues[3]);
