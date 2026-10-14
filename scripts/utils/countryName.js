@@ -4,13 +4,16 @@ import config from "../config/config.js";
  * 国名のチェック（文字数・使えない文字・不適切な名前）
  * 建国・国情報の編集・管理画面で国名を決めるときは、必ず validateCountryName を通す。
  * 文字数は config.js の countryNameMinLength / countryNameMaxLength で変えられる。
+ * § による文字装飾（色・太字など）は使える。文字数には数えない（画面に出る文字で数える）。
  */
 
+// Minecraft の装飾コード（§ とその次の1文字）。画面には出ない
+const FORMAT_CODE = /§[\s\S]/g;
+
 // 国名に使えない文字
-// - § … 色や装飾のコード。チャットや名前の表示が崩れる
 // - " \ ` … 名前を文字列に埋め込む処理（tellraw や sendData）を壊す
 // - 制御文字・見えない文字 … 空白に見える国名や、表示が崩れる国名を防ぐ
-const FORBIDDEN_CHARS = /[§"\\`\u0000-\u001F\u007F-\u009F\u00AD\u034F\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u2028-\u202F\u205F-\u206F\u3164\uFEFF\uFFA0\uFFF9-\uFFFB]/;
+const FORBIDDEN_CHARS = /["\\`\u0000-\u001F\u007F-\u009F\u00AD\u034F\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u2028-\u202F\u205F-\u206F\u3164\uFEFF\uFFA0\uFFF9-\uFFFB]/;
 
 // 運営や「国なし」の表示になりすませる名前（照合は表記ゆれをそろえたあとの完全一致）
 const RESERVED_NAMES = [
@@ -72,23 +75,35 @@ const NG_KEYS = NG_WORDS.map(toKey).filter(key => key.length > 0);
  */
 export function validateCountryName(rawName) {
     const name = typeof rawName === "string" ? rawName.trim() : "";
-    const length = Array.from(name).length; // 絵文字なども1文字として数える
+    const visible = name.replace(FORMAT_CODE, "").trim(); // 装飾コードを除いた、画面に出る部分
+    const length = Array.from(visible).length; // 絵文字なども1文字として数える
     const min = config.countryNameMinLength;
     const max = config.countryNameMaxLength;
 
-    if (length === 0) {
+    if (name.length === 0) {
         return { ok: false, message: "§c国名を入力してください。" };
+    }
+    if (length === 0) {
+        return { ok: false, message: "§c装飾コードだけでなく、画面に表示される文字を入れてください。" };
     }
     if (length < min) {
         return { ok: false, message: `§c国名は${min}文字以上にしてください。（今は${length}文字です）` };
     }
     if (length > max) {
-        return { ok: false, message: `§c国名は${max}文字以内にしてください。（今は${length}文字です）` };
+        return { ok: false, message: `§c国名は${max}文字以内にしてください。（装飾コードは数えません。今は${length}文字です）` };
+    }
+    if (Array.from(name).length > config.countryNameMaxRawLength) {
+        return { ok: false, message: `§c装飾コードが多すぎます。装飾コードを含めて${config.countryNameMaxRawLength}文字以内にしてください。` };
+    }
+    if (visible.includes("§")) {
+        // 最後に残った § のように、あとに装飾コードの文字が続かないもの
+        // （メッセージに § そのものを書くと装飾コードとして解釈されるので、書かない）
+        return { ok: false, message: "§c装飾コードが途中で終わっています。名前の最後に、装飾コード用の記号（セクション記号）だけが残っていないか確認してください。" };
     }
     if (FORBIDDEN_CHARS.test(name)) {
-        return { ok: false, message: "§c国名に使えない文字が含まれています。（§ \" \\ ` と、見えない文字・制御文字は使えません）" };
+        return { ok: false, message: "§c国名に使えない文字が含まれています。（\" \\ ` と、見えない文字・制御文字は使えません）" };
     }
-    const key = toKey(name);
+    const key = toKey(visible); // 装飾コードを挟んだ言い換えを防ぐため、装飾コードを除いて調べる
     if (RESERVED_KEYS.has(key)) {
         return { ok: false, message: "§cその名前は運営などと間違えやすいため、国名に使えません。" };
     }

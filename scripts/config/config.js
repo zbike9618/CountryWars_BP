@@ -7,9 +7,11 @@ export default {
 
     //建国するのに必要な金額
     countryprice: 1000,
-    //国名の文字数（絵文字なども1文字として数える）
+    //国名の文字数（画面に表示される文字数。§の装飾コードは数えず、絵文字なども1文字として数える）
     countryNameMinLength: 1,
     countryNameMaxLength: 16,
+    //国名の長さの上限（§の装飾コードも含めた文字数）
+    countryNameMaxRawLength: 64,
     //1チャンクごとにおける土地の維持費
     maintenance: 100,
     //チャンク購入の金額
