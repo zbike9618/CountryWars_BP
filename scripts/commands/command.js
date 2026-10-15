@@ -27,3 +27,5 @@ import "./kill"
 import "./lobby"
 import "./map"
 import "./plotchunk"
+import "./setting"
+

@@ -480,22 +480,110 @@ world.beforeEvents.playerPlaceBlock.subscribe((ev) => {
         player.sendMessage({ translate: "cw.chunk.place", with: [check.countryName] })
     }
 })
-world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
-    const player = ev.player
-    const chunkId = Chunk.positionToChunkId(ev.block.location, ev.block.dimension.id)
-    const blockId = ev.block.typeId
+function getOffsetLocation(loc, face) {
+    let { x, y, z } = loc;
+    switch (face) {
+        case "North": z -= 1; break;
+        case "South": z += 1; break;
+        case "East":  x += 1; break;
+        case "West":  x -= 1; break;
+        case "Up":    y += 1; break;
+        case "Down":  y -= 1; break;
+    }
+    return { x, y, z };
+}
 
+world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
+    const player = ev.player;
+    const blockLoc = ev.block.location;
+    const dimensionId = ev.block.dimension.id;
+    const clickedChunkId = Chunk.positionToChunkId(blockLoc, dimensionId);
+    const itemStack = ev.itemStack;
+    const itemTypeId = itemStack?.typeId;
+
+    // 水バケツ・溶岩バケツ・その他特殊アイテム（火打石・スポーンエッグ・ボート等）による保護領域の改変を防ぐ
+    const isBucketOrSpecialItem = itemTypeId && (
+        itemTypeId.includes("bucket") ||
+        itemTypeId === "minecraft:flint_and_steel" ||
+        itemTypeId === "minecraft:fire_charge" ||
+        itemTypeId.endsWith("_spawn_egg") ||
+        itemTypeId.includes("boat") ||
+        itemTypeId.includes("raft") ||
+        itemTypeId.includes("minecart") ||
+        itemTypeId === "minecraft:armor_stand" ||
+        itemTypeId === "minecraft:end_crystal" ||
+        itemTypeId.endsWith("_hoe") ||
+        itemTypeId.endsWith("_shovel") ||
+        itemTypeId.endsWith("_axe") ||
+        itemTypeId === "minecraft:bone_meal"
+    );
+
+    if (isBucketOrSpecialItem) {
+        const targetLoc = ev.blockFace ? getOffsetLocation(blockLoc, ev.blockFace) : blockLoc;
+        const offsetChunkId = Chunk.positionToChunkId(targetLoc, dimensionId);
+
+        const checkClicked = Chunk.checkPermission(player, clickedChunkId, "place_block");
+        const checkOffset = Chunk.checkPermission(player, offsetChunkId, "place_block");
+
+        if (!checkClicked.allowed || !checkOffset.allowed) {
+            const forbiddenCountry = !checkClicked.allowed ? checkClicked.countryName : checkOffset.countryName;
+            player.sendMessage({ translate: "cw.chunk.place", with: [forbiddenCountry] });
+            ev.cancel = true;
+            return;
+        }
+    }
+
+    const blockId = ev.block.typeId;
     const inventory = ev.block.getComponent("minecraft:inventory");
     let permType = "interact";
 
     if (!inventory && ((!Data.usableBlocks.includes(blockId) && !player.isSneaking) || player.isSneaking)) return;
 
-    const check = Chunk.checkPermission(player, chunkId, permType);
+    const check = Chunk.checkPermission(player, clickedChunkId, permType);
     if (!check.allowed) {
-        player.sendMessage({ translate: "cw.chunk.interact", with: [check.countryName] })
-        ev.cancel = true
+        player.sendMessage({ translate: "cw.chunk.interact", with: [check.countryName] });
+        ev.cancel = true;
     }
-})
+});
+
+world.beforeEvents.itemUse.subscribe((ev) => {
+    const player = ev.source;
+    if (!player || player.typeId !== "minecraft:player") return;
+    const itemTypeId = ev.itemStack?.typeId;
+    if (!itemTypeId || !itemTypeId.includes("bucket")) return;
+
+    const chunkId = Chunk.positionToChunkId(player.location, player.dimension.id);
+    const check = Chunk.checkPermission(player, chunkId, "place_block");
+    if (!check.allowed) {
+        player.sendMessage({ translate: "cw.chunk.place", with: [check.countryName] });
+        ev.cancel = true;
+    }
+});
+
+world.beforeEvents.playerInteractWithEntity.subscribe((ev) => {
+    const player = ev.player;
+    const targetEntity = ev.target;
+    if (!player || !targetEntity) return;
+
+    const chunkId = Chunk.positionToChunkId(targetEntity.location, targetEntity.dimension.id);
+    const itemStack = ev.itemStack;
+    const itemTypeId = itemStack?.typeId;
+
+    const isDangerousItem = itemTypeId && (
+        itemTypeId.includes("bucket") ||
+        itemTypeId === "minecraft:flint_and_steel" ||
+        itemTypeId === "minecraft:fire_charge" ||
+        itemTypeId.endsWith("_spawn_egg")
+    );
+
+    const permType = isDangerousItem ? "place_block" : "interact";
+    const check = Chunk.checkPermission(player, chunkId, permType);
+
+    if (!check.allowed) {
+        player.sendMessage({ translate: "cw.chunk.interact", with: [check.countryName] });
+        ev.cancel = true;
+    }
+});
 
 world.beforeEvents.entityHurt.subscribe((ev) => {
     const entity = ev.hurtEntity

@@ -297,6 +297,17 @@ export class Util {
         }
     }
 
+    /**
+     * プレイヤーがCombat表示（ActionBar）をONにしているか判定
+     * @param {server.Player} player 
+     * @returns {boolean}
+     */
+    static shouldShowCombat(player) {
+        if (!player || !player.isValid) return false;
+        const playerData = playerDatas.get(player.id);
+        return !(playerData?.hideCombat);
+    }
+
 }
 
 // スコアボード "cw:combat" の取得・初期化
@@ -335,11 +346,15 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         const obj = getCombatObjective();
         if (victim.typeId === "minecraft:player") {
             obj.setScore(victim, 5);
-            victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            if (Util.shouldShowCombat(victim)) {
+                victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
         if (attacker.typeId === "minecraft:player") {
             obj.setScore(attacker, 5);
-            attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            if (Util.shouldShowCombat(attacker)) {
+                attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
     }
 });
@@ -355,10 +370,12 @@ system.runInterval(() => {
             if (score > 0) {
                 const newScore = score - 1;
                 obj.setScore(player, newScore);
-                if (newScore > 0) {
-                    player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
-                } else {
-                    player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                if (Util.shouldShowCombat(player)) {
+                    if (newScore > 0) {
+                        player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
+                    } else {
+                        player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                    }
                 }
             }
         } catch (e) { }
