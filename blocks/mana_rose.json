@@ -1,5 +1,5 @@
 {
-  "format_version": "1.20.60",
+  "format_version": "1.21.0",
   "minecraft:block": {
     "description": {
       "identifier": "cw:mana_rose",
@@ -16,9 +16,9 @@
       }
     },
     "components": {
-      "minecraft:on_random_tick": {
-        "event": "cw:try_grow"
-      },
+      "minecraft:custom_components": [
+        "cw:mana_rose"
+      ],
       "minecraft:geometry": "geometry.cw.mana_rose_0",
       "minecraft:material_instances": {
         "*": {
@@ -54,26 +54,6 @@
               "minecraft:farmland",
               "minecraft:podzol",
               "minecraft:moss_block"
-            ]
-          }
-        ]
-      }
-    },
-    "events": {
-      "cw:try_grow": {
-        "sequence": [
-          {
-            "condition": "q.block_state('cw:age') < 3",
-            "randomize": [
-              {
-                "weight": 5,
-                "set_block_state": {
-                  "cw:age": "q.block_state('cw:age') + 1"
-                }
-              },
-              {
-                "weight": 95
-              }
             ]
           }
         ]

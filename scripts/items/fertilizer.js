@@ -38,6 +38,7 @@ const cropGrowthData = {
     "minecraft:pumpkin_stem": { state: "growth", max: 7 },
     "minecraft:melon_stem": { state: "growth", max: 7 },
     "minecraft:torchflower_crop": { state: "age", max: 2 },
-    "minecraft:pitcher_crop": { state: "age", max: 4 }
+    "minecraft:pitcher_crop": { state: "age", max: 4 },
+    "cw:mana_rose": { state: "cw:age", max: 3 }
 };
 

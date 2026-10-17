@@ -16,6 +16,7 @@ import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
 import "./potion_crafter.js";
+import "./mana_rose.js";
 
 
 world.afterEvents.worldLoad.subscribe((event) => {
