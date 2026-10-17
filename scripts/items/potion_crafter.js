@@ -464,7 +464,7 @@ async function _showForm(player, potionData = []) {
             const slotIndex = i + 18;
             if (item) {
                 invItems[i] = item;
-                
+
                 // ポーションアイテムであるかの解析
                 if (item.typeId === "minecraft:potion" || item.typeId === "minecraft:splash_potion") {
                     const parsed = parsePotionData(item);
@@ -723,4 +723,4 @@ world.afterEvents.itemCompleteUse.subscribe((event) => {
         player.playSound("random.levelup", { volume: 0.5, pitch: 1.8 });
         player.sendMessage("§a✨ 特製ポーションの効能を発動しました！");
     }
-});
+});
