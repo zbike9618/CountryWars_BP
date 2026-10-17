@@ -19,7 +19,7 @@ export class Stock {
 
     /** @private */
     get latestPrice() {
-        const stock = this.countryData.stock || [];
+        const stock = this.countryData?.stock || [];
         return stock.length > 0 ? stock[stock.length - 1].price : 0;
     }
 
@@ -208,24 +208,30 @@ export class Stock {
 
     /** @param {number} int */
     set(int) {
+        if (!this.countryData) return;
         if (!this.countryData.stock) this.countryData.stock = [];
         if (this.countryData.stock.length > 72) this.countryData.stock.shift();
         this.countryData.stock.push({ price: int, date: Date.now() });
         countryDatas.set(this.countryData.id, this.countryData);
     }
     randomset() {
-        const countryData = this.countryData
-        const playeramount = countryData.players.length;
+        const countryData = this.countryData;
+        if (!countryData) return;
 
-        const chunkamount = countryData.chunkAmount
-        const money = countryData.money
-        const nowprice = this.latestPrice
-        //nowpriceの10パーセントを+-する
+        if (!Array.isArray(countryData.players)) {
+            countryData.players = countryData.owner ? [countryData.owner] : [];
+        }
+
+        const playeramount = countryData.players.length;
+        const chunkamount = Number(countryData.chunkAmount) || 0;
+        const money = Number(countryData.money) || 0;
+        const nowprice = this.latestPrice || 10;
+        // nowpriceの10パーセントを+-する
         const moneyInt = Math.floor(money * 0.001);
         const playerInt = Math.floor(playeramount * 100);
         const chunkInt = Math.floor(chunkamount * 10);
         const nowpriceInt = Math.floor((Math.random() * nowprice * 0.2) - (nowprice * 0.1));
-        const int = moneyInt + playerInt + chunkInt + nowpriceInt
+        const int = Math.max(1, moneyInt + playerInt + chunkInt + nowpriceInt);
         this.set(Math.floor(int));
     }
 }

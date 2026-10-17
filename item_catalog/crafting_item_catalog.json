@@ -29,7 +29,7 @@
                     {
                         "group_identifier": {
                             "icon": "cw:dance_b",
-                            "name": "itemGroup.name.playerdolls"
+                            "name": "cw:itemGroup.name.playerdolls"
                         },
                         "items": [
                             "cw:dance_b",
