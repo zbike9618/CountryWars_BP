@@ -9,7 +9,7 @@ const playerDatas = new Dypro("player")
 const chunkDatas = new Dypro("chunk")
 import { Data } from "./data";
 import { hasPermission } from "./country";
-const explosionMap = new Map();
+
 
 
 
@@ -498,103 +498,106 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
 })
 
 world.beforeEvents.entityHurt.subscribe((ev) => {
-    const entity = ev.hurtEntity
+    const entity = ev.hurtEntity;
 
     const damageSource = ev.damageSource;
     const attacker = damageSource.damagingEntity;
     if (!attacker || attacker.typeId !== "minecraft:player") return;
 
-    const loc = entity.location
-    const chunkId = Chunk.positionToChunkId(loc, entity.dimension.id)
+    const isWindCharge = damageSource.damagingProjectile?.typeId === "minecraft:wind_charge_projectile";
+
+    // 自身へのウィンドチャージ（自爆ジャンプ等）はチャンク保護でキャンセルしない
+    if (attacker.id === entity.id && isWindCharge) return;
+
+    const loc = entity.location;
+    const chunkId = Chunk.positionToChunkId(loc, entity.dimension.id);
 
     const permType = entity.typeId === "minecraft:player" ? "attack_player" : "attack_entity";
     const check = Chunk.checkPermission(attacker, chunkId, permType);
 
     if (!check.allowed) {
-        attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
         ev.cancel = true;
-    }
-})
-world.beforeEvents.explosion.subscribe((ev) => {
-    // ウィンドチャージは標準の挙動を維持し、独自爆発へ変換しない
-    if (ev.source?.typeId === "minecraft:wind_charge_projectile") return;
 
-    if (ev.source && explosionMap.has(ev.source.id)) {
-        const locations = explosionMap.get(ev.source.id);
-        const dimension = ev.dimension;
-        const blocksToDestroy = [];
-
-        for (const loc of locations) {
-            const block = dimension.getBlock(loc);
-            if (block) {
-                if (block.typeId === "minecraft:bedrock") continue;
-                blocksToDestroy.push(block);
-            }
-        }
-        if (blocksToDestroy.length > 0) {
-            ev.setImpactedBlocks(blocksToDestroy);
-        }
-
-        // Cleanup to prevent data bloat
-        explosionMap.delete(ev.source.id);
-    } else {
-        const blocks = ev.getImpactedBlocks();
-        if (blocks.length === 0) return;
-        const dimension = ev.dimension;
-        let explodedInCountry = false;
-        const destroyBlockLocations = [];
-
-        // 影響を受けたブロックの範囲から爆発の威力を動的に計算
-        let maxDistSq = 0;
-        const centerLoc = blocks[0].location;
-        for (const block of blocks) {
-            const dx = block.location.x - centerLoc.x;
-            const dy = block.location.y - centerLoc.y;
-            const dz = block.location.z - centerLoc.z;
-            const distSq = dx * dx + dy * dy + dz * dz;
-            if (distSq > maxDistSq) maxDistSq = distSq;
-        }
-        const explosionPower = Math.max(4, Math.ceil(Math.sqrt(maxDistSq)));
-
-        for (const block of blocks) {
-            const chunkId = Chunk.positionToChunkId(block.location, ev.dimension.id);
-            const countryDataId = Chunk.checkChunk(chunkId);
-
-            if (countryDataId && (countryDataId == "admin" || (countryDataId !== "wasteland"))) {
-                if (!explodedInCountry) {
-                    ev.cancel = true;
-                    system.run(() => {
-                        dimension.createExplosion(block.location, explosionPower, {
-                            breaksBlocks: false
-                        });
-                    });
-                    explodedInCountry = true;
-                }
-                if (block.typeId === "minecraft:tnt") {
-                    destroyBlockLocations.push({
-                        x: block.location.x,
-                        y: block.location.y,
-                        z: block.location.z
-                    });
-                }
-            } else {
-                // Store only the location properties
-                destroyBlockLocations.push({
-                    x: block.location.x,
-                    y: block.location.y,
-                    z: block.location.z
-                });
-            }
-        }
-
-        if (destroyBlockLocations.length > 0) {
-            const players = world.getAllPlayers();
-            if (players.length === 0) return;
-            const spawnpos = players[0].location;
+        // ウィンドチャージの場合、ダメージは無効化するがノックバックを適用
+        if (isWindCharge) {
+            const projLoc = damageSource.damagingProjectile?.location ?? attacker.location;
+            const dx = entity.location.x - projLoc.x;
+            const dz = entity.location.z - projLoc.z;
+            const dist = Math.hypot(dx, dz) || 0.1;
             system.run(() => {
-                const entity = dimension.spawnEntity("cw:explosion", { x: spawnpos.x, y: 320, z: spawnpos.z });
-                explosionMap.set(entity.id, destroyBlockLocations);
+                if (entity.isValid) {
+                    entity.applyKnockback(dx / dist, dz / dist, 1.6, 0.8);
+                }
             });
+            return;
+        }
+
+        attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] });
+    }
+});
+
+world.beforeEvents.explosion.subscribe((ev) => {
+    const blocks = ev.getImpactedBlocks();
+    if (blocks.length === 0) return;
+
+    const dimension = ev.dimension;
+
+    // 影響を受けるブロックに国または管理者領土のブロックが含まれているか確認
+    let explodedInCountry = false;
+    for (const block of blocks) {
+        const chunkId = Chunk.positionToChunkId(block.location, dimension.id);
+        const countryDataId = Chunk.checkChunk(chunkId);
+
+        if (countryDataId && (countryDataId === "admin" || countryDataId !== "wasteland")) {
+            explodedInCountry = true;
+            break;
         }
     }
+
+    if (!explodedInCountry) return;
+
+
+
+    const isWindCharge = ev.source?.typeId === "minecraft:wind_charge_projectile";
+
+    const centerLoc = blocks[0].location;
+
+    // 爆発の発生地点を取得 (system.runの前に同期的に座標をコピー)
+    const explosionLoc = ev.source ? {
+        x: ev.source.location.x,
+        y: ev.source.location.y,
+        z: ev.source.location.z
+    } : centerLoc;
+
+    // ウィンドチャージならcreateExplosionではなくノックバックを周囲のエンティティに発生させる
+    if (isWindCharge) {
+        system.run(() => {
+            const entities = dimension.getEntities({ location: explosionLoc, maxDistance: 4.5 });
+            for (const entity of entities) {
+                const dx = entity.location.x - explosionLoc.x;
+                const dz = entity.location.z - explosionLoc.z;
+                const dist = Math.hypot(dx, dz) || 0.1;
+                entity.applyKnockback(dx / dist, dz / dist, Math.max(0.8, 2.0 - dist * 0.3), 0.85);
+            }
+        });
+        return;
+    }
+    // チャンク内の爆破をキャンセル
+    ev.cancel = true;
+    // 影響を受けたブロックの範囲から爆発の威力を動的に計算
+    let maxDistSq = 0;
+    for (const block of blocks) {
+        const dx = block.location.x - centerLoc.x;
+        const dy = block.location.y - centerLoc.y;
+        const dz = block.location.z - centerLoc.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+        if (distSq > maxDistSq) maxDistSq = distSq;
+    }
+    const explosionPower = Math.max(4, Math.ceil(Math.sqrt(maxDistSq)));
+
+    system.run(() => {
+        dimension.createExplosion(explosionLoc, explosionPower, {
+            breaksBlocks: false
+        });
+    });
 });
