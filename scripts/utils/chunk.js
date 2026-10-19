@@ -498,27 +498,47 @@ world.beforeEvents.playerInteractWithBlock.subscribe((ev) => {
 })
 
 world.beforeEvents.entityHurt.subscribe((ev) => {
-    const entity = ev.hurtEntity
+    const entity = ev.hurtEntity;
 
     const damageSource = ev.damageSource;
     const attacker = damageSource.damagingEntity;
     if (!attacker || attacker.typeId !== "minecraft:player") return;
 
-    const loc = entity.location
-    const chunkId = Chunk.positionToChunkId(loc, entity.dimension.id)
+    const isWindCharge = damageSource.damagingProjectile?.typeId === "minecraft:wind_charge_projectile" ||
+        damageSource.damagingProjectile?.typeId === "minecraft:breeze_wind_charge_projectile" ||
+        damageSource.cause === "wind_charge";
+
+    // 自身へのウィンドチャージ（自爆ジャンプ等）はチャンク保護でキャンセルしない
+    if (attacker.id === entity.id && isWindCharge) return;
+
+    const loc = entity.location;
+    const chunkId = Chunk.positionToChunkId(loc, entity.dimension.id);
 
     const permType = entity.typeId === "minecraft:player" ? "attack_player" : "attack_entity";
     const check = Chunk.checkPermission(attacker, chunkId, permType);
 
     if (!check.allowed) {
-        attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] })
         ev.cancel = true;
-    }
-})
-world.beforeEvents.explosion.subscribe((ev) => {
-    // ウィンドチャージは標準の挙動を維持し、独自爆発へ変換しない
-    if (ev.source?.typeId === "minecraft:wind_charge_projectile") return;
 
+        // ウィンドチャージの場合、ダメージは無効化するがノックバックを適用
+        if (isWindCharge) {
+            const projLoc = damageSource.damagingProjectile?.location ?? attacker.location;
+            const dx = entity.location.x - projLoc.x;
+            const dz = entity.location.z - projLoc.z;
+            const dist = Math.hypot(dx, dz) || 0.1;
+            system.run(() => {
+                if (entity.isValid) {
+                    entity.applyKnockback(dx / dist, dz / dist, 1.6, 0.8);
+                }
+            });
+            return;
+        }
+
+        attacker.sendMessage({ translate: "cw.chunk.hurt", with: [check.countryName] });
+    }
+});
+
+world.beforeEvents.explosion.subscribe((ev) => {
     const blocks = ev.getImpactedBlocks();
     if (blocks.length === 0) return;
 
@@ -541,9 +561,34 @@ world.beforeEvents.explosion.subscribe((ev) => {
     // チャンク内の爆破をキャンセル
     ev.cancel = true;
 
+    const isWindCharge = ev.source?.typeId === "minecraft:wind_charge_projectile" ||
+        ev.source?.typeId === "minecraft:breeze_wind_charge_projectile";
+
+    const centerLoc = blocks[0].location;
+
+    // 爆発の発生地点を取得 (system.runの前に同期的に座標をコピー)
+    const explosionLoc = ev.source ? {
+        x: ev.source.location.x,
+        y: ev.source.location.y,
+        z: ev.source.location.z
+    } : centerLoc;
+
+    // ウィンドチャージならcreateExplosionではなくノックバックを周囲のエンティティに発生させる
+    if (isWindCharge) {
+        system.run(() => {
+            const entities = dimension.getEntities({ location: explosionLoc, maxDistance: 4.5 });
+            for (const entity of entities) {
+                const dx = entity.location.x - explosionLoc.x;
+                const dz = entity.location.z - explosionLoc.z;
+                const dist = Math.hypot(dx, dz) || 0.1;
+                entity.applyKnockback(dx / dist, dz / dist, Math.max(0.8, 2.0 - dist * 0.3), 0.85);
+            }
+        });
+        return;
+    }
+
     // 影響を受けたブロックの範囲から爆発の威力を動的に計算
     let maxDistSq = 0;
-    const centerLoc = blocks[0].location;
     for (const block of blocks) {
         const dx = block.location.x - centerLoc.x;
         const dy = block.location.y - centerLoc.y;
@@ -552,13 +597,6 @@ world.beforeEvents.explosion.subscribe((ev) => {
         if (distSq > maxDistSq) maxDistSq = distSq;
     }
     const explosionPower = Math.max(4, Math.ceil(Math.sqrt(maxDistSq)));
-
-    // 爆発の発生地点を取得 (system.runの前に同期的に座標をコピー)
-    const explosionLoc = ev.source ? {
-        x: ev.source.location.x,
-        y: ev.source.location.y,
-        z: ev.source.location.z
-    } : centerLoc;
 
     system.run(() => {
         dimension.createExplosion(explosionLoc, explosionPower, {
