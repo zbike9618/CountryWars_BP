@@ -504,9 +504,7 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
     const attacker = damageSource.damagingEntity;
     if (!attacker || attacker.typeId !== "minecraft:player") return;
 
-    const isWindCharge = damageSource.damagingProjectile?.typeId === "minecraft:wind_charge_projectile" ||
-        damageSource.damagingProjectile?.typeId === "minecraft:breeze_wind_charge_projectile" ||
-        damageSource.cause === "wind_charge";
+    const isWindCharge = damageSource.damagingProjectile?.typeId === "minecraft:wind_charge_projectile";
 
     // 自身へのウィンドチャージ（自爆ジャンプ等）はチャンク保護でキャンセルしない
     if (attacker.id === entity.id && isWindCharge) return;
@@ -558,11 +556,9 @@ world.beforeEvents.explosion.subscribe((ev) => {
 
     if (!explodedInCountry) return;
 
-    // チャンク内の爆破をキャンセル
-    ev.cancel = true;
 
-    const isWindCharge = ev.source?.typeId === "minecraft:wind_charge_projectile" ||
-        ev.source?.typeId === "minecraft:breeze_wind_charge_projectile";
+
+    const isWindCharge = ev.source?.typeId === "minecraft:wind_charge_projectile";
 
     const centerLoc = blocks[0].location;
 
@@ -586,7 +582,8 @@ world.beforeEvents.explosion.subscribe((ev) => {
         });
         return;
     }
-
+    // チャンク内の爆破をキャンセル
+    ev.cancel = true;
     // 影響を受けたブロックの範囲から爆発の威力を動的に計算
     let maxDistSq = 0;
     for (const block of blocks) {
