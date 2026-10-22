@@ -2,7 +2,6 @@ import { Dypro } from "./dypro.js"
 import * as server from "@minecraft/server"
 const { world, system, RawMessage } = server;
 import { ChestFormData } from "./chest_shop/chest-ui"
-import { sendDataForPlayers } from "./sendData.js";
 import { Util } from "./util.js";
 import { itemIdToPath } from "../config/texture_config.js"
 import { Data } from "./data.js";
@@ -168,8 +167,8 @@ export class playerMarketSystem {
             }
         }
 
-        const data = `Util.addMoney(world.getEntity("${seller}"), ${currentPrice})`;
-        sendDataForPlayers(data, seller);
+        // お金はワールドのデータなので、売り手がオフラインでもその場で足せる（キューに積むと48時間で捨てられる）
+        Util.addMoney({ id: seller }, currentPrice);
 
         player.sendMessage({
             rawtext: [
