@@ -1,3 +1,4 @@
+import { openTransceiver } from "../commands/sendmessage.js";
 import { world } from "@minecraft/server";
 import { ActionFormData } from "@minecraft/server-ui";
 import { Dypro } from "./dypro.js";
@@ -154,6 +155,13 @@ function show_form(player) {
         lore: ["<<Click here>>"],
         isGlint: true, editedName: true
     })
+    form.setButton(18, {
+        iconPath: "textures/items/compass_item",
+        name: "トランシーバー",
+        stackAmount: 1,
+        lore: ["指定したオンラインプレイヤーに送信"],
+        isGlint: true, editedName: true
+    })
     form.setButton(26, {
         iconPath: "textures/ui/how_to_play_button_pressed_light",
         name: "cw.phone.help",
@@ -217,6 +225,9 @@ function show_form(player) {
                 break;
             case 17:
                 player.runCommand("sv:tips")
+                break;
+            case 18:
+                openTransceiver(player).catch(() => player.sendMessage("トランシーバーを開けませんでした。もう一度お試しください。"));
                 break;
             case 26:
                 Help.mainForm(player);
