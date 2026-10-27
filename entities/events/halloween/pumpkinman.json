@@ -18,10 +18,20 @@
         "entity_types": [
           {
             "filters": {
-              "operator": "not",
-              "test": "is_family",
-              "subject": "other",
-              "value": "breeze"
+              "all_of": [
+                {
+                  "test": "is_family",
+                  "subject": "other",
+                  "operator": "!=",
+                  "value": "halloween"
+                },
+                {
+                  "test": "is_family",
+                  "subject": "other",
+                  "operator": "!=",
+                  "value": "breeze"
+                }
+              ]
             }
           }
         ],
@@ -43,43 +53,22 @@
         "entity_types": [
           {
             "filters": {
-              "any_of": [
+              "all_of": [
                 {
                   "test": "is_family",
                   "subject": "other",
-                  "value": "player"
+                  "operator": "!=",
+                  "value": "halloween"
                 },
                 {
                   "test": "is_family",
                   "subject": "other",
-                  "value": "snowgolem"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "irongolem"
+                  "operator": "!=",
+                  "value": "inanimate"
                 }
               ]
             },
             "max_dist": 35
-          },
-          {
-            "filters": {
-              "any_of": [
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "villager"
-                },
-                {
-                  "test": "is_family",
-                  "subject": "other",
-                  "value": "wandering_trader"
-                }
-              ]
-            },
-            "max_dist": 35,
-            "must_see": false
           }
         ],
         "priority": 2
@@ -437,6 +426,7 @@
       "minecraft:spawn_egg_interaction": {},
       "minecraft:type_family": {
         "family": [
+          "halloween",
           "pumpkinman",
           "monster",
           "mob"

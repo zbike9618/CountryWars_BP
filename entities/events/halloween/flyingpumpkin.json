@@ -10,6 +10,7 @@
         "components": {
             "minecraft:type_family": {
                 "family": [
+                    "halloween",
                     "flyingpumpkin",
                     "monster",
                     "mob"
