@@ -17,6 +17,7 @@ import "./tank/import.js";
 import "./redstone.js"
 import "./events/halloween/candy_sword.js";
 import "./events/halloween/ghost_pickaxe.js";
+import "./events/halloween/phantom_boots.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
