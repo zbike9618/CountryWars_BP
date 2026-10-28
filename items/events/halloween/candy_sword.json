@@ -19,7 +19,7 @@
                 "slot": "sword"
             },
             "minecraft:durability": {
-                "value": 1561
+                "max_durability": 1561
             }
         }
     }
