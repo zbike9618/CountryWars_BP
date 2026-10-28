@@ -3,6 +3,9 @@ import { world, system } from "@minecraft/server";
 // 空中ジャンプの最大可能回数（1 = 2段ジャンプ）
 const MAX_AIR_JUMPS = 1;
 
+// 接地判定で足元から下を見るオフセット（ブロック単位）
+const GROUND_CHECK_OFFSET = 0.3;
+
 // プレイヤーごとの空中ジャンプ使用回数を保持するMap
 const airJumpCounts = new Map();
 
@@ -22,6 +25,42 @@ function hasPhantomBoots(player) {
     if (inventory?.container) {
         const item = inventory.container.getItem(player.selectedSlotIndex);
         if (item?.typeId === "cw:phantom_boots") return true;
+    }
+
+    return false;
+}
+
+/**
+ * プレイヤーが接地している（または足元直下にブロックがある）かを判定
+ * ※ジャンプした瞬間にisOnGroundが即座にfalseになり空中判定されるのを防ぐため、少し下のブロックも確認
+ * @param {import("@minecraft/server").Player} player 
+ */
+function isPlayerOnGround(player) {
+    if (player.isOnGround) return true;
+
+    const loc = player.location;
+    const checkY = Math.floor(loc.y - GROUND_CHECK_OFFSET);
+
+    // 足元の4隅と中心をチェック（ブロックの縁に立っている場合もカバー）
+    const offsets = [
+        [0, 0],
+        [0.25, 0.25],
+        [-0.25, 0.25],
+        [0.25, -0.25],
+        [-0.25, -0.25]
+    ];
+
+    for (const [ox, oz] of offsets) {
+        try {
+            const block = player.dimension.getBlock({
+                x: Math.floor(loc.x + ox),
+                y: checkY,
+                z: Math.floor(loc.z + oz)
+            });
+            if (block && !block.isAir && !block.isLiquid) {
+                return true;
+            }
+        } catch (e) { }
     }
 
     return false;
@@ -49,7 +88,7 @@ system.runInterval(() => {
         }
 
         // 地面に着地している、またはブーツを使っていない（装備・手持ちから外した）場合はdelete
-        if (player.isOnGround || !hasPhantomBoots(player)) {
+        if (isPlayerOnGround(player) || !hasPhantomBoots(player)) {
             cleanupPlayer(playerId);
         }
     }
@@ -71,7 +110,7 @@ world.afterEvents.entityDie.subscribe((ev) => {
 world.afterEvents.playerButtonInput.subscribe((ev) => {
     // ジャンプボタンかつボタンが押された瞬間のみ処理
     if (ev.button !== "Jump") return;
-    if (ev.buttonState && ev.buttonState !== "Pressed") return;
+    if (ev.newButtonState && ev.newButtonState !== "Pressed") return;
 
     const player = ev.player;
     if (!player || !player.isValid) return;
@@ -79,8 +118,8 @@ world.afterEvents.playerButtonInput.subscribe((ev) => {
     // ファントムブーツを装備または保持しているか
     if (!hasPhantomBoots(player)) return;
 
-    // 地上にいる場合は通常のジャンプなので空中ジャンプは行わない
-    if (player.isOnGround) return;
+    // 地上（足元直下にブロックがある状態）の場合は通常のジャンプなので空中ジャンプは行わない
+    if (isPlayerOnGround(player)) return;
 
     // 回数制限チェック
     const currentJumps = airJumpCounts.get(player.id) ?? 0;
