@@ -107,7 +107,7 @@ world.afterEvents.playerButtonInput.subscribe((ev) => {
     player.clearVelocity?.();
 
     // 上方向へインパルスを付与
-    player.applyImpulse({ x: 0, y: 1.3, z: 0 });
+    player.applyImpulse({ x: 0, y: 0.6, z: 0 });
 
     // ファントムの羽ばたき音と煙パーティクル演出
     try {
