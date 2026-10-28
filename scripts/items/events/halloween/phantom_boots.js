@@ -37,9 +37,10 @@ function hasPhantomBoots(player) {
  */
 function isPlayerOnGround(player) {
     if (player.isOnGround) return true;
-
     const loc = player.location;
+    player.sendMessage(`${loc.y}`)
     const checkY = Math.floor(loc.y - GROUND_CHECK_OFFSET);
+    player.sendMessage(`${checkY}`)
 
     // 足元の4隅と中心をチェック（ブロックの縁に立っている場合もカバー）
     const offsets = [
