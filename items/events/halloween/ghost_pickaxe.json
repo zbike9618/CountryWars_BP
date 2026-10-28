@@ -31,7 +31,7 @@
                 "destroy_speeds": [
                     {
                         "block": {
-                            "tags": "q.any_tag('stone', 'metal','ore')"
+                            "tags": "q.any_tag('minecraft:is_pickaxe_item_destructible')"
                         },
                         "speed": 6
                     },
