@@ -114,10 +114,7 @@
                 "priority": 4,
                 "xz_dist": 8,
                 "y_dist": 4,
-                "y_offset": [
-                    -1,
-                    2
-                ]
+                "y_offset": -1
             },
             "minecraft:behavior.random_look_around": {
                 "priority": 5
