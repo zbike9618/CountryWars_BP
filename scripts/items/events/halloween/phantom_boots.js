@@ -1,7 +1,7 @@
 import { world, system } from "@minecraft/server";
 
 // 空中ジャンプの最大可能回数（1 = 2段ジャンプ）
-const MAX_AIR_JUMPS = 1;
+const MAX_AIR_JUMPS = 2;
 
 // プレイヤーごとのジャンプ状態を保持するMap
 // Map<playerId, { airJumps: number, hasGroundJumped: boolean }>
@@ -107,7 +107,7 @@ world.afterEvents.playerButtonInput.subscribe((ev) => {
     player.clearVelocity?.();
 
     // 上方向へインパルスを付与
-    player.applyImpulse({ x: 0, y: 0.4, z: 0 });
+    player.applyImpulse({ x: 0, y: 1.3, z: 0 });
 
     // ファントムの羽ばたき音と煙パーティクル演出
     try {
