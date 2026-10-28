@@ -3,11 +3,9 @@ import { world, system } from "@minecraft/server";
 // 空中ジャンプの最大可能回数（1 = 2段ジャンプ）
 const MAX_AIR_JUMPS = 1;
 
-// 接地判定で足元から下を見るオフセット（ブロック単位）
-const GROUND_CHECK_OFFSET = 0.3;
-
-// プレイヤーごとの空中ジャンプ使用回数を保持するMap
-const airJumpCounts = new Map();
+// プレイヤーごとのジャンプ状態を保持するMap
+// Map<playerId, { airJumps: number, hasGroundJumped: boolean }>
+const playerJumpData = new Map();
 
 /**
  * プレイヤーがファントムブーツを足に装備しているか、または手持ちスロットにあるかを判定
@@ -31,55 +29,18 @@ function hasPhantomBoots(player) {
 }
 
 /**
- * プレイヤーが接地している（または足元直下にブロックがある）かを判定
- * ※ジャンプした瞬間にisOnGroundが即座にfalseになり空中判定されるのを防ぐため、少し下のブロックも確認
- * @param {import("@minecraft/server").Player} player 
- */
-function isPlayerOnGround(player) {
-    if (player.isOnGround) return true;
-    const loc = player.location;
-    player.sendMessage(`${loc.y}`)
-    const checkY = Math.floor(loc.y - GROUND_CHECK_OFFSET);
-    player.sendMessage(`${checkY}`)
-
-    // 足元の4隅と中心をチェック（ブロックの縁に立っている場合もカバー）
-    const offsets = [
-        [0, 0],
-        [0.25, 0.25],
-        [-0.25, 0.25],
-        [0.25, -0.25],
-        [-0.25, -0.25]
-    ];
-
-    for (const [ox, oz] of offsets) {
-        try {
-            const block = player.dimension.getBlock({
-                x: Math.floor(loc.x + ox),
-                y: checkY,
-                z: Math.floor(loc.z + oz)
-            });
-            if (block && !block.isAir && !block.isLiquid) {
-                return true;
-            }
-        } catch (e) { }
-    }
-
-    return false;
-}
-
-/**
  * プレイヤーに関連するMapデータを完全に削除・クリーンアップ
  * @param {string} playerId 
  */
 function cleanupPlayer(playerId) {
-    airJumpCounts.delete(playerId);
+    playerJumpData.delete(playerId);
 }
 
-// 毎tick、Mapにデータが存在する場合に状態を検証し、不要・未使用のデータを確実にdelete
+// 毎tick、着地したプレイヤーや使っていないプレイヤーのデータを確実にdelete
 system.runInterval(() => {
-    if (airJumpCounts.size === 0) return;
+    if (playerJumpData.size === 0) return;
 
-    for (const [playerId] of airJumpCounts) {
+    for (const [playerId] of playerJumpData) {
         const player = world.getEntity(playerId);
 
         // プレイヤーが存在しない、または無効な場合は即座にdelete
@@ -88,8 +49,8 @@ system.runInterval(() => {
             continue;
         }
 
-        // 地面に着地している、またはブーツを使っていない（装備・手持ちから外した）場合はdelete
-        if (isPlayerOnGround(player) || !hasPhantomBoots(player)) {
+        // 地面に着地している、またはブーツを使っていない場合はdelete
+        if (player.isOnGround || !hasPhantomBoots(player)) {
             cleanupPlayer(playerId);
         }
     }
@@ -119,15 +80,28 @@ world.afterEvents.playerButtonInput.subscribe((ev) => {
     // ファントムブーツを装備または保持しているか
     if (!hasPhantomBoots(player)) return;
 
-    // 地上（足元直下にブロックがある状態）の場合は通常のジャンプなので空中ジャンプは行わない
-    if (isPlayerOnGround(player)) return;
+    // 完全に地上にいる場合はバニラのジャンプに任せる
+    if (player.isOnGround) return;
+
+    // プレイヤーのジャンプ状態を取得
+    const data = playerJumpData.get(player.id) ?? { airJumps: 0, hasGroundJumped: false };
+    const velocity = player.getVelocity();
+
+    // 【重要】地上で押したジャンプ入力がサーバーに届く頃には、バニラの上昇によって約0.82m浮いてしまっている。
+    // この最初の検知（上昇中かつ地上ジャンプ未記録）は「地上ジャンプ」の入力なので、空中ジャンプは発動せず記録のみ行う。
+    if (!data.hasGroundJumped && velocity.y != 0) {
+        data.hasGroundJumped = true;
+        playerJumpData.set(player.id, data);
+        return;
+    }
 
     // 回数制限チェック
-    const currentJumps = airJumpCounts.get(player.id) ?? 0;
-    if (currentJumps >= MAX_AIR_JUMPS) return;
+    if (data.airJumps >= MAX_AIR_JUMPS) return;
 
-    // 空中ジャンプ回数をカウント
-    airJumpCounts.set(player.id, currentJumps + 1);
+    // 空中ジャンプ実行
+    data.hasGroundJumped = true;
+    data.airJumps++;
+    playerJumpData.set(player.id, data);
 
     // 落下中でも安定して跳べるよう速度をクリア（メソッドが利用可能な場合）
     player.clearVelocity?.();
