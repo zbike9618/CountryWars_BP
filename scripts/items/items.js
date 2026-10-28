@@ -15,6 +15,7 @@ import "./landmine.js";
 import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
+import "./events/halloween/candy_sword.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
