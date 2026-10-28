@@ -1,6 +1,7 @@
 import { ItemStack, world, EquipmentSlot, EntityDamageCause } from "@minecraft/server";
 import { AttackFunction } from "../../AttackFunctions.js";
 import { Lore } from "../../../utils/Lore.js";
+import { Util } from "../../../utils/util.js";
 
 // お菓子ごとの設定 [ドロップ個数, ドロップ確率(%), チャージ量(%)]
 const CANDY_ITEMS = {
@@ -136,7 +137,8 @@ function executeCandySlash(player, slot) {
     player.dimension.playSound("random.levelup", player.location, { volume: 0.8, pitch: 2.0 });
 
     player.onScreenDisplay.setActionBar("§d§l★☆★ キャンディ斬！！ ★☆★");
-
+    //HP回復
+    Util.heal(player, 5)
     // ゲージを0にリセット
     Lore.setLore(player, slot, LORE_KEY, "0%");
 }

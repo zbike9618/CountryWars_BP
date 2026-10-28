@@ -335,11 +335,17 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         const obj = getCombatObjective();
         if (victim.typeId === "minecraft:player") {
             obj.setScore(victim, 5);
-            victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            const victimData = playerDatas.get(victim.id);
+            if (victimData?.settings?.showCombat ?? true) {
+                victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
         if (attacker.typeId === "minecraft:player") {
             obj.setScore(attacker, 5);
-            attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            const attackerData = playerDatas.get(attacker.id);
+            if (attackerData?.settings?.showCombat ?? true) {
+                attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
     }
 });
@@ -355,10 +361,13 @@ system.runInterval(() => {
             if (score > 0) {
                 const newScore = score - 1;
                 obj.setScore(player, newScore);
-                if (newScore > 0) {
-                    player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
-                } else {
-                    player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                const pData = playerDatas.get(player.id);
+                if (pData?.settings?.showCombat ?? true) {
+                    if (newScore > 0) {
+                        player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
+                    } else {
+                        player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                    }
                 }
             }
         } catch (e) { }
