@@ -31,7 +31,7 @@
                 "destroy_speeds": [
                     {
                         "block": {
-                            "tags": "q.any_tag('stone', 'metal')"
+                            "tags": "q.any_tag('stone', 'metal','ore')"
                         },
                         "speed": 6
                     },
