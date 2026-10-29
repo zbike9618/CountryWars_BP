@@ -1,0 +1,15 @@
+{
+    "format_version": "1.21.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "cw:halloween_candy",
+            "menu_category": {
+                "category": "items"
+            }
+        },
+        "components": {
+            "minecraft:icon": "halloween_candy",
+            "minecraft:max_stack_size": 64
+        }
+    }
+}
