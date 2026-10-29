@@ -7,7 +7,7 @@ world.afterEvents.entitySpawn.subscribe((ev) => {
     }
 });
 world.afterEvents.entityDie.subscribe((ev) => {
-    const entity = ev.damageSource.damagingEntity.typeId
+    const entity = ev.damageSource.damagingEntity?.typeId
     const damager = ev.deadEntity;
     if (entity == "cw:pumpkinman") {
         const block = damager.dimension.getBlock(damager.location)

@@ -40,10 +40,8 @@
       "minecraft:jump.static": {},
       "minecraft:can_climb": {},
       "minecraft:physics": {},
-      "minecraft:pushable": {
-        "is_pushable": true,
-        "is_pushable_by_piston": true
-      },
+      "minecraft:pushable_by_entity": {},
+      "minecraft:pushable_by_block": {},
       "minecraft:breathable": {
         "breathes_air": true,
         "breathes_water": false,
