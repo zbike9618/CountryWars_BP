@@ -9,7 +9,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 10
+									"quantity": 30
 								}
 							],
 							"gives": [
@@ -32,7 +32,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 10
+									"quantity": 30
 								}
 							],
 							"gives": [
@@ -55,7 +55,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 10
+									"quantity": 30
 								}
 							],
 							"gives": [
@@ -78,7 +78,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 30
+									"quantity": 40
 								}
 							],
 							"gives": [
@@ -101,7 +101,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 30
+									"quantity": 40
 								}
 							],
 							"gives": [
@@ -124,7 +124,7 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
-									"quantity": 30
+									"quantity": 64
 								}
 							],
 							"gives": [
