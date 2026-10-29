@@ -61,10 +61,7 @@ world.afterEvents.entityItemDrop.subscribe((ev) => {
         // スコアボードを加算
         const newCount = Util.addScore(player, SCOREBOARD_OBJ_ID, 1, "お菓子を投げた回数");
 
-        if (newCount < 100) {
-            player.onScreenDisplay.setActionBar(`§eお菓子を投げた回数: §b${newCount}§f / §a100`);
-            return;
-        }
+        if (newCount < 100) return;
 
         // 100回達成時：称号を付与・セット
         const playerData = playerDatas.get(player.id);
