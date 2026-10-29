@@ -119,6 +119,29 @@
 							"trader_exp": 0,
 							"max_uses": -1,
 							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:pumpkin_doll",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§fハロウィーン記念"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
 						}
 					]
 				}
