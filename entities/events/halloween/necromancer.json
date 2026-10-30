@@ -262,7 +262,7 @@
         "priority": 10
       },
       "minecraft:loot": {
-        "table": "loot_tables/events/halloween/necromancer.json"
+        "table": "loot_tables/entity/events/halloween/necromancer.json"
       }
     }
   }
