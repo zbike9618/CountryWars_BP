@@ -1,0 +1,174 @@
+{
+	"tiers": [
+		{
+			"total_exp_required": 0,
+			"groups": [
+				{
+					"trades": [
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:candy_sword",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§fお菓子を消費して大ダメージ"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:ghost_pickaxe",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f鉱石を掘るとたまにドロップ率3倍"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:phantom_boots",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f空中ジャンプできる"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:black_scythe",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f範囲攻撃といえば..."
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 40
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:shogo_ticket",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f前:ハロウィン好きの"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 40
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:shogo_ticket",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f後:驚かせ屋"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 64
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:pumpkin_doll",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§fハロウィーン記念"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						}
+					]
+				}
+			]
+		}
+	]
+}

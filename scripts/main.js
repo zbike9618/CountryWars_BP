@@ -7,10 +7,12 @@ import "./commands/command"
 import "./utils/playerData"
 import "./utils/interval"
 import "./items/items"
+import "./entity/entities"
 import "./utils/chat"
 import "./utils/bank"
 import "./plugin_controller"
 import "./utils/chest_protection.js"
+import "./events/givecandy.js"
 
 
 world.afterEvents.worldLoad.subscribe(() => {

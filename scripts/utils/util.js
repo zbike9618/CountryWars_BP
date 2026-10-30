@@ -297,19 +297,95 @@ export class Util {
         }
     }
 
+    /**
+     * スコアボードオブジェクトを取得、存在しない場合は作成して返す
+     * @param {string} objectiveId 
+     * @param {string} [displayName] 
+     * @returns {server.ScoreboardObjective | undefined}
+     */
+    static getScoreboardObjective(objectiveId, displayName = objectiveId) {
+        let obj = world.scoreboard.getObjective(objectiveId);
+        if (!obj) {
+            try {
+                obj = world.scoreboard.addObjective(objectiveId, displayName);
+            } catch {
+                obj = world.scoreboard.getObjective(objectiveId);
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * プレイヤーまたはエンティティのスコアを取得
+     * @param {server.Entity | server.ScoreboardIdentity | string} target 
+     * @param {string} objectiveId 
+     * @param {number} [defaultVal=0] 
+     * @returns {number}
+     */
+    static getScore(target, objectiveId, defaultVal = 0) {
+        if (!target) return defaultVal;
+        const obj = this.getScoreboardObjective(objectiveId);
+        if (!obj) return defaultVal;
+        try {
+            return obj.getScore(target) ?? defaultVal;
+        } catch {
+            return defaultVal;
+        }
+    }
+
+    /**
+     * プレイヤーまたはエンティティのスコアを設定
+     * @param {server.Entity | server.ScoreboardIdentity | string} target 
+     * @param {string} objectiveId 
+     * @param {number} score 
+     * @param {string} [displayName] 
+     * @returns {boolean}
+     */
+    static setScore(target, objectiveId, score, displayName = objectiveId) {
+        if (!target) return false;
+        const obj = this.getScoreboardObjective(objectiveId, displayName);
+        if (!obj) return false;
+        try {
+            obj.setScore(target, score);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * プレイヤーまたはエンティティのスコアを加算
+     * @param {server.Entity | server.ScoreboardIdentity | string} target 
+     * @param {string} objectiveId 
+     * @param {number} [amount=1] 
+     * @param {string} [displayName] 
+     * @returns {number} 加算後のスコア
+     */
+    static addScore(target, objectiveId, amount = 1, displayName = objectiveId) {
+        if (!target) return 0;
+        const obj = this.getScoreboardObjective(objectiveId, displayName);
+        if (!obj) return 0;
+        try {
+            if (typeof obj.addScore === "function") {
+                return obj.addScore(target, amount);
+            }
+            const current = obj.getScore(target) ?? 0;
+            const updated = current + amount;
+            obj.setScore(target, updated);
+            return updated;
+        } catch {
+            const current = obj.getScore(target) ?? 0;
+            const updated = current + amount;
+            try { obj.setScore(target, updated); } catch { }
+            return updated;
+        }
+    }
+
 }
 
 // スコアボード "cw:combat" の取得・初期化
 function getCombatObjective() {
-    let obj = world.scoreboard.getObjective("cw:combat");
-    if (!obj) {
-        try {
-            obj = world.scoreboard.addObjective("cw:combat", "Combat Status");
-        } catch (e) {
-            obj = world.scoreboard.getObjective("cw:combat");
-        }
-    }
-    return obj;
+    return Util.getScoreboardObjective("cw:combat", "Combat Status");
 }
 
 // ワールドロード時にスコアボードを確実初期化
@@ -335,11 +411,17 @@ world.afterEvents.entityHurt.subscribe((ev) => {
         const obj = getCombatObjective();
         if (victim.typeId === "minecraft:player") {
             obj.setScore(victim, 5);
-            victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            const victimData = playerDatas.get(victim.id);
+            if (victimData?.settings?.showCombat ?? true) {
+                victim.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
         if (attacker.typeId === "minecraft:player") {
             obj.setScore(attacker, 5);
-            attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            const attackerData = playerDatas.get(attacker.id);
+            if (attackerData?.settings?.showCombat ?? true) {
+                attacker.onScreenDisplay.setActionBar("§c Combat:5s §r");
+            }
         }
     }
 });
@@ -355,10 +437,13 @@ system.runInterval(() => {
             if (score > 0) {
                 const newScore = score - 1;
                 obj.setScore(player, newScore);
-                if (newScore > 0) {
-                    player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
-                } else {
-                    player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                const pData = playerDatas.get(player.id);
+                if (pData?.settings?.showCombat ?? true) {
+                    if (newScore > 0) {
+                        player.onScreenDisplay.setActionBar(`§c Combat:${newScore}s §r`);
+                    } else {
+                        player.onScreenDisplay.setActionBar(`§a Combat:0s §r`);
+                    }
                 }
             }
         } catch (e) { }

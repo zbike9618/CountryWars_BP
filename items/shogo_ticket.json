@@ -1,0 +1,13 @@
+{
+    "format_version": "1.21.10",
+    "minecraft:item": {
+        "description": {
+            "identifier": "cw:shogo_ticket"
+        },
+        "components": {
+            "minecraft:max_stack_size": 1,
+            "minecraft:icon": "paper",
+            "minecraft:glint": true
+        }
+    }
+}

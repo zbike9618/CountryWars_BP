@@ -26,15 +26,24 @@ export class Lore {
         const item = container.getItem(slot)
         if (!item) return;
         const lore = item.getLore()
-        const line = lore.find(l => l.split(":")[0].trim() == loreId)
-        if (line) return line.split(":")[1]?.trim()
+        const line = lore.find(l => {
+            const key = l.split(":")[0].replace(/§[0-9a-fk-or]/gi, "").trim();
+            return key == loreId;
+        })
+        if (line) {
+            const colonIndex = line.indexOf(":");
+            return line.slice(colonIndex + 1).trim();
+        }
     }
     static removeLore(player, slot, loreId) {
         const container = player.getComponent("inventory").container
         const item = container.getItem(slot)
         if (!item) return;
         let lore = item.getLore()
-        lore = lore.filter(l => l.split(":")[0].trim() !== loreId)
+        lore = lore.filter(l => {
+            const key = l.split(":")[0].replace(/§[0-9a-fk-or]/gi, "").trim();
+            return key !== loreId;
+        })
         item.setLore(lore)
         container.setItem(slot, item)
     }
@@ -43,6 +52,9 @@ export class Lore {
         const item = container.getItem(slot)
         if (!item) return false;
         const lore = item.getLore()
-        return lore.some(l => l.split(":")[0].trim() == loreId)
+        return lore.some(l => {
+            const key = l.split(":")[0].replace(/§[0-9a-fk-or]/gi, "").trim();
+            return key == loreId;
+        })
     }
 }

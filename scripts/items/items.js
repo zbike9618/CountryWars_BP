@@ -15,6 +15,11 @@ import "./landmine.js";
 import "./timer_bomb.js";
 import "./tank/import.js";
 import "./redstone.js"
+import "./events/halloween/candy_sword.js";
+import "./events/halloween/ghost_pickaxe.js";
+import "./events/halloween/phantom_boots.js";
+import "./events/halloween/black_scythe.js";
+import "./shogo_ticket.js";
 
 world.afterEvents.worldLoad.subscribe((event) => {
 
