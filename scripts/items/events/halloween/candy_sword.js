@@ -113,22 +113,36 @@ function executeCandySlash(player, slot) {
 
     // 斬撃1: 水平スイング（ハート＆お菓子エフェクト）
     af.ZangekiAttack(
-        { damage: 16, damageCause: EntityDamageCause.entityAttack },
         "minecraft:heart_particle",
         0.3,
         140,
         0,
-        4.5
+        4.5,
+        (target) => {
+            target.applyDamage(16, {
+                cause: EntityDamageCause.entityAttack,
+                damagingEntity: player
+            });
+            target.addEffect("hunger", 60, { amplifier: 4, showParticles: false });
+            target.addEffect("mining_fatigue", 100, { amplifier: 1, showParticles: false });
+        }
     );
 
     // 斬撃2: 斜めスイング（クリティカルスターエフェクト）
     af.ZangekiAttack(
-        { damage: 10, damageCause: EntityDamageCause.entityAttack },
         "minecraft:critical_hit_emitter",
         0.5,
         120,
         45,
-        4.0
+        4.0,
+        (target) => {
+            target.applyDamage(10, {
+                cause: EntityDamageCause.entityAttack,
+                damagingEntity: player
+            });
+            target.addEffect("hunger", 60, { amplifier: 4, showParticles: false });
+            target.addEffect("mining_fatigue", 100, { amplifier: 1, showParticles: false });
+        }
     );
 
     // サウンド演出

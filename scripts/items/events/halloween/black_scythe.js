@@ -16,6 +16,7 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
         y: 0.35,
         z: (view.z / hLen) * speed
     });
+
     p.playSound("mob.enderdragon.flap", { location: p.location, volume: 1.2, pitch: 1.2 });
     await system.waitTicks(10);
     const af = new AttackFunction(p)
@@ -26,10 +27,13 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
         0,
         4.5,
         (target) => {
-            target.applyDamage(15, {
+            target.applyDamage(25, {
                 cause: EntityDamageCause.entityAttack,
                 damagingEntity: p
             });
+            target.addEffect("slowness", 40, { amplifier: 1, showParticles: false });
+            target.addEffect("blindness", 40, { amplifier: 2, showParticles: false });
+            target.addEffect("wither", 100, { amplifier: 1, showParticles: false });
         }
     );
 
@@ -40,10 +44,13 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
         0,
         -4.5,
         (target) => {
-            target.applyDamage(15, {
+            target.applyDamage(25, {
                 cause: EntityDamageCause.entityAttack,
                 damagingEntity: p
             });
+            target.addEffect("slowness", 40, { amplifier: 1, showParticles: false });
+            target.addEffect("blindness", 40, { amplifier: 2, showParticles: false });
+            target.addEffect("wither", 100, { amplifier: 1, showParticles: false });
         }
     );
     p.playSound("mob.blaze.shoot", { location: p.location, volume: 1.2, pitch: 1.2 });
