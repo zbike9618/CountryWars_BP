@@ -11,29 +11,71 @@ export class AttackFunction {
 
   /**
    * 斬撃攻撃（同一tick内で完了）
-   * @param {{damage:number, damageCause: import("@minecraft/server").EntityDamageCause | null}} damageInfo ダメージ情報
-   * @param {string} particle パーティクルID
-   * @param {number} eccentricity 離心率 0 = 真円, 1 = 前に伸びる（見た目用）
-   * @param {number} spandeg 扇形の広がり角度（度）
-   * @param {number} angle 0=水平斬り / 180=縦斬り（度）
-   * @param {number} radius 扇の基本半径（攻撃の基準射程）
+   * @param {string | ((target: import("@minecraft/server").Entity) => void) | {damage:number, damageCause?: import("@minecraft/server").EntityDamageCause}} arg1 パーティクルID、またはコールバック (target) => {}、またはdamageInfo
+   * @param {number | string} [arg2] 離心率、またはパーティクルID
+   * @param {number} [arg3] 扇形の広がり角度（度）、または離心率
+   * @param {number} [arg4] 0=水平斬り / 180=縦斬り（度）、または扇形の広がり角度
+   * @param {number} [arg5] 扇の基本半径、または角度
+   * @param {((target: import("@minecraft/server").Entity) => void) | number} [arg6] コールバック (target) => {}、または半径
+   * @param {((target: import("@minecraft/server").Entity) => void)} [arg7] コールバック (target) => {}
+   * @returns {import("@minecraft/server").Entity[]} ヒットしたターゲットの配列
    */
-  ZangekiAttack(
-    damageInfo = { damage: 6, damageCause: EntityDamageCause.entityAttack },
-    particle,
-    eccentricity,
-    spandeg = 120,
-    angle = 0,
-    radius = 3.0
-  ) {
+  ZangekiAttack(...args) {
     const source = this.executor;
-    if (!source) return;
+    if (!source) return [];
+
+    let callback = null;
+    let damageInfo = null;
+    let particle = "";
+    let eccentricity = 0;
+    let spandeg = 120;
+    let angle = 0;
+    let radius = 3.0;
+
+    // パラメータの判定（コールバックを先頭または末尾どちらでも受け取れるように対応）
+    if (typeof args[0] === "function") {
+      // (callback, particle, eccentricity, spandeg, angle, radius)
+      callback = args[0];
+      particle = args[1] ?? "";
+      eccentricity = args[2] ?? 0;
+      spandeg = args[3] ?? 120;
+      angle = args[4] ?? 0;
+      radius = args[5] ?? 3.0;
+    } else if (typeof args[0] === "string") {
+      // (particle, eccentricity, spandeg, angle, radius, callback)
+      particle = args[0];
+      eccentricity = args[1] ?? 0;
+      spandeg = args[2] ?? 120;
+      angle = args[3] ?? 0;
+      radius = args[4] ?? 3.0;
+      if (typeof args[5] === "function") {
+        callback = args[5];
+      }
+    } else if (args[0] && typeof args[0] === "object") {
+      // 後方互換: (damageInfo, particle, eccentricity, spandeg, angle, radius, callback)
+      damageInfo = args[0];
+      particle = args[1] ?? "";
+      eccentricity = args[2] ?? 0;
+      spandeg = args[3] ?? 120;
+      angle = args[4] ?? 0;
+      radius = args[5] ?? 3.0;
+      if (typeof args[6] === "function") {
+        callback = args[6];
+      }
+    } else {
+      particle = args[1] ?? "";
+      eccentricity = args[2] ?? 0;
+      spandeg = args[3] ?? 120;
+      angle = args[4] ?? 0;
+      radius = args[5] ?? 3.0;
+      if (typeof args[6] === "function") {
+        callback = args[6];
+      }
+    }
 
     const dim = source.dimension;
     const headPos = source.getHeadLocation();
     const origin = { x: headPos.x, y: headPos.y - 1, z: headPos.z };
-
-    const { damage, damageCause } = damageInfo;
 
     // ---- パラメータ ----
     const steps = Math.floor(spandeg / 10);              // 斬撃の分割数（多いほどなめらか）
@@ -215,21 +257,30 @@ export class AttackFunction {
         if (hitIds.has(target.id)) continue;
         hitIds.add(target.id);
 
-        try {
-            targets.push(target)
-          target.applyDamage(damage, {
-            cause: damageCause ?? EntityDamageCause.entityAttack,
-            damagingEntity: source,
-          });
-        } catch (e) {
-          console.error("applyDamage error", e);
+        targets.push(target);
+
+        if (typeof callback === "function") {
+          try {
+            callback(target);
+          } catch (e) {
+            console.error("ZangekiAttack callback error", e);
+          }
+        } else if (damageInfo && typeof damageInfo.damage === "number") {
+          try {
+            target.applyDamage(damageInfo.damage, {
+              cause: damageInfo.damageCause ?? EntityDamageCause.entityAttack,
+              damagingEntity: source,
+            });
+          } catch (e) {
+            console.error("applyDamage error", e);
+          }
         }
       }
     } catch (e) {
       console.error("AoE getEntities error", e);
     }
-    finally{
-        return targets;
+    finally {
+      return targets;
     }
   }
 }

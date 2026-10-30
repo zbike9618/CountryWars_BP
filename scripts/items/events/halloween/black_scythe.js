@@ -13,21 +13,31 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
     await system.waitTicks(20)
     const af = new AttackFunction(p)
     af.ZangekiAttack(
-        { damage: 15, damageCause: EntityDamageCause.entityAttack },
         "minecraft:soul",
         0.4,
         140,
         0,
-        4.5
-    )
+        4.5,
+        (target) => {
+            target.applyDamage(15, {
+                cause: EntityDamageCause.entityAttack,
+                damagingEntity: p
+            });
+        }
+    );
 
     af.ZangekiAttack(
-        { damage: 15, damageCause: EntityDamageCause.entityAttack },
         "minecraft:soul",
         0.4,
         140,
         0,
-        -4.5
-    )
+        -4.5,
+        (target) => {
+            target.applyDamage(15, {
+                cause: EntityDamageCause.entityAttack,
+                damagingEntity: p
+            });
+        }
+    );
 
 })
