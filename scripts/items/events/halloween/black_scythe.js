@@ -7,6 +7,14 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
     if (ev.itemStack.typeId != "cw:black_scythe") return;
     if (p.getItemCooldown("cw:black_scythe") > 0) return;
     p.startItemCooldown("cw:black_scythe", 200);
+
+    // 鎌アニメーション再生
+    try {
+        p.playAnimation("animation.black_scythe.movement");
+    } catch (e) {
+        console.warn(`[black_scythe] playAnimation error: ${e}`);
+    }
+
     // 向いている前方に飛ばす
     const view = p.getViewDirection();
     const hLen = Math.hypot(view.x, view.z) || 1;
