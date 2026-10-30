@@ -16,7 +16,7 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
         y: 0.35,
         z: (view.z / hLen) * speed
     });
-    p.playSound("mob.enderdragon.flap", p.location, { volume: 1.2, pitch: 1.2 });
+    p.playSound("mob.enderdragon.flap", { location: p.location, volume: 1.2, pitch: 1.2 });
     await system.waitTicks(10);
     const af = new AttackFunction(p)
     af.ZangekiAttack(
@@ -46,6 +46,6 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
             });
         }
     );
-    p.playSound("mob.blaze.shoot", p.location, { volume: 1.2, pitch: 1.2 });
+    p.playSound("mob.blaze.shoot", { location: p.location, volume: 1.2, pitch: 1.2 });
 
 })
