@@ -6,11 +6,17 @@ world.afterEvents.itemUse.subscribe(async (ev) => {
     if (p.typeId != "minecraft:player") return;
     if (ev.itemStack.typeId != "cw:black_scythe") return;
 
-    p.startItemCooldown("cw:black_scythe", 200)
-    //向いてる前に飛ばす
-    const rot = p.getRotation()
-    p.applyImpulse({ x: Math.cos(rot.y) * 5, y: 0.3, z: Math.sin(rot.y) * 5 })
-    await system.waitTicks(20)
+    p.startItemCooldown("cw:black_scythe", 200);
+    // 向いている前方に飛ばす
+    const view = p.getViewDirection();
+    const hLen = Math.hypot(view.x, view.z) || 1;
+    const speed = 2.5;
+    p.applyImpulse({
+        x: (view.x / hLen) * speed,
+        y: 0.35,
+        z: (view.z / hLen) * speed
+    });
+    await system.waitTicks(20);
     const af = new AttackFunction(p)
     af.ZangekiAttack(
         "minecraft:soul",
