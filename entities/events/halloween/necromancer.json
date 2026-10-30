@@ -98,15 +98,15 @@
         "priority": 2,
         "summon_choices": [
           {
-            "cast_duration": 2,
+            "cast_duration": 1.5,
             "particle_color": "#FF4A0072",
-            "cooldown_time": 4,
+            "cooldown_time": 2,
             "max_activation_range": 4,
             "min_activation_range": 0,
             "start_sound_event": "cast.spell",
             "sequence": [
               {
-                "base_delay": 0.8,
+                "base_delay": 0.5,
                 "shape": "circle",
                 "num_entities_spawned": 5,
                 "delay_per_summon": 0,
@@ -130,15 +130,15 @@
             "weight": 3
           },
           {
-            "cast_duration": 2,
+            "cast_duration": 1.5,
             "particle_color": "#FF4A0072",
-            "cooldown_time": 5,
+            "cooldown_time": 2.5,
             "min_activation_range": 4,
             "max_activation_range": 20,
             "start_sound_event": "cast.spell",
             "sequence": [
               {
-                "base_delay": 0.8,
+                "base_delay": 0.5,
                 "shape": "line",
                 "num_entities_spawned": 16,
                 "delay_per_summon": 0.05,
@@ -152,15 +152,15 @@
             "weight": 3
           },
           {
-            "cast_duration": 3,
+            "cast_duration": 2,
             "particle_color": "#FF1B4D3E",
-            "cooldown_time": 14,
+            "cooldown_time": 6,
             "max_activation_range": 24,
             "min_activation_range": 0,
             "start_sound_event": "cast.spell",
             "sequence": [
               {
-                "base_delay": 2,
+                "base_delay": 1,
                 "shape": "circle",
                 "num_entities_spawned": 2,
                 "delay_per_summon": 0.2,
