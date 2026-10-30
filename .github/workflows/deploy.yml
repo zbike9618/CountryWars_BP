@@ -6,6 +6,13 @@ on:
       - server
       - 'f/**'
 
+# 同じサーバーへのデプロイは1本ずつ流す。f/** に続けて push すると reboot.sh が2本重なり、
+# 片方が「No screen session found」で失敗していた（2026-10-10）。
+# 途中で止めると BDS が止まったままになるので、動いている run は取り消さない
+concurrency:
+  group: deploy-${{ github.ref == 'refs/heads/server' && 'production' || 'debug' }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,6 +29,23 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
+
+      # Tailscale が up になっても、すぐには宅内に届かないことがある（2026-10-30: Tailscale の管理サーバーの応答が
+      # 2分ほど止まり、up のやり直しの直後に SSH が30秒でタイムアウトした）。SSH のポートに届くまで最大3分待つ
+      - name: Wait until the server is reachable
+        env:
+          HOST: ${{ github.ref == 'refs/heads/server' && secrets.PROD_SERVER_IP || secrets.SERVER_IP }}
+        run: |
+          end=$((SECONDS + 180))
+          until timeout 5 bash -c 'exec 3<>"/dev/tcp/$HOST/22"' 2>/dev/null; do
+            if [ "$SECONDS" -ge "$end" ]; then
+              echo "::error::3分待っても SSH のポートに届きませんでした"
+              exit 1
+            fi
+            echo "まだ届きません。5秒後にもう一度試します"
+            sleep 5
+          done
+          echo "SSH のポートに届きました"
 
       # 1. 【デバッグ鯖への反映】f/* ブランチの時（従来通りスクリプト実行）
       - name: Deploy to Debug Server via SSH
