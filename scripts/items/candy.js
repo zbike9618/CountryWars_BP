@@ -22,6 +22,12 @@ world.afterEvents.itemCompleteUse.subscribe((ev) => {
         // 効果: 通常のHP回復（ハート2個分 = 4HP回復）
         Util.heal(player, 4);
 
+        // 衝撃吸収（Absorption）を1ずつ加算付与
+        const currentAbsorption = player.getEffect("absorption");
+        const currentAmp = currentAbsorption ? currentAbsorption.amplifier : -1;
+        const nextAmp = Math.min(currentAmp + 1, 255);
+        player.addEffect("absorption", 2400, { amplifier: nextAmp, showParticles: true });
+
         // 現在の食べた回数を取得
         const currentCount = Util.getScore(player, SCOREBOARD_OBJ_ID);
         if (currentCount >= 50) {
