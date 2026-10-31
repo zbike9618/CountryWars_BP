@@ -35,8 +35,10 @@ world.afterEvents.entityItemDrop.subscribe((ev) => {
         // ドロップされたアイテムにお菓子が含まれているか確認
         let hasCandy = false;
 
+        // ev.items は配列に見えるが for...of では回せない（"value is not iterable" になる）ので、添字で回す
         if (Array.isArray(ev.items)) {
-            for (const itemEntity of ev.items) {
+            for (let i = 0; i < ev.items.length; i++) {
+                const itemEntity = ev.items[i];
                 try {
                     const itemComp = itemEntity.getComponent("minecraft:item");
                     const stack = itemComp?.itemStack;

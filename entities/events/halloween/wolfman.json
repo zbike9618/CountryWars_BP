@@ -413,7 +413,6 @@
         ],
         "singular_pickup": true
       },
-      "minecraft:spawn_egg_interaction": {},
       "minecraft:type_family": {
         "family": [
           "halloween",
