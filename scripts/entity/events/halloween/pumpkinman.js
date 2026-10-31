@@ -3,6 +3,8 @@ import { world, system } from "@minecraft/server";
 world.afterEvents.entitySpawn.subscribe((ev) => {
     const entity = ev.entity;
     if (entity.typeId == "cw:pumpkinman" || entity.typeId == "cw:event_trader") {
+        // スポーンした同じtickのうちに消えたものは、もう操作できない
+        if (!entity.isValid) return;
         entity.runCommand("replaceitem entity @s slot.armor.head 0 carved_pumpkin")
     }
 });

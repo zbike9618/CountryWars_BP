@@ -7,6 +7,13 @@
       "is_spawnable": true,
       "spawn_category": "monster"
     },
+    "component_groups": {
+      "cw:summoned": {
+        "minecraft:loot": {
+          "table": "loot_tables/empty.json"
+        }
+      }
+    },
     "components": {
       "minecraft:attack": {
         "damage": 3
@@ -423,7 +430,6 @@
         ],
         "singular_pickup": true
       },
-      "minecraft:spawn_egg_interaction": {},
       "minecraft:type_family": {
         "family": [
           "halloween",
@@ -440,6 +446,15 @@
       },
       "minecraft:loot": {
         "table": "loot_tables/entity/events/halloween/pumpkin_man.json"
+      }
+    },
+    "events": {
+      "cw:as_summoned": {
+        "add": {
+          "component_groups": [
+            "cw:summoned"
+          ]
+        }
       }
     }
   }
