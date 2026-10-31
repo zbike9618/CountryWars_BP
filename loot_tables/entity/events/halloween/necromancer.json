@@ -1,12 +1,12 @@
 {
     "pools": [
         {
-            "rolls": 1,
+            "rolls": 2,
             "entries": [
                 {
                     "type": "item",
                     "name": "minecraft:cookie",
-                    "weight": 30,
+                    "weight": 20,
                     "functions": [
                         {
                             "function": "set_count",
@@ -48,7 +48,7 @@
                 {
                     "type": "item",
                     "name": "cw:halloween_candy",
-                    "weight": 30,
+                    "weight": 40,
                     "functions": [
                         {
                             "function": "set_count",

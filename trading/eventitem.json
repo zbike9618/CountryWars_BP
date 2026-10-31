@@ -9,6 +9,23 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
+									"quantity": 1
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:candy",
+									"quantity": 1
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
 									"quantity": 30
 								}
 							],
