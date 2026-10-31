@@ -165,6 +165,7 @@
                 "num_entities_spawned": 2,
                 "delay_per_summon": 0.2,
                 "entity_type": "cw:pumpkinman",
+                "summon_event": "cw:as_summoned",
                 "size": 2,
                 "sound_event": "prepare.summon",
                 "summon_cap": 6,
