@@ -20,6 +20,7 @@ import "./events/halloween/ghost_pickaxe.js";
 import "./events/halloween/phantom_boots.js";
 import "./events/halloween/black_scythe.js";
 import "./events/halloween/blood_axe.js";
+import "./events/halloween/cursed_sword.js";
 import "./candy.js";
 import "./shogo_ticket.js";
 
