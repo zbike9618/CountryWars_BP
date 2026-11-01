@@ -3,7 +3,7 @@ import { Util } from "../../../utils/util.js";
 
 const TARGET_ITEM_ID = "cw:blood_axe";
 const bloodBuffEndTick = new Map(); // player.id -> endTick
-const SELF_DAMAGE = 6;              // 右クリック時の自傷ダメージ (ハート3個分)
+const SELF_DAMAGE = 10;              // 右クリック時の自傷ダメージ (ハート3個分)
 const BUFF_DURATION_TICKS = 100;    // 5秒間 (100 ticks)
 const COOLDOWN_TICKS = 160;         // 8秒クールダウン (160 ticks)
 const BONUS_DAMAGE = 10;            // 攻撃力 +10
@@ -93,7 +93,7 @@ world.afterEvents.itemUse.subscribe((ev) => {
         // 演出 & 通知
         player.playSound("mob.wither.hurt", { volume: 0.9, pitch: 1.1 });
         player.playSound("ambient.weather.thunder", { volume: 0.5, pitch: 1.8 });
-        player.onScreenDisplay?.setActionBar("§4§l【血の狂気】§c自傷を受け、5秒間ブラッドアックスの攻撃力+10！");
+        player.onScreenDisplay?.setActionBar("§4§l5秒間攻撃力+10！");
 
         try {
             const loc = player.location;
