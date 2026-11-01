@@ -119,7 +119,10 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
         if (!canAttackWithBloodAxe(attacker)) {
             ev.cancel = true;
             attacker.sendMessage("§c防具未装備(防御力0) かつ バフ(攻撃・防御・速度)無しの時のみ攻撃可能です！");
-            attacker.playSound?.("note.bass", { volume: 0.8, pitch: 0.6 });
+            // beforeEvents の中では playSound を呼べない（restricted execution）ので、次のtickに回す
+            system.run(() => {
+                if (attacker.isValid) attacker.playSound("note.bass", { volume: 0.8, pitch: 0.6 });
+            });
             return;
         }
 
