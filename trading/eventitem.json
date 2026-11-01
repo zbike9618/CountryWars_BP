@@ -118,6 +118,52 @@
 							"wants": [
 								{
 									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:blood_axe",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f捨て身の重撃と防具破壊"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
+									"quantity": 30
+								}
+							],
+							"gives": [
+								{
+									"item": "cw:cursed_sword",
+									"quantity": 1,
+									"functions": [
+										{
+											"function": "set_lore",
+											"lore": "§f攻撃するたびに呪いが侵食する"
+										}
+									]
+								}
+							],
+							"trader_exp": 0,
+							"max_uses": -1,
+							"reward_exp": false
+						},
+						{
+							"wants": [
+								{
+									"item": "cw:halloween_candy",
 									"quantity": 40
 								}
 							],
