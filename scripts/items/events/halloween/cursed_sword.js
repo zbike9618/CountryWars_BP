@@ -4,9 +4,9 @@ const TARGET_ITEM_ID = "cw:cursed_sword";
 const GAUGE_PER_HIT = 5;            // 攻撃1回ごとのゲージ蓄積量 (+5%)
 const RAMPAGE_DURATION_TICKS = 200; // 暴走持続時間: 10秒 (200 ticks)
 const RAMPAGE_TICK_STEP = 20;       // 1秒 (20 ticks) ごとに継続ダメージ & パーティクル
-const RAMPAGE_DAMAGE = 1;           // 暴走時の1秒ごとの自傷ダメージ (ハート半分)
+const RAMPAGE_DAMAGE = 2;           // 暴走時の1秒ごとの自傷ダメージ (ハート半分)
 const RECOIL_CHANCE = 0.35;         // 75〜99%時の自傷確率 (35%)
-const RECOIL_DAMAGE = 2;            // 反動自傷ダメージ (ハート1個分)
+const RECOIL_DAMAGE = 5;            // 反動自傷ダメージ (ハート1個分)
 
 // 状態管理Map (リーク防止のため退出・死亡時に完全削除)
 const curseGaugeMap = new Map(); // playerId -> number (0〜100)

@@ -108,6 +108,7 @@ world.afterEvents.itemUse.subscribe((ev) => {
 // 攻撃前の判定: 条件を満たしていない場合はダメージ無効化 & バフ発動中なら攻撃力+10
 world.beforeEvents.entityHurt.subscribe((ev) => {
     try {
+        /**@type(import("@minecraft/server").Player) */
         const attacker = ev.damageSource.damagingEntity;
         if (!attacker || !attacker.isValid || attacker.typeId !== "minecraft:player") return;
 
@@ -117,7 +118,7 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
 
         if (!canAttackWithBloodAxe(attacker)) {
             ev.cancel = true;
-            attacker.onScreenDisplay?.setActionBar("§c【ブラッドアックス】防具未装備(防御力0) かつ バフ(攻撃・防御・速度)無しの時のみ攻撃可能です！");
+            attacker.sendMessage("§c防具未装備(防御力0) かつ バフ(攻撃・防御・速度)無しの時のみ攻撃可能です！");
             attacker.playSound?.("note.bass", { volume: 0.8, pitch: 0.6 });
             return;
         }
