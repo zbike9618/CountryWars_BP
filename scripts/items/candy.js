@@ -3,7 +3,7 @@ import { Dypro } from "../utils/dypro.js";
 import { Util } from "../utils/util.js";
 
 const playerDatas = new Dypro("player");
-const TITLE_NAME = "キャンディ好き";
+const TITLE_NAME = "キャンディ好きの";
 const SCOREBOARD_OBJ_ID = "cw:eat_candy";
 const TARGET_ITEM_ID = "cw:candy";
 
