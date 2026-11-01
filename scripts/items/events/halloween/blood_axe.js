@@ -1,7 +1,28 @@
-import { world } from "@minecraft/server";
+import { world, system, EntityDamageCause } from "@minecraft/server";
 import { Util } from "../../../utils/util.js";
 
 const TARGET_ITEM_ID = "cw:blood_axe";
+const bloodBuffEndTick = new Map(); // player.id -> endTick
+const SELF_DAMAGE = 6;              // 右クリック時の自傷ダメージ (ハート3個分)
+const BUFF_DURATION_TICKS = 100;    // 5秒間 (100 ticks)
+const COOLDOWN_TICKS = 160;         // 8秒クールダウン (160 ticks)
+const BONUS_DAMAGE = 10;            // 攻撃力 +10
+
+/**
+ * プレイヤーのバフが有効か判定し、期限切れならMapから確実に削除する
+ * @param {string} playerId 
+ * @returns {boolean}
+ */
+function isBuffActive(playerId) {
+    const endTick = bloodBuffEndTick.get(playerId);
+    if (endTick === undefined) return false;
+    if (system.currentTick < endTick) {
+        return true;
+    }
+    // 期限切れ時は即座に削除
+    bloodBuffEndTick.delete(playerId);
+    return false;
+}
 
 /**
  * 攻撃者がブラッドアックスの発動条件（防具未装備・防御力0 かつ 攻撃/防御/速度バフ無し）を満たしているか判定
@@ -30,7 +51,61 @@ function canAttackWithBloodAxe(player) {
     return true;
 }
 
-// 攻撃前の判定: 条件を満たしていない場合はダメージを無効化（キャンセル）
+// プレイヤー退出時のMap削除
+world.afterEvents.playerLeave.subscribe((ev) => {
+    bloodBuffEndTick.delete(ev.playerId);
+});
+
+// プレイヤー死亡時のMap削除
+world.afterEvents.entityDie.subscribe((ev) => {
+    if (ev.deadEntity?.typeId === "minecraft:player") {
+        bloodBuffEndTick.delete(ev.deadEntity.id);
+    }
+});
+
+// 右クリック (アイテム使用): 自傷ダメージを受け、5秒間ブラッドアックスの攻撃力+10
+world.afterEvents.itemUse.subscribe((ev) => {
+    try {
+        const player = ev.source;
+        if (!player || !player.isValid || player.typeId !== "minecraft:player") return;
+        if (ev.itemStack.typeId !== TARGET_ITEM_ID) return;
+
+        // クールダウンチェック
+        if (player.getItemCooldown("cw:blood_axe") > 0) return;
+
+        // クールダウン開始 (8秒)
+        player.startItemCooldown("cw:blood_axe", COOLDOWN_TICKS);
+
+        // 自傷ダメージ
+        player.applyDamage(SELF_DAMAGE, { cause: EntityDamageCause.magic });
+
+        // 5秒間のバフ終了Tickを設定
+        const targetEndTick = system.currentTick + BUFF_DURATION_TICKS;
+        bloodBuffEndTick.set(player.id, targetEndTick);
+
+        // 5秒経過時のタイムアウトで確実に削除
+        system.runTimeout(() => {
+            if (bloodBuffEndTick.get(player.id) === targetEndTick) {
+                bloodBuffEndTick.delete(player.id);
+            }
+        }, BUFF_DURATION_TICKS);
+
+        // 演出 & 通知
+        player.playSound("mob.wither.hurt", { volume: 0.9, pitch: 1.1 });
+        player.playSound("ambient.weather.thunder", { volume: 0.5, pitch: 1.8 });
+        player.onScreenDisplay?.setActionBar("§4§l【血の狂気】§c自傷を受け、5秒間ブラッドアックスの攻撃力+10！");
+
+        try {
+            const loc = player.location;
+            player.dimension.spawnParticle("minecraft:critical_hit_emitter", { x: loc.x, y: loc.y + 1, z: loc.z });
+            player.dimension.spawnParticle("minecraft:redstone_ore_dust_particle", { x: loc.x, y: loc.y + 1, z: loc.z });
+        } catch { }
+    } catch (e) {
+        console.error("blood_axe itemUse error:", e);
+    }
+});
+
+// 攻撃前の判定: 条件を満たしていない場合はダメージ無効化 & バフ発動中なら攻撃力+10
 world.beforeEvents.entityHurt.subscribe((ev) => {
     try {
         const attacker = ev.damageSource.damagingEntity;
@@ -44,6 +119,12 @@ world.beforeEvents.entityHurt.subscribe((ev) => {
             ev.cancel = true;
             attacker.onScreenDisplay?.setActionBar("§c【ブラッドアックス】防具未装備(防御力0) かつ バフ(攻撃・防御・速度)無しの時のみ攻撃可能です！");
             attacker.playSound?.("note.bass", { volume: 0.8, pitch: 0.6 });
+            return;
+        }
+
+        // 5秒間の攻撃力+10バフ適用 (斧のみ)
+        if (isBuffActive(attacker.id)) {
+            ev.damage += BONUS_DAMAGE;
         }
     } catch (e) {
         console.error("blood_axe beforeHurt error:", e);
@@ -91,8 +172,18 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
             }
         }
 
-        // 4. 重撃音
+        // 4. 重撃音 & バフ中の追加演出
         attacker.playSound("item.mace.smash_ground_heavy", { location: target.location, volume: 1.2, pitch: 0.85 });
+
+        if (isBuffActive(attacker.id)) {
+            try {
+                attacker.dimension.spawnParticle("minecraft:critical_hit_emitter", {
+                    x: target.location.x,
+                    y: target.location.y + 1,
+                    z: target.location.z
+                });
+            } catch { }
+        }
     } catch (e) {
         console.error("blood_axe hit error:", e);
     }

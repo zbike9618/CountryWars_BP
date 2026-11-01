@@ -36,6 +36,10 @@
                         "speed": 8
                     }
                 ]
+            },
+            "minecraft:cooldown": {
+                "category": "cw:blood_axe",
+                "duration": 0
             }
         }
     }
