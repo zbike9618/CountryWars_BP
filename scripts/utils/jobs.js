@@ -70,9 +70,9 @@ world.afterEvents.playerBreakBlock.subscribe(ev => {
             if (enchantable?.hasEnchantment("silk_touch")) continue; // シルクタッチ採掘は報酬なし
         }
 
-        const rewardInfo = Object.entries(job.blockRewards).find(([key]) => blockId.includes(key));
-        if (rewardInfo) {
-            const reward = rewardInfo[1];
+        // 表のブロックと同じ ID のときだけ（部分一致だと深層岩の鉱石が deepslate に当たる）
+        const reward = job.blockRewards[blockId];
+        if (reward !== undefined) {
             Util.addMoney(player, reward);
             const score = Util.getMoney(player);
             sendActionBar(player, [
