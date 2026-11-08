@@ -219,7 +219,7 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
         if (newGauge >= 75) {
             // 75〜99%: 確率で自分もダメージ
             if (Math.random() < RECOIL_CHANCE) {
-                Util.applyDamage(player, RECOIL_DAMAGE);
+                Util.applyDamage(attacker, RECOIL_DAMAGE);
                 attacker.playSound("mob.warden.heartbeat", { volume: 0.8, pitch: 1.2 });
                 attacker.dimension.spawnParticle("minecraft:critical_hit_emitter", {
                     x: attacker.location.x,
