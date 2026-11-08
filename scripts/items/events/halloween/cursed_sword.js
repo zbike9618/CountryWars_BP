@@ -1,5 +1,5 @@
 import { world, system, EntityDamageCause } from "@minecraft/server";
-
+import { Util } from "../../../utils/util"
 const TARGET_ITEM_ID = "cw:cursed_sword";
 const GAUGE_PER_HIT = 5;            // 攻撃1回ごとのゲージ蓄積量 (+5%)
 const RAMPAGE_DURATION_TICKS = 200; // 暴走持続時間: 10秒 (200 ticks)
@@ -111,7 +111,7 @@ function runRampageStep(playerId, sequenceId) {
 
     try {
         // 使用者への継続ダメージ
-        player.applyDamage(RAMPAGE_DAMAGE, { cause: EntityDamageCause.magic });
+        Util.applyDamage(player, RAMPAGE_DAMAGE)
         spawnPurpleParticles(player);
         player.playSound("mob.wither.hurt", { volume: 0.3, pitch: 1.5 });
 
@@ -219,7 +219,7 @@ world.afterEvents.entityHitEntity.subscribe((ev) => {
         if (newGauge >= 75) {
             // 75〜99%: 確率で自分もダメージ
             if (Math.random() < RECOIL_CHANCE) {
-                attacker.applyDamage(RECOIL_DAMAGE, { cause: EntityDamageCause.magic });
+                Util.applyDamage(attacker, RECOIL_DAMAGE);
                 attacker.playSound("mob.warden.heartbeat", { volume: 0.8, pitch: 1.2 });
                 attacker.dimension.spawnParticle("minecraft:critical_hit_emitter", {
                     x: attacker.location.x,

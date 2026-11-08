@@ -6,6 +6,17 @@ import { Data } from "./data";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 export class Util {
+    /**
+     * 
+     * @param {server.Player} player 
+     * @param {Int} amount 
+     */
+    static applyDamage(player, amount) {
+        player.runCommand("damage @s 0")
+        const comp = player.getComponent("minecraft:health")
+        const hp = comp.currentValue - amount
+        comp.setCurrentValue(hp)
+    }
     static getAllPlayerIdsSorted() {
         return playerDatas.idList.sort((a, b) => {
             const nameA = playerDatas.get(a)?.name || "";
