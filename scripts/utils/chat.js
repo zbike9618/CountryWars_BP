@@ -60,11 +60,131 @@ world.afterEvents.entityDie.subscribe((ev) => {
 });
 
 /**
+ * チャットのスパム対策
+ * 記録はメモリだけに持つ（抜けて入り直しても残る。reload・再起動で消える）。
+ * OP（コマンドの権限が Admin 以上）は対象外。
+ */
+export const CHAT_GUARD = {
+    minIntervalMs: 1000,          // 前の発言から1秒は空ける
+    burstWindowMs: 10000,         // 10秒のあいだに
+    burstMax: 5,                  // 5回まで
+    duplicateWindowMs: 30000,     // 30秒以内に同じ内容は送れない
+    duplicateHistory: 3,          // 直近3件と比べる
+    duplicateMinLength: 3,        // 「w」「ok」のような短い発言は、同じ内容でも止めない
+    maxLength: 200,               // これより長い発言は送れない
+    strikeWindowMs: 60000,        // 1分のあいだに
+    strikesToMute: 3,             // 3回止められたら、しばらく送れなくする
+    muteMs: [60000, 300000, 900000], // 1回目は1分、2回目は5分、3回目から15分
+    muteLevelResetMs: 3600000,    // 最後のミュートから1時間たったら、1回目に戻す
+    aiCooldownMs: 30000,          // !ai は30秒に1回
+};
+
+/** 同じ内容かどうかを比べるための形（全角半角・大文字小文字・空白・§の装飾をそろえる） */
+export function normalizeChat(message) {
+    return String(message).normalize("NFKC").toLowerCase().replace(/§./g, "").replace(/\s+/g, "");
+}
+
+/**
+ * 発言を通すかどうかを決めて、記録を更新する。
+ * @param {object} state プレイヤーごとの記録（最初は {}）
+ * @param {string} message
+ * @param {number} now ミリ秒
+ * @returns {{ ok: true } | { ok: false, reason: string, waitMs?: number, muteMs?: number }}
+ */
+export function checkChat(state, message, now, cfg = CHAT_GUARD) {
+    state.sentAt ??= [];
+    state.recent ??= [];
+    state.strikes ??= [];
+
+    if (state.mutedUntil > now) return { ok: false, reason: "muted", waitMs: state.mutedUntil - now };
+
+    const text = normalizeChat(message);
+    const isAi = message.startsWith("!ai ");
+    state.sentAt = state.sentAt.filter(t => now - t < cfg.burstWindowMs);
+    state.recent = state.recent.filter(r => now - r.at < cfg.duplicateWindowMs);
+
+    let block;
+    const last = state.sentAt[state.sentAt.length - 1];
+    if (text.length === 0) {
+        block = { reason: "empty" };
+    } else if (message.length > cfg.maxLength) {
+        block = { reason: "long" };
+    } else if (text.length >= cfg.duplicateMinLength && state.recent.some(r => r.text === text)) {
+        block = { reason: "duplicate" };
+    } else if (last !== undefined && now - last < cfg.minIntervalMs) {
+        block = { reason: "fast", waitMs: cfg.minIntervalMs - (now - last) };
+    } else if (state.sentAt.length >= cfg.burstMax) {
+        block = { reason: "fast", waitMs: cfg.burstWindowMs - (now - state.sentAt[0]) };
+    } else if (isAi && state.lastAiAt !== undefined && now - state.lastAiAt < cfg.aiCooldownMs) {
+        // !ai の待ち時間は連投には数えない
+        return { ok: false, reason: "ai", waitMs: cfg.aiCooldownMs - (now - state.lastAiAt) };
+    }
+
+    if (block) {
+        state.strikes = state.strikes.filter(t => now - t < cfg.strikeWindowMs);
+        state.strikes.push(now);
+        if (state.strikes.length >= cfg.strikesToMute) {
+            const level = state.lastMuteAt !== undefined && now - state.lastMuteAt < cfg.muteLevelResetMs ? state.muteCount : 0;
+            const muteMs = cfg.muteMs[Math.min(level, cfg.muteMs.length - 1)];
+            state.mutedUntil = now + muteMs;
+            state.muteCount = level + 1;
+            state.lastMuteAt = now;
+            state.strikes = [];
+            return { ok: false, reason: block.reason, muteMs };
+        }
+        return { ok: false, ...block };
+    }
+
+    state.sentAt.push(now);
+    state.recent.push({ text, at: now });
+    if (state.recent.length > cfg.duplicateHistory) state.recent.shift();
+    if (isAi) state.lastAiAt = now;
+    return { ok: true };
+}
+
+/** 待ち時間を「N秒」「N分」で */
+export function formatWait(ms) {
+    const sec = Math.max(1, Math.ceil(ms / 1000));
+    return sec < 60 ? `${sec}秒` : `${Math.ceil(sec / 60)}分`;
+}
+
+const BLOCK_MESSAGES = {
+    empty: () => "§c空のメッセージは送れません。",
+    long: (r, message) => `§cメッセージが長すぎます（${message.length}/${CHAT_GUARD.maxLength}文字）。`,
+    duplicate: () => "§c同じ内容を続けて送ることはできません。",
+    fast: (r) => `§cチャットの送信が速すぎます。${formatWait(r.waitMs)}待ってから送ってください。`,
+    ai: (r) => `§c!ai は${formatWait(CHAT_GUARD.aiCooldownMs)}に1回までです。あと${formatWait(r.waitMs)}待ってください。`,
+    muted: (r) => `§cチャットを送れるようになるまで、あと${formatWait(r.waitMs)}です。`,
+};
+
+const chatGuardStates = new Map();
+
+/** 止めたら true（本人に理由を伝える） */
+function guardChat(player, message) {
+    if (player.commandPermissionLevel >= server.CommandPermissionLevel.Admin) return false;
+    let state = chatGuardStates.get(player.id);
+    if (!state) chatGuardStates.set(player.id, state = {});
+    const result = checkChat(state, message, Date.now());
+    if (result.ok) return false;
+    if (result.muteMs) {
+        player.sendMessage(`§cチャットの連投が続いたため、${formatWait(result.muteMs)}のあいだチャットを送れません。`);
+        console.warn(`[chatguard] ${player.name} を ${Math.round(result.muteMs / 1000)}秒ミュート（${result.reason}、${state.muteCount}回目）`);
+    } else {
+        player.sendMessage(BLOCK_MESSAGES[result.reason](result, message));
+    }
+    return true;
+}
+
+/**
  * チャット処理
  */
 world.beforeEvents.chatSend.subscribe((ev) => {
     const player = ev.sender;
     const message = ev.message;
+    if (guardChat(player, message)) {
+        ev.cancel = true;
+        return;
+    }
     const playerData = playerDatas.get(player.id);
     // --- 国に加入していないのに国・同盟チャットになっている場合の修正 ---
     if ((playerData.chattype === "country" || playerData.chattype === "ally") && (!playerData.country || !countryDatas.get(playerData.country))) {
