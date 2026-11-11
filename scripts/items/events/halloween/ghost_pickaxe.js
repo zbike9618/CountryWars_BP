@@ -26,7 +26,6 @@ const ORE_BLOCK_IDS = new Set([
     "minecraft:deepslate_emerald_ore",
     "minecraft:quartz_ore",
     "minecraft:nether_gold_ore",
-    "minecraft:ancient_debris",
 
     // カスタム鉱石
     "cw:platinum_ore",
