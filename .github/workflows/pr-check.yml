@@ -1,0 +1,80 @@
+name: PR チェック
+
+# server への PR に自動でかかるチェック（AI なしの簡易版）。中身は .github/cw-check/README.md
+# - 読み込みを壊す問題（JSON・構文・import・エンティティのイベントなど）が「この PR で新しく」出たら失敗にする
+# - 足された行から、バランスや安全に関わりやすいところを拾って PR にコメントする（失敗にはしない）
+# どこにもデプロイしない・サーバーにはつながない・シークレットは使わない
+on:
+  pull_request:
+    branches:
+      - server
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # PR を server に入れた後の形（マージコミット）と、その1つ前（今の server）を取る
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare base and diff
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD^1
+          git -c core.quotepath=false diff --no-color HEAD^1 HEAD > "$RUNNER_TEMP/pr.diff"
+          echo "変更されたファイル:"
+          git -c core.quotepath=false diff --name-status HEAD^1 HEAD
+
+      - name: Check
+        id: check
+        run: |
+          set +e
+          node .github/cw-check/check.mjs \
+            --head . --base "$RUNNER_TEMP/base" --diff "$RUNNER_TEMP/pr.diff" \
+            --summary "$RUNNER_TEMP/summary.md" --annotate
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # 同じコメントを書き換える（push のたびにコメントが増えないように）。フォークからの PR では書けないので飛ばす
+      - name: Comment on PR
+        if: always() && steps.check.outputs.code != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                 --jq '.[] | select(.body | startswith("<!-- cw-pr-check -->")) | .id' | head -n1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$id" -F "body=@$RUNNER_TEMP/summary.md" > /dev/null \
+              || echo "::warning::コメントを書き換えられませんでした"
+          else
+            gh api --method POST "repos/$REPO/issues/$PR/comments" -F "body=@$RUNNER_TEMP/summary.md" > /dev/null \
+              || echo "::warning::コメントを書けませんでした"
+          fi
+
+      - name: Result
+        if: always()
+        env:
+          CODE: ${{ steps.check.outputs.code }}
+        run: |
+          if [ "$CODE" != "0" ]; then
+            echo "::error::直す必要がある問題があります。PR のコメントか、このページの Summary を見てください"
+            exit 1
+          fi
