@@ -503,28 +503,40 @@
             "cw:enraged"
           ]
         },
-        "run_command": {
+        "queue_command": {
           "command": [
             "replaceitem entity @s slot.armor.head 0 lit_pumpkin",
+            "effect @s speed 15 1",
             "playsound mob.ghast.scream @a[r=16] ~ ~ ~ 0.8 1.3",
-            "particle minecraft:villager_angry ~ ~2.1 ~"
+            "playsound mob.warden.roar @a[r=16] ~ ~ ~ 0.6 1.6",
+            "particle minecraft:villager_angry ~ ~2.1 ~",
+            "particle minecraft:flame_particle ~ ~1.8 ~"
           ]
         }
       },
       "cw:start_explode": {
-        "add": {
-          "component_groups": [
-            "cw:exploding"
-          ]
-        },
-        "run_command": {
-          "command": [
-            "replaceitem entity @s slot.armor.head 0 lit_pumpkin",
-            "playsound random.fuse @a[r=16] ~ ~ ~ 1.0 1.0",
-            "particle minecraft:flame_particle ~ ~1.8 ~",
-            "particle minecraft:basic_smoke_particle ~ ~1.8 ~"
-          ]
-        }
+        "sequence": [
+          {
+            "filters": {
+              "test": "is_family",
+              "subject": "target",
+              "value": "player"
+            },
+            "add": {
+              "component_groups": [
+                "cw:exploding"
+              ]
+            },
+            "queue_command": {
+              "command": [
+                "replaceitem entity @s slot.armor.head 0 lit_pumpkin",
+                "playsound random.fuse @a[r=16] ~ ~ ~ 1.0 1.0",
+                "particle minecraft:flame_particle ~ ~1.8 ~",
+                "particle minecraft:basic_smoke_particle ~ ~1.8 ~"
+              ]
+            }
+          }
+        ]
       }
     }
   }
