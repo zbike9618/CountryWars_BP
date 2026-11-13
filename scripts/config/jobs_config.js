@@ -1,6 +1,8 @@
 export class JobsConfig {
     static JOB_LIMIT = 4; // 最大職業数
-    static jobList = ["miner", "hunter", "lumberjack", "netherdigger", "builder"]
+    static jobList = ["miner", "hunter", "lumberjack", "netherdigger", "builder", "farmer", "fisher"]
+    // リソースパックに文言が無い職業の表示名
+    static jobNames = { fisher: "漁師" }
 }
 
 // 職業ごとの設定ファイル
@@ -103,13 +105,33 @@ export class JOB_CONFIG {
         }
     };
     static farmer = {
-        blockRewards: {
-            "minecraft:wheat": 0.2,
-            "minecraft:carrots": 0.2,
-            "minecraft:potatoes": 0.2,
-            "minecraft:beetroot": 0.2,
-            "minecraft:farmland": 0.1
+        // 育ちきった作物だけ報酬を出す（state の値が ripe のとき）。植えて壊すだけでは稼げない
+        cropRewards: {
+            "minecraft:wheat": { reward: 2, state: "growth", ripe: 7 },
+            "minecraft:carrots": { reward: 2, state: "growth", ripe: 7 },
+            "minecraft:potatoes": { reward: 2, state: "growth", ripe: 7 },
+            "minecraft:beetroot": { reward: 2, state: "growth", ripe: 7 },
+            "minecraft:cocoa": { reward: 2, state: "age", ripe: 2 },
+            "minecraft:nether_wart": { reward: 3, state: "age", ripe: 3 },
+            "minecraft:melon_block": { reward: 2 }
         }
+    };
+    static fisher = {
+        catchRewards: {
+            "minecraft:cod": 10,
+            "minecraft:salmon": 15,
+            "minecraft:pufferfish": 25,
+            "minecraft:tropical_fish": 40,
+            // 宝物
+            "minecraft:bow": 80,
+            "minecraft:enchanted_book": 80,
+            "minecraft:fishing_rod": 80,
+            "minecraft:name_tag": 80,
+            "minecraft:saddle": 80,
+            "minecraft:nautilus_shell": 80
+        },
+        // それ以外（ゴミ）
+        otherCatchReward: 3
     };
     static netherdigger = {
         blockRewards: {
