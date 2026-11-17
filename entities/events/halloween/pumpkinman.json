@@ -32,6 +32,7 @@
       }
     },
     "components": {
+      "minecraft:instant_despawn": {},
       "minecraft:attack": {
         "damage": 3
       },

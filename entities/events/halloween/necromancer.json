@@ -8,6 +8,7 @@
       "spawn_category": "monster"
     },
     "components": {
+      "minecraft:instant_despawn": {},
       "minecraft:type_family": {
         "family": [
           "halloween",
