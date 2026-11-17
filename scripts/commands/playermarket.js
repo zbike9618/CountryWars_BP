@@ -9,6 +9,7 @@ import { ActionForm } from "../utils/form_class.js";
 const marketDatas = new Dypro("playermarket");
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
+const LISTING_GONE_MESSAGE = "§cこの出品は、もう売れたか、内容が変わっています。もう一度開き直してください。";
 system.beforeEvents.startup.subscribe(ev => {
     /**
      * setLivesコマンドを定義
@@ -76,9 +77,9 @@ async function showPlayerMarket(player) {
     const res = await form.show(player)
     if (res.canceled) return;
     if (res.selection === 0) {
-        const loc = await playerMarketSystem.show(player)
-        if (loc == "none") return;
-        buyForm(player, loc)
+        const sel = await playerMarketSystem.show(player)
+        if (sel == "none") return;
+        buyForm(player, sel)
     }
     if (res.selection === 1) {
         sellForm(player)
@@ -90,8 +91,12 @@ async function showPlayerMarket(player) {
         showHistoryForm(player)
     }
 }
-async function buyForm(player, { slot, page }) {
-    const data = marketDatas.get(`${page}`)[slot];
+/**
+ * @param {server.Player} player
+ * @param {{ ref: { page: number, slot: number, data: Object }, viewPage: number }} sel 一覧で選んだ出品と、戻るときのページ
+ */
+async function buyForm(player, { ref, viewPage }) {
+    const data = ref.data;
     const buyerData = playerDatas.get(player.id);
     const countryId = buyerData?.country;
 
@@ -133,9 +138,9 @@ async function buyForm(player, { slot, page }) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection == 0) {
-            const loc = await playerMarketSystem.show(player, page)
-            if (loc == "none") return;
-            buyForm(player, loc)
+            const sel = await playerMarketSystem.show(player, viewPage)
+            if (sel == "none") return;
+            buyForm(player, sel)
         }
         return;
     }
@@ -156,16 +161,16 @@ async function buyForm(player, { slot, page }) {
 
     const res = await form.show(player)
     if (res.canceled) {
-        const loc = await playerMarketSystem.show(player, page)
-        if (loc !== "none") buyForm(player, loc);
+        const sel = await playerMarketSystem.show(player, viewPage)
+        if (sel !== "none") buyForm(player, sel);
         return;
     }
 
     if (res.selection === 0) {
-        playerMarketSystem.buy(player, { slot, page })
+        playerMarketSystem.buy(player, ref)
     } else {
-        const loc = await playerMarketSystem.show(player, page)
-        if (loc !== "none") buyForm(player, loc);
+        const sel = await playerMarketSystem.show(player, viewPage)
+        if (sel !== "none") buyForm(player, sel);
     }
 }
 /**
@@ -282,24 +287,23 @@ async function sellFormS(player, item, maxamount) {
 async function editForm(player) {
     const form = new ActionFormData()
     form.title({ translate: "cw.playermarket.edit" })
-    const datas = []
-    for (const page of marketDatas.idList) {
-        let slot = 0;
-        for (const data of marketDatas.get(`${page}`)) {
-
-            if (data.player == player.id) {
-                form.button({ translate: Util.langChangeItemName(data.itemId) }, itemIdToPath[data.itemId])
-                datas.push({ page, slot })
-            }
-            slot++
-        }
+    // 一覧と同じ並び順で、自分の出品だけを出す
+    const mine = playerMarketSystem.listAll().filter(l => l.data.player == player.id)
+    const datas = playerMarketSystem.sortListings(mine, playerMarketSystem.getSortMode(player))
+    for (const { data } of datas) {
+        form.button({ translate: Util.langChangeItemName(data.itemId) }, itemIdToPath[data.itemId])
     }
     const res = await form.show(player)
     if (res.canceled) return;
-    editForm2(player, { page: datas[res.selection].page, slot: datas[res.selection].slot })
+    const { page, slot, data } = datas[res.selection]
+    editForm2(player, { page, slot, data })
 }
-async function editForm2(player, { page, slot }) {
-    const marketData = marketDatas.get(`${page}`)[slot];
+/**
+ * @param {server.Player} player
+ * @param {{ page: number, slot: number, data: Object }} ref 編集する自分の出品
+ */
+async function editForm2(player, ref) {
+    const marketData = ref.data;
     const form = new ModalFormData()
     form.title({ translate: "cw.playermarket.sell" })
     form.toggle({ translate: "cw.playermarket.edit.toggle" })
@@ -311,15 +315,22 @@ async function editForm2(player, { page, slot }) {
         const comp = player.getComponent("minecraft:inventory");
         const inv = comp.container;
         const { itemId, lore, amount } = marketData
+        let tempStack;
         if (amount != 0) {
-            let tempStack;
             try {
                 tempStack = new server.ItemStack(itemId);
             } catch (e) {
                 player.sendMessage("§c警告: このアイテムは無効な識別子を持っているため、アイテムを返却できません。出品データのみを削除します。");
-                playerMarketSystem.delete({ slot, page })
+                playerMarketSystem.delete(ref)
                 return;
             }
+        }
+        // 返す前に出品を消す。画面を開いている間に売れていたら、何も返さない
+        if (!playerMarketSystem.delete(ref)) {
+            player.sendMessage(LISTING_GONE_MESSAGE);
+            return;
+        }
+        if (amount != 0) {
             const AmountMax = tempStack.maxAmount;
             const count = Math.floor(amount / AmountMax);
             for (let i = 0; i < count; i++) {
@@ -373,7 +384,6 @@ async function editForm2(player, { page, slot }) {
                 }
             }
         }
-        playerMarketSystem.delete({ slot, page })
         return;
     }
     const price = Number(res.formValues[1]);
@@ -386,13 +396,17 @@ async function editForm2(player, { page, slot }) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            editForm2(player, { page, slot })
+            editForm2(player, ref)
         }
         return
     }
-    marketData.price.push(Number(res.formValues[1]))
-    marketData.description = res.formValues[2]
-    playerMarketSystem.edit(marketData, { page, slot })
+    // ref.data は「開いたときの中身」として照合に使うので、書き換えずに写しを作る
+    const newData = JSON.parse(JSON.stringify(marketData))
+    newData.price.push(price)
+    newData.description = res.formValues[2]
+    if (!playerMarketSystem.edit(newData, ref)) {
+        player.sendMessage(LISTING_GONE_MESSAGE);
+    }
 }
 async function showHistoryForm(player) {
     const pmlogDatas = new Dypro("pmlog");

@@ -9,7 +9,105 @@ import { Chunk } from "./chunk.js";
 const playerDatas = new Dypro("player");
 const countryDatas = new Dypro("country");
 const marketDatas = new Dypro("playermarket");
+
+// 一覧の並び順。プレイヤーごとに最後に選んだものを覚えておく
+const SORT_PROPERTY = "cw:pmSort";
+const SORT_MODES = ["item", "new"];
+const SORT_LABELS = { item: "アイテム別", new: "新着順" };
+const PAGE_SIZE = 45;
+
+function isValidItemId(itemId) {
+    try {
+        new server.ItemStack(itemId);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+function latestPrice(data) {
+    return Array.isArray(data.price) ? data.price[data.price.length - 1] : data.price;
+}
+function unitPrice(data) {
+    const price = Number(latestPrice(data)) || 0;
+    return data.amount > 0 ? price / data.amount : price;
+}
+// 新しい順。listedAt の無い古い出品は、それより前に出たものとして保存順の逆に並べる
+function compareNewest(a, b) {
+    const ta = a.data.listedAt || 0;
+    const tb = b.data.listedAt || 0;
+    if (ta !== tb) return tb - ta;
+    return b.order - a.order;
+}
+const comparators = {
+    // 同じアイテムをまとめ、その中は1個あたりの値段が安い順
+    item(a, b) {
+        if (a.invalid !== b.invalid) return a.invalid ? 1 : -1;
+        if (a.data.itemId !== b.data.itemId) return a.data.itemId < b.data.itemId ? -1 : 1;
+        const pa = unitPrice(a.data);
+        const pb = unitPrice(b.data);
+        if (pa !== pb) return pa - pb;
+        return compareNewest(a, b);
+    },
+    new: compareNewest,
+};
+
 export class playerMarketSystem {
+    static getSortMode(player) {
+        let mode;
+        try { mode = player.getDynamicProperty(SORT_PROPERTY); } catch (e) { }
+        return SORT_MODES.includes(mode) ? mode : SORT_MODES[0];
+    }
+    static setSortMode(player, mode) {
+        try { player.setDynamicProperty(SORT_PROPERTY, mode); } catch (e) { }
+    }
+    /**
+     * 全ページの出品を、保存されている場所と一緒に返す（保存順）
+     * @returns {{ page: number, slot: number, data: Object, order: number }[]}
+     */
+    static listAll() {
+        const pages = marketDatas.idList
+            .map(id => Number(id))
+            .filter(n => Number.isInteger(n) && n >= 0)
+            .sort((a, b) => a - b);
+        const listings = [];
+        for (const page of pages) {
+            const marketData = marketDatas.get(`${page}`);
+            if (!Array.isArray(marketData)) continue;
+            marketData.forEach((data, slot) => {
+                if (data) listings.push({ page, slot, data, order: listings.length });
+            });
+        }
+        return listings;
+    }
+    /**
+     * @param {{ page: number, slot: number, data: Object, order: number }[]} listings
+     * @param {string} mode
+     */
+    static sortListings(listings, mode) {
+        const compare = comparators[mode] || comparators[SORT_MODES[0]];
+        const validity = new Map();
+        for (const l of listings) {
+            if (!validity.has(l.data.itemId)) validity.set(l.data.itemId, !isValidItemId(l.data.itemId));
+            l.invalid = validity.get(l.data.itemId);
+        }
+        return listings.sort(compare);
+    }
+    /**
+     * 画面を開いている間に出品が売れたり変わったりして、保存場所がずれていることがある。
+     * 開いたときと中身がまったく同じ出品の、今の場所を探す。もう無ければ null
+     * @param {{ page: number, slot: number, data: Object }} ref
+     * @returns {{ page: number, slot: number } | null}
+     */
+    static resolve(ref) {
+        if (!ref || !ref.data) return null;
+        const key = JSON.stringify(ref.data);
+        const atSame = (marketDatas.get(`${ref.page}`) || [])[ref.slot];
+        if (atSame && JSON.stringify(atSame) === key) return { page: ref.page, slot: ref.slot };
+        for (const l of this.listAll()) {
+            if (JSON.stringify(l.data) === key) return { page: l.page, slot: l.slot };
+        }
+        return null;
+    }
     /**
      * 
      * @param {server.Player} player 
@@ -30,7 +128,8 @@ export class playerMarketSystem {
             price: [itemData.price],
             description: itemData.description,
             enchants: itemData.enchants,
-            durability: itemData.durability
+            durability: itemData.durability,
+            listedAt: Date.now()
         })
         marketDatas.set(`${page}`, marketData);
 
@@ -52,9 +151,15 @@ export class playerMarketSystem {
     /**
      * 
      * @param {server.Player} player 
-     * @param {{ slot: number, page: number }} { slot, page } 
+     * @param {{ page: number, slot: number, data: Object }} ref 画面で選んだ出品
      */
-    static async buy(player, { slot, page }) {
+    static async buy(player, ref) {
+        const loc = this.resolve(ref);
+        if (!loc) {
+            player.sendMessage("§cこの商品は、もう売れたか、出品者が内容を変えました。もう一度マーケットを開いてください。");
+            return;
+        }
+        const { slot, page } = loc;
         const marketData = marketDatas.get(`${page}`);
         const itemData = marketData[slot];
         const itemId = itemData.itemId;
@@ -192,26 +297,62 @@ export class playerMarketSystem {
         marketData.splice(slot, 1);
         marketDatas.set(`${page}`, marketData);
     }
-    static async show(player, page = 0) {
+    /**
+     * 出品の一覧を開く。全ページの出品を並べ替えてから、45件ずつ見せる
+     * @param {server.Player} player
+     * @param {number} viewPage 見せるページ（並べ替えた後の番号）
+     * @returns {Promise<"none" | { ref: { page: number, slot: number, data: Object }, viewPage: number }>}
+     */
+    static async show(player, viewPage = 0) {
+        const mode = this.getSortMode(player);
+        const listings = this.sortListings(this.listAll(), mode);
+        const pageCount = Math.max(1, Math.ceil(listings.length / PAGE_SIZE));
+        viewPage = Math.min(Math.max(Math.floor(viewPage) || 0, 0), pageCount - 1);
+        const shown = listings.slice(viewPage * PAGE_SIZE, (viewPage + 1) * PAGE_SIZE);
+        const hasPrev = viewPage > 0;
+        const hasNext = viewPage < pageCount - 1;
+
         const form = new ChestFormData("large")
-        form.setTitle({ translate: "cw.playermarket.title" })
-        const marketData = marketDatas.get(`${page}`) || [];
-        if (marketDatas.get(`${page - 1}`)) {
+        form.setTitle({ rawtext: [{ translate: "cw.playermarket.title" }, { text: ` (${viewPage + 1}/${pageCount})` }] })
+        if (hasPrev) {
             form.setButton(0, {
                 iconPath: "textures/ui/arrow_dark_left_stretch",
                 name: "Undo", lore: ["<Click here>"],
                 editedName: true
             })
         }
-        if (marketDatas.get(`${page + 1}`)) {
+        if (hasNext) {
             form.setButton(8, {
                 iconPath: "textures/ui/arrow_dark_right_stretch",
                 name: "Next", lore: ["<Click here>"],
                 editedName: true
             })
         }
-        for (let i = 0; i < marketData.length; i++) {
-            const itemData = marketData[i];
+        const nextMode = SORT_MODES[(SORT_MODES.indexOf(mode) + 1) % SORT_MODES.length];
+        form.setButton(4, {
+            iconPath: "textures/items/hopper",
+            name: { rawtext: [{ text: `§e並び順: ${SORT_LABELS[mode]}` }] },
+            lore: [
+                { text: mode === "item" ? "§7同じアイテムをまとめて、1個あたりが安い順" : "§7新しく出品された順" },
+                { text: `§7出品 ${listings.length}件・${viewPage + 1}/${pageCount}ページ` },
+                { text: `§a押すと「${SORT_LABELS[nextMode]}」に切り替え` }
+            ],
+            editedName: true
+        })
+
+        // 消費税 (Consumption Tax) の計算 (閲覧者ベース)
+        const buyerData = playerDatas.get(player.id);
+        const countryId = buyerData?.country;
+        let taxRate = 0;
+        if (countryId) {
+            const countryData = countryDatas.get(countryId);
+            if (countryData) {
+                taxRate = countryData.tax.consumption || 0;
+            }
+        }
+
+        for (let i = 0; i < shown.length; i++) {
+            const itemData = shown[i].data;
             let AmountMax = 64;
             let isInvalid = false;
             try {
@@ -237,16 +378,6 @@ export class playerMarketSystem {
             }
             const lore = [{ translate: "cw.playermarket.seller", with: [playerDatas.get(itemData.player)?.name || "Unknown"] }]
 
-            // 消費税 (Consumption Tax) の計算 (閲覧者ベース)
-            const buyerData = playerDatas.get(player.id);
-            const countryId = buyerData?.country;
-            let taxRate = 0;
-            if (countryId) {
-                const countryData = countryDatas.get(countryId);
-                if (countryData) {
-                    taxRate = countryData.tax.consumption || 0;
-                }
-            }
             const currentPrice = itemData.price[itemData.price.length - 1];
             const taxAmount = Math.floor(currentPrice * (taxRate / 100));
             const totalWithTax = currentPrice + taxAmount;
@@ -304,28 +435,48 @@ export class playerMarketSystem {
             })
         }
         const res = await form.show(player)
-        if (res.canceled) return "none";
-        if (res.selection == 0) {
-            const loc = await this.show(player, page - 1)
-            return loc;
+        if (!res || res.canceled) return "none";
+        if (res.selection == 0 && hasPrev) {
+            return await this.show(player, viewPage - 1);
         }
-        if (res.selection == 8) {
-            const loc = await this.show(player, page + 1)
-            return loc;
+        if (res.selection == 8 && hasNext) {
+            return await this.show(player, viewPage + 1);
         }
-        const slot = res.selection - 9;
-        return { slot, page }
-
+        if (res.selection == 4) {
+            this.setSortMode(player, nextMode);
+            return await this.show(player, 0);
+        }
+        const index = res.selection - 9;
+        if (index < 0 || index >= shown.length) {
+            // 空いているマスを押したときは、同じページを開き直す
+            return await this.show(player, viewPage);
+        }
+        const { page, slot, data } = shown[index];
+        return { ref: { page, slot, data }, viewPage };
     }
-    static delete({ slot, page }) {
-
-        const marketData = marketDatas.get(`${page}`);
-        marketData.splice(slot, 1);
-        marketDatas.set(`${page}`, marketData);
+    /**
+     * @param {{ page: number, slot: number, data: Object }} ref
+     * @returns {boolean} 消せたら true（もう無ければ false）
+     */
+    static delete(ref) {
+        const loc = this.resolve(ref);
+        if (!loc) return false;
+        const marketData = marketDatas.get(`${loc.page}`);
+        marketData.splice(loc.slot, 1);
+        marketDatas.set(`${loc.page}`, marketData);
+        return true;
     }
-    static edit(newData, { slot, page }) {
-        const marketData = marketDatas.get(`${page}`);
-        marketData[slot] = newData;
-        marketDatas.set(`${page}`, marketData);
+    /**
+     * @param {Object} newData
+     * @param {{ page: number, slot: number, data: Object }} ref
+     * @returns {boolean} 書き換えられたら true（もう無ければ false）
+     */
+    static edit(newData, ref) {
+        const loc = this.resolve(ref);
+        if (!loc) return false;
+        const marketData = marketDatas.get(`${loc.page}`);
+        marketData[loc.slot] = newData;
+        marketDatas.set(`${loc.page}`, marketData);
+        return true;
     }
 }
