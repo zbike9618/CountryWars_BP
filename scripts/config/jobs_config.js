@@ -26,6 +26,7 @@ export class JOB_CONFIG {
             "minecraft:copper_ore": 20,
             "minecraft:lapis_ore": 20,
             "minecraft:redstone_ore": 20,
+            "minecraft:lit_redstone_ore": 20, // 光っている状態は別の ID
 
             "minecraft:gold_ore": 25,
             "minecraft:diamond_ore": 30,
@@ -36,6 +37,7 @@ export class JOB_CONFIG {
             "minecraft:deepslate_copper_ore": 30,
             "minecraft:deepslate_lapis_ore": 30,
             "minecraft:deepslate_redstone_ore": 30,
+            "minecraft:lit_deepslate_redstone_ore": 30, // 光っている状態は別の ID
 
             "minecraft:deepslate_gold_ore": 37.5,
             "minecraft:deepslate_diamond_ore": 45,
