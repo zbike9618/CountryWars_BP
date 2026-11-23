@@ -1,0 +1,93 @@
+{
+  "_説明": "PR で「足された行」がこの正規表現に当たると、レビューで見てほしいところとしてコメントに載る（失敗にはしない）。増やしたいときはここに足す。files は対象のファイルのパス（正規表現）",
+  "rules": [
+    {
+      "id": "valuable-item",
+      "title": "貴重なアイテム",
+      "why": "古代の残骸・ネザライト・ダイヤなど。手に入る量や確率が増えていないか、意図どおりかを見る",
+      "files": "\\.(js|json)$",
+      "pattern": "ancient_debris|netherite|diamond|emerald|elytra|totem_of_undying|enchanted_golden_apple|nether_star|beacon|shulker_box|dragon_egg|heavy_core|\\bmace\\b|trial_key|_spawn_egg|command_block|structure_block|\\bbarrier\\b|\\bbedrock\\b|platinum"
+    },
+    {
+      "id": "item-create",
+      "title": "アイテムを増やす・作る処理",
+      "why": "ドロップを足す・配る処理は、複製や入手量の増えすぎにつながりやすい",
+      "files": "\\.(js|json)$",
+      "pattern": "loot\\s+(spawn|give|insert|replace)|\\bgive\\s+@|new\\s+ItemStack\\(|\\.spawnItem\\(|structure\\s+load|\\bclone\\s+[~\\d-]|\\.addItem\\(|\\.setItem\\("
+    },
+    {
+      "id": "chance",
+      "title": "確率・倍率",
+      "why": "確率や倍率の値が、ゲームのバランスとして妥当かを見る",
+      "files": "\\.js$",
+      "pattern": "Math\\.random\\(|chance|\\bmultiplier\\b|TRIPLE|DOUBLE|倍"
+    },
+    {
+      "id": "block-break",
+      "title": "ブロックを壊したときの処理",
+      "why": "採掘のドロップを変える処理。鉱石が増えすぎないか、シルクタッチや幸運と組み合わさったときを見る",
+      "files": "\\.js$",
+      "pattern": "playerBreakBlock|blockBreak|brokenBlockPermutation"
+    },
+    {
+      "id": "money",
+      "title": "お金・スコア",
+      "why": "経済に直接効く。増える量と、何回でも繰り返せないかを見る",
+      "files": "\\.(js|json)$",
+      "pattern": "addMoney|setMoney|\\bmoney\\b|scoreboard\\s+players\\s+(add|set)|\\.setScore\\(|\\.addScore\\("
+    },
+    {
+      "id": "dynamic-command",
+      "title": "文字列を組み立てて実行するコマンド",
+      "why": "プレイヤー名や国名など、プレイヤーが決められる文字がコマンドに入ると、別のコマンドを実行される恐れがある",
+      "files": "\\.js$",
+      "pattern": "runCommand(Async)?\\(\\s*`[^`]*\\$\\{"
+    },
+    {
+      "id": "eval",
+      "title": "eval（文字列をスクリプトとして実行）",
+      "why": "国名・プレイヤー名を入れると任意のスクリプトを実行される恐れがある（既知の問題）。文字列に名前を入れない",
+      "files": "\\.js$",
+      "pattern": "\\beval\\(|new\\s+Function\\(|sendDataForPlayers\\("
+    },
+    {
+      "id": "permission",
+      "title": "権限・管理者",
+      "why": "誰が使えるかが変わる。OP 以外が使えるようになっていないかを見る",
+      "files": "\\.(js|json)$",
+      "pattern": "isOp\\(|setOp\\(|\\bop\\s+@|permissionLevel|CommandPermissionLevel|PlayerPermissionLevel|addTag\\(\\s*[\"'](admin|op)"
+    },
+    {
+      "id": "world-data",
+      "title": "ワールドに保存するデータ",
+      "why": "保存の形を変えると、今のデータが読めなくなることがある。大きくなると TPS にも効く",
+      "files": "\\.js$",
+      "pattern": "setDynamicProperty\\(|clearDynamicProperties\\(|Dypro\\("
+    }
+  ],
+  "combo": {
+    "_説明": "1つのスクリプトに need のどれかと with のどれかが両方あると、「特に見てほしいファイル」として一番上に出す（ゴーストツルハシ: 鉱石のドロップを確率で3倍にして、古代の残骸も対象だった）",
+    "need": ["item-create"],
+    "with": ["valuable-item", "chance", "block-break", "money"]
+  },
+  "fileRules": [
+    {
+      "id": "economy-files",
+      "title": "ドロップ・取引・レシピのファイル",
+      "why": "手に入る物と量が変わる。数（count）・重み（weight）・材料が妥当かを見る",
+      "files": "^(loot_tables|trading|recipes)/|^scripts/config/shop_config\\.js$"
+    },
+    {
+      "id": "ci-change",
+      "title": "CI・デプロイの設定",
+      "why": "自動チェックや本番へのデプロイの仕組みが変わる。管理者が確認する",
+      "files": "^\\.github/"
+    },
+    {
+      "id": "manifest",
+      "title": "manifest.json",
+      "why": "パックの uuid・版・使う API が変わる。間違えると BP 全体が読み込まれない",
+      "files": "^manifest\\.json$"
+    }
+  ]
+}
