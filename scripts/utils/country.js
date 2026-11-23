@@ -14,6 +14,13 @@ import config from "../config/config.js";
 const countryDatas = new Dypro("country");
 const playerDatas = new Dypro("player");
 const chunkDatas = new Dypro("chunk");
+
+/** 国の名簿から外す。名簿にいない人を渡しても、ほかの人は消さない */
+function removeMember(countryData, playerId) {
+    const index = countryData.players.indexOf(playerId);
+    if (index !== -1) countryData.players.splice(index, 1);
+}
+
 export class Country {
 
     static async makeForm(player) {
@@ -160,13 +167,20 @@ export class Country {
             playerData.money += Math.floor(countryData.money * 0.5 / players.length);
             playerDatas.set(playerId, playerData);
         }
-        //株も消す
+        //株も消す。名簿にいないのにこの国に所属している人の所属も消す
         for (const playerId of playerDatas.idList) {
             const pData = playerDatas.get(playerId);
+            let changed = false;
             if (pData.stock && pData.stock[countryData.id]) {
                 delete pData.stock[countryData.id];
-                playerDatas.set(playerId, pData);
+                changed = true;
             }
+            if (String(pData.country) === String(countryData.id)) {
+                pData.country = undefined;
+                pData.permission = "";
+                changed = true;
+            }
+            if (changed) playerDatas.set(playerId, pData);
         }
         countryDatas.delete(countryData.id);
         Util.updateAllNameTags();
@@ -182,8 +196,9 @@ export class Country {
             return false;
         }
         playerData.country = countryData.id;
+        playerData.permission = ""; // 前の国の役職を持ち込まない
         playerDatas.set(player.id, playerData);
-        countryData.players.push(player.id);
+        if (!countryData.players.includes(player.id)) countryData.players.push(player.id);
         countryDatas.set(countryData.id, countryData);
         Util.updateNameTag(player);
         for (const p of Util.GetCountryPlayer(countryData)) {
@@ -198,13 +213,18 @@ export class Country {
             player.sendMessage({ translate: "cw.form.unjoincountry" })
             return false;
         }
+        // 確認の画面を開いている間に国のデータが変わっていることがあるので、読み直す
+        const currentCountryData = countryDatas.get(playerData.country);
         playerData.country = undefined;
+        playerData.permission = "";
         playerDatas.set(player.id, playerData);
-        countryData.players.splice(countryData.players.indexOf(player.id), 1);
-        countryDatas.set(countryData.id, countryData);
+        player.removeTag("cw:duringwar");
         Util.updateNameTag(player);
-        for (const p of Util.GetCountryPlayer(countryData)) {
-            const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.exitMessage", with: [${countryData.name}] })`
+        if (!currentCountryData) return true;
+        removeMember(currentCountryData, player.id);
+        countryDatas.set(currentCountryData.id, currentCountryData);
+        for (const p of Util.GetCountryPlayer(currentCountryData)) {
+            const data = `world.getEntity(${p.id}).sendMessage({ translate: "cw.mcform.exitMessage", with: [${currentCountryData.name}] })`
             sendDataForPlayers(data, player.id)
         }
         return true;
@@ -623,14 +643,23 @@ class Member {
         const res = await form.show(player)
         if (res.canceled) return;
         const playerId = players[res.formValues[0]]
+        // 画面を開いている間に国のデータが変わっていることがあるので、読み直す
+        const currentCountryData = countryDatas.get(countryData.id)
+        if (!currentCountryData) return;
         const playerData = playerDatas.get(playerId)
-        playerData.country = undefined
-        playerData.permission = ""
-        playerDatas.set(playerId, playerData)
-        countryData.players.splice(countryData.players.indexOf(playerId), 1)
-        countryDatas.set(countryData.id, countryData)
+        // すでに抜けて別の国に入った人の所属は変えない
+        if (String(playerData.country) === String(countryData.id)) {
+            playerData.country = undefined
+            playerData.permission = ""
+            playerDatas.set(playerId, playerData)
+        }
+        removeMember(currentCountryData, playerId)
+        countryDatas.set(currentCountryData.id, currentCountryData)
         const kickedPlayer = world.getEntity(playerId);
-        if (kickedPlayer) Util.updateNameTag(kickedPlayer);
+        if (kickedPlayer) {
+            kickedPlayer.removeTag("cw:duringwar");
+            Util.updateNameTag(kickedPlayer);
+        }
         player.sendMessage({ translate: "cw.scform.member.kick.success", with: [playerDatas.get(playerId).name] })
         const data = `world.getEntity('${playerId}').sendMessage({ translate: "cw.scform.member.kicked", with: ["${countryData.name}"] })`
         sendDataForPlayers(data, playerId)
@@ -1197,3 +1226,68 @@ class Diplomacy {
         player.sendMessage({ translate: "cw.scform.diplomacy.perm_updated", with: [relation.toUpperCase()] });
     }
 }
+
+const MEMBERSHIP_REPAIR_KEY = "cw:membershipRepair1";
+
+/**
+ * 本人の所属（player.country）と国の名簿（country.players）のずれを直す。本人の所属を正とする。
+ * - 所属先の国が無い → 所属と役職を消す
+ * - 所属しているのに名簿にいない → 名簿に戻す
+ * - 未所属なのに役職が残っている → 役職を消す
+ * - 名簿にいるのに所属が違う → 名簿から外す
+ */
+function repairMembership() {
+    const log = message => console.warn(`[membership repair] ${message}`);
+    const countries = new Map();
+    for (const countryId of countryDatas.idList) {
+        const countryData = countryDatas.get(countryId);
+        if (countryData) countries.set(countryId, countryData);
+    }
+
+    const players = new Map();
+    const changedCountries = new Set();
+    let changedPlayerCount = 0;
+    for (const playerId of playerDatas.idList) {
+        const playerData = playerDatas.get(playerId);
+        if (!playerData) continue;
+        players.set(playerId, playerData);
+        const label = `${playerData.name}(${playerId})`;
+        const countryData = countries.get(String(playerData.country));
+        if (countryData) {
+            if (!countryData.players.includes(playerId)) {
+                log(`${label}: 国 ${playerData.country} の名簿に戻す`);
+                countryData.players.push(playerId);
+                changedCountries.add(countryData);
+            }
+        } else if (playerData.country || playerData.permission) {
+            log(`${label}: 所属 ${playerData.country} と役職 ${playerData.permission} を消す`);
+            playerData.country = undefined;
+            playerData.permission = "";
+            playerDatas.set(playerId, playerData);
+            changedPlayerCount++;
+        }
+    }
+
+    for (const countryData of countries.values()) {
+        const members = countryData.players.filter(playerId => {
+            const playerData = players.get(playerId);
+            return !playerData || String(playerData.country) === String(countryData.id);
+        });
+        if (members.length !== countryData.players.length) {
+            log(`国 ${countryData.id}: 所属が違う人を名簿から外す ${countryData.players.filter(id => !members.includes(id)).join(",")}`);
+            countryData.players = members;
+            changedCountries.add(countryData);
+        }
+    }
+
+    for (const countryData of changedCountries) {
+        countryDatas.set(countryData.id, countryData);
+    }
+    log(`完了: プレイヤー ${changedPlayerCount}人、国 ${changedCountries.size}か国を直した`);
+}
+
+world.afterEvents.worldLoad.subscribe(() => {
+    if (world.getDynamicProperty(MEMBERSHIP_REPAIR_KEY)) return;
+    repairMembership();
+    world.setDynamicProperty(MEMBERSHIP_REPAIR_KEY, true);
+});
