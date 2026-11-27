@@ -174,44 +174,64 @@ async function buyForm(player, { ref, viewPage }) {
     }
 }
 /**
+ * 出品するアイテムのボタンに付ける補足（同じ種類が複数あっても見分けられるように）
+ * @param {{ ref: server.ItemStack, amount: number, slot?: number }} group
+ */
+function groupLabel(group) {
+    const item = group.ref;
+    if (group.slot === undefined) return ` §8×${group.amount}`;
+    const notes = [];
+    if (item.nameTag) notes.push(`§f"${item.nameTag}"`);
+    try {
+        if ((item.getComponent("minecraft:enchantable")?.getEnchantments() || []).length > 0) notes.push("§dエンチャント");
+    } catch (e) { }
+    try {
+        const damage = item.getComponent("minecraft:durability")?.damage || 0;
+        if (damage > 0) notes.push(`§7耐久 -${damage}`);
+    } catch (e) { }
+    return notes.length > 0 ? ` ${notes.join(" ")}` : "";
+}
+/**
  * @param {server.Player} player 
  */
 async function sellForm(player) {
     const aform = new ActionFormData()
     aform.title({ translate: "cw.playermarket.sell" })
-    const comp = player.getComponent("minecraft:inventory");
-    const inv = comp.container;
-    const size = inv.size;
-    const items = [];
-    for (let i = 0; i < size; i++) {
-        const item = inv.getItem(i)
-        if (!item) continue;
-        if (items.find(i => i.typeId === item.typeId)) continue;
-        items.push(item)
+    const inv = player.getComponent("minecraft:inventory").container;
+    const groups = playerMarketSystem.sellableGroups(inv);
+    let hasContainer = false;
+    for (let i = 0; i < inv.size; i++) {
+        const item = inv.getItem(i);
+        if (item && playerMarketSystem.holdsItems(item.typeId)) hasContainer = true;
     }
-    for (const item of items) {
-        aform.button({ translate: Util.langChangeItemName(item.typeId) }, itemIdToPath[item.typeId])
+    if (hasContainer) {
+        player.sendMessage("§7シュルカーボックスとバンドルは、中身を引き継げないため出品できません。");
+    }
+    if (groups.length === 0) {
+        player.sendMessage("§c出品できるアイテムを持っていません。");
+        return;
+    }
+    for (const group of groups) {
+        aform.button({
+            rawtext: [
+                { translate: Util.langChangeItemName(group.ref.typeId) },
+                { text: groupLabel(group) }
+            ]
+        }, itemIdToPath[group.ref.typeId])
     }
     const resItem = await aform.show(player)
     if (resItem.canceled) return;
-    const item = items[resItem.selection]
-    let amount = 0;
-    for (let i = 0; i < size; i++) {
-        const item = inv.getItem(i)
-        if (!item) continue;
-        if (item.typeId !== items[resItem.selection].typeId) continue;
-        amount += item.amount;
-    }
-    sellFormS(player, item, amount)
-
+    const group = groups[resItem.selection]
+    if (!group) return;
+    sellFormS(player, group)
 }
 /**
  * @param {server.Player} player 
- * @param {server.ItemStack} item 
- * @param {number} maxamount 
+ * @param {{ ref: server.ItemStack, amount: number, slot?: number, signature?: string }} group 出品するアイテム（sellableGroups の1つ）
  */
-async function sellFormS(player, item, maxamount) {
-    const AmountMax = item.maxAmount;
+async function sellFormS(player, group) {
+    const item = group.ref;
+    const maxamount = group.amount;
     const form = new ModalFormData()
     form.title({ translate: "cw.playermarket.sell" })
     form.textField({ translate: "cw.playermarket.sell.price" }, "Press Number")
@@ -229,7 +249,7 @@ async function sellFormS(player, item, maxamount) {
         const res = await mform.show(player)
         if (res.canceled) return;
         if (res.selection === 0) {
-            sellFormS(player, item, maxamount)
+            sellFormS(player, group)
         }
         return;
     }
@@ -245,44 +265,15 @@ async function sellFormS(player, item, maxamount) {
     }
     const durComp = item.getComponent("minecraft:durability");
     const durability = durComp ? durComp.damage : 0;
+    const itemData = { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price, description: res.formValues[2], durability };
 
-    playerMarketSystem.sell(player, { itemId: item.typeId, amount, enchants, lore: item.getLore().join("\n"), price: Number(res.formValues[0]), description: res.formValues[2], durability })
-    const comp = player.getComponent("minecraft:inventory");
-    const inv = comp.container;
-    for (let i = 0; i < inv.size; i++) {
-        const newItem = inv.getItem(i)
-        if (!newItem) continue;
-        if (newItem.typeId !== item.typeId) continue;
-        inv.setItem(i, undefined)
+    // 画面を開いている間に持ち物が変わっていたら、出品しない
+    const inv = player.getComponent("minecraft:inventory").container;
+    if (!playerMarketSystem.takeForSale(inv, group, amount)) {
+        player.sendMessage("§c持ち物が変わったため、出品をやめました。もう一度選んでください。");
+        return;
     }
-
-    const amountC = maxamount - amount;
-    if (amountC == 0) return;
-    const count = Math.floor(amountC / AmountMax);
-    for (let i = 0; i < count; i++) {
-        const newItem = item.clone();
-        newItem.clearDynamicProperties()
-        newItem.amount = AmountMax;
-        if (inv.emptySlotsCount == 0) {
-            const ent = player.dimension.spawnItem(newItem, player.location)
-            ent.clearVelocity()
-        } else {
-            inv.addItem(newItem)
-        }
-    }
-    const remainder = amountC - (count * AmountMax);
-    if (remainder > 0) {
-        const newItem = item.clone();
-        newItem.clearDynamicProperties()
-        newItem.amount = remainder;
-        if (inv.emptySlotsCount == 0) {
-            const ent = player.dimension.spawnItem(newItem, player.location)
-            ent.clearVelocity()
-        } else {
-            inv.addItem(newItem)
-        }
-    }
-
+    playerMarketSystem.sell(player, itemData)
 }
 async function editForm(player) {
     const form = new ActionFormData()
