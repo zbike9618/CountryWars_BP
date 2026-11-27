@@ -24,6 +24,21 @@ function isValidItemId(itemId) {
         return false;
     }
 }
+// 中身を持つ入れ物。出品データには中身を残せないので、出品できないことにする
+function holdsItems(typeId) {
+    return typeId.endsWith("shulker_box") || typeId.endsWith("bundle");
+}
+// 重ならないアイテムが、選んだときと同じものかを見分けるための印
+function itemSignature(item) {
+    let enchants = [];
+    try {
+        enchants = (item.getComponent("minecraft:enchantable")?.getEnchantments() || [])
+            .map(e => `${e.type.id}:${e.level}`).sort();
+    } catch (e) { }
+    let damage = 0;
+    try { damage = item.getComponent("minecraft:durability")?.damage || 0; } catch (e) { }
+    return JSON.stringify([item.typeId, item.amount, item.nameTag || "", item.getLore(), enchants, damage]);
+}
 function latestPrice(data) {
     return Array.isArray(data.price) ? data.price[data.price.length - 1] : data.price;
 }
@@ -108,10 +123,75 @@ export class playerMarketSystem {
         }
         return null;
     }
+    static holdsItems(typeId) {
+        return holdsItems(typeId);
+    }
     /**
-     * 
-     * @param {server.Player} player 
-     * @param {Object} itemData 
+     * 出品できるアイテムを、持ち物から選べる単位に分ける。
+     * 重なるアイテムは「重ねられるもの同士」で1つ、重ならないアイテム（道具など）は1マスずつ。
+     * 中身を持つ入れ物（シュルカーボックス・バンドル）は入れない
+     * @param {server.Container} container
+     * @returns {{ ref: server.ItemStack, amount: number, slot?: number, signature?: string }[]}
+     */
+    static sellableGroups(container) {
+        const groups = [];
+        for (let i = 0; i < container.size; i++) {
+            const item = container.getItem(i);
+            if (!item || holdsItems(item.typeId)) continue;
+            if (item.maxAmount === 1) {
+                groups.push({ ref: item, amount: 1, slot: i, signature: itemSignature(item) });
+                continue;
+            }
+            const group = groups.find(g => g.slot === undefined && g.ref.typeId === item.typeId && g.ref.isStackableWith(item));
+            if (group) group.amount += item.amount;
+            else groups.push({ ref: item, amount: item.amount });
+        }
+        return groups;
+    }
+    /**
+     * 出品する分だけを持ち物から取る。画面を開いている間に持ち物が変わって足りなければ、何も取らずに false。
+     * 残りのマスには触らない
+     * @param {server.Container} container
+     * @param {{ ref: server.ItemStack, slot?: number, signature?: string }} group sellableGroups の1つ
+     * @param {number} amount
+     * @returns {boolean}
+     */
+    static takeForSale(container, group, amount) {
+        if (!Number.isInteger(amount) || amount < 1) return false;
+        if (group.slot !== undefined) {
+            if (amount !== 1) return false;
+            const item = container.getItem(group.slot);
+            if (!item || itemSignature(item) !== group.signature) return false;
+            container.setItem(group.slot, undefined);
+            return true;
+        }
+        const found = [];
+        let have = 0;
+        for (let i = 0; i < container.size; i++) {
+            const item = container.getItem(i);
+            if (!item || item.typeId !== group.ref.typeId || !group.ref.isStackableWith(item)) continue;
+            found.push({ i, item });
+            have += item.amount;
+        }
+        if (have < amount) return false;
+        let rest = amount;
+        for (const { i, item } of found) {
+            if (rest <= 0) break;
+            if (item.amount <= rest) {
+                rest -= item.amount;
+                container.setItem(i, undefined);
+            } else {
+                item.amount -= rest;
+                container.setItem(i, item);
+                rest = 0;
+            }
+        }
+        return true;
+    }
+    /**
+     *
+     * @param {server.Player} player
+     * @param {Object} itemData
      */
 
     static sell(player, itemData) {
